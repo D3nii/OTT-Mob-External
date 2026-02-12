@@ -1,1 +1,0 @@
-enum ItineraryStatus { NOT_STARTED, IN_PROGRESS, PAUSED, COMPLETED }

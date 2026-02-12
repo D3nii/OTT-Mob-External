@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">One Two Trail</string>
+    <string name="facebook_app_id">313206986055635</string>
+    <string name="facebook_client_token">2cbeabcd4a3cfc79100c7a6a50c3009c</string>
+    <string name="fb_login_protocol_scheme">fb313206986055635</string>
+</resources>

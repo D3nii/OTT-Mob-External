@@ -1,0 +1,4 @@
+app_identifier(ENV['PACKAGE_NAME'])
+apple_id(ENV['FASTLANE_IOS_APPLE_ID'])
+itc_team_id(ENV['FASTLANE_IOS_ITC_TEAM_ID'])
+team_id(ENV['FASTLANE_IOS_TEAM_ID'])

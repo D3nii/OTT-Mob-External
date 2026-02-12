@@ -1,0 +1,2 @@
+json_key_file(ENV['FASTLANE_ANDROID_GOOGLE_PLAY_JSON_KEY_PATH'])
+package_name(ENV['PACKAGE_NAME'])

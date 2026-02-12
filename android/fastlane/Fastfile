@@ -1,0 +1,74 @@
+default_platform(:android)
+
+platform :android do
+  def setup_release_notes
+    version = ENV['VERSION']
+    if version.nil?
+      UI.user_error!("VERSION environment variable is not set")
+    end
+
+    build_number = ENV['BUILD_NUMBER']
+    if build_number.nil?
+      UI.user_error!("BUILD_NUMBER environment variable is not set")
+    end
+
+    metadata_dir = "metadata/en-US/changelogs"
+    FileUtils.mkdir_p(metadata_dir)
+    
+    # When running fastlane, working directory is android/fastlane, so we need to go up two levels to get to the root
+    release_notes_file = "../../release-notes/#{version}.txt"
+    default_notes_file = "../../release-notes/default.txt"
+    
+    changelog_content = if File.exist?(release_notes_file)
+      UI.message("Using release notes from #{release_notes_file}")
+      File.read(release_notes_file)
+    elsif File.exist?(default_notes_file)
+      UI.message("Using default release notes from #{default_notes_file}")
+      File.read(default_notes_file)
+    else
+      UI.user_error!("No release notes found! Please create either '#{release_notes_file}' or '#{default_notes_file}'")
+    end
+    UI.message("Writing changelog to #{metadata_dir}/#{build_number}.txt")
+    File.write("#{metadata_dir}/#{build_number}.txt", changelog_content)
+  end
+
+  desc "Deploy based on environment"
+  lane :deploy do
+    case ENV['ENV']
+    when 'staging'
+      staging
+    when 'production'
+      production
+    else
+      UI.user_error!("Unknown environment: #{ENV['ENV']}. Use 'staging' or 'production'")
+    end
+  end
+
+  desc "Upload to internal testing (staging)"
+  lane :staging do
+    setup_release_notes
+    
+    upload_to_play_store(
+      track: 'internal',
+      aab: "../build/app/outputs/bundle/#{ENV['ENV']}Release/app-#{ENV['ENV']}-release.aab",
+      json_key: "../#{ENV['FASTLANE_ANDROID_GOOGLE_PLAY_JSON_KEY_PATH']}",
+      package_name: ENV['PACKAGE_NAME'],
+      release_status: ENV['FASTLANE_AUTO_PUBLISH'] == 'true' ? 'completed' : 'draft',
+      metadata_path: 'fastlane/metadata'
+    )
+  end
+
+  desc "Upload to production"
+  lane :production do
+    setup_release_notes
+    
+    upload_to_play_store(
+      track: 'production',
+      aab: "../build/app/outputs/bundle/#{ENV['ENV']}Release/app-#{ENV['ENV']}-release.aab",
+      json_key: "../#{ENV['FASTLANE_ANDROID_GOOGLE_PLAY_JSON_KEY_PATH']}",
+      package_name: ENV['PACKAGE_NAME'],
+      release_status: ENV['FASTLANE_AUTO_PUBLISH'] == 'true' ? 'completed' : 'draft',
+      metadata_path: 'fastlane/metadata'
+    )
+  end
+end

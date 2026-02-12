@@ -1,0 +1,109 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def keyProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keyProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def dartEnvironmentVariables = [:]
+if (project.hasProperty('dart-defines')) {
+    dartEnvironmentVariables = project.property('dart-defines')
+        .split(',')
+        .collectEntries { entry ->
+            def pair = new String(entry.decodeBase64(), 'UTF-8').split('=')
+            [(pair.first()): pair.last()]
+        }
+}
+
+def getDartDefine = { String key ->
+    // For clean operations, provide dummy values to avoid configuration errors
+    def isCleanTask = gradle.startParameter.taskNames.any { it.contains('clean') }
+    
+    if (isCleanTask) {
+        return 'dummy_value_for_clean'
+    }
+    
+    if (!dartEnvironmentVariables.containsKey(key)) {
+        def env = dartEnvironmentVariables.get('FLUTTER_APP_FLAVOR', 'development')
+        throw new GradleException("""
+${key} Dart define not found.
+
+To fix this:
+1. Check that your environment file (environments/${env}.env) contains ${key}
+2. Run 'make dart-definitions ENV=${env}' to regenerate the JSON file
+3. Ensure you're using the correct ENV parameter (development/staging/production)
+""".stripIndent())
+    }
+    
+    def value = dartEnvironmentVariables.get(key)
+    if (value == null || value.toString().trim().isEmpty()) {
+        throw new GradleException("${key} Dart define is empty. Please provide a valid value.")
+    }
+    
+    return value.toString()
+}
+
+android {
+    namespace "com.onetwotrail"
+    compileSdkVersion flutter.compileSdkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+
+    defaultConfig {
+        applicationId "com.onetwotrail"
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+        
+        manifestPlaceholders = [
+            googleMapsApiKey: getDartDefine('GOOGLE_MAPS_API_KEY')
+        ]
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keyProperties['keyAlias']
+            keyPassword keyProperties['keyPassword']
+            storeFile file(keyProperties['storeFile'])
+            storePassword keyProperties['storePassword']
+        }
+    }
+
+    buildTypes {
+        release {
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+            signingConfig signingConfigs.release
+        }
+    }
+
+    flavorDimensions "version"
+    productFlavors {
+        development {
+            applicationId "com.onetwotrail.development"
+        }
+        staging {
+            applicationId "com.onetwotrail.staging"
+        }
+        production {
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}

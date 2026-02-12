@@ -1,0 +1,66 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Deploy based on environment"
+  lane :deploy do
+    case ENV['ENV']
+    when 'staging'
+      staging
+    when 'production'
+      production
+    else
+      UI.user_error!("Unknown environment: #{ENV['ENV']}. Use 'staging' or 'production'")
+    end
+  end
+
+  desc "Upload to TestFlight (staging)"
+  lane :staging do
+    unless ENV['RELEASE_NOTES']
+      UI.user_error!("RELEASE_NOTES environment variable not set")
+    end
+    
+    upload_to_testflight(
+      ipa: "../build/ios/ipa/onetwotrail.ipa",
+      changelog: ENV['RELEASE_NOTES'],
+      distribute_external: ENV['FASTLANE_AUTO_PUBLISH'] == 'true',
+      groups: ENV['FASTLANE_AUTO_PUBLISH'] == 'true' ? ["External Testers"] : nil,
+      notify_external_testers: ENV['FASTLANE_AUTO_PUBLISH'] == 'true'
+    )
+  end
+
+  desc "Upload to App Store (production)"
+  lane :production do
+    unless ENV['RELEASE_NOTES']
+      UI.user_error!("RELEASE_NOTES environment variable not set")
+    end
+    
+    upload_to_app_store(
+      ipa: "../build/ios/ipa/onetwotrail.ipa",
+      force: true,
+      reject_if_possible: true,
+      release_notes: {
+        'en-US' => ENV['RELEASE_NOTES']
+      },
+      automatic_release: ENV['FASTLANE_AUTO_PUBLISH'] == 'true',
+      submit_for_review: ENV['FASTLANE_AUTO_PUBLISH'] == 'true',
+      submission_information: {
+        add_id_info_limits_tracking: true,
+        add_id_info_serves_ads: false,
+        add_id_info_tracks_action: true,
+        add_id_info_tracks_install: true,
+        add_id_info_uses_idfa: true,
+        content_rights_has_rights: true,
+        content_rights_contains_third_party_content: true,
+        export_compliance_platform: 'ios',
+        export_compliance_compliance_required: false,
+        export_compliance_encryption_updated: false,
+        export_compliance_app_type: nil,
+        export_compliance_uses_encryption: false,
+        export_compliance_is_exempt: false,
+        export_compliance_contains_third_party_cryptography: false,
+        export_compliance_contains_proprietary_cryptography: false,
+        export_compliance_available_on_french_store: false
+      }
+    )
+  end
+end

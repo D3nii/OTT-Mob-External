@@ -1,0 +1,1 @@
+enum Prices { FREE, LOW, MEDIUM, EXPENSIVE }

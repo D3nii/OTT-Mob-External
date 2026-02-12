@@ -1,0 +1,1 @@
+enum FilterType { OPTIONS_RANGE, VALUES_RANGE, CHECK_BOX, NONE }

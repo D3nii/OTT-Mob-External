@@ -79,6 +79,6 @@ test/**/*.mocks.dart
 ################################################################################
 
 # Dart definitions
-dart-definitions/
+# dart-definitions/
 android/upload-certificate.pem
 secrets/fastlane-google-credentials.json

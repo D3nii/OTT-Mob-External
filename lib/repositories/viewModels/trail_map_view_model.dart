@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_map_polyline_new/google_map_polyline_new.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:logging/logging.dart';
 import 'package:onetwotrail/repositories/models/experience.dart';
 import 'package:onetwotrail/repositories/models/visit_itinerary_event.dart';
 import 'package:onetwotrail/repositories/viewModels/base_model.dart';
@@ -12,6 +13,7 @@ import 'package:onetwotrail/utils/map_marker_utils.dart';
 import 'package:snapping_sheet/snapping_sheet.dart';
 
 class TrailMapViewModel extends BaseModel {
+  static final Logger _logger = Logger('TrailMapViewModel');
   BitmapDescriptor? _pinLocationIcon;
   final ControllerPageBoardAndItineraryModel controllerPageBoardAndItineraryModel;
   GoogleMapController? _googleMapController;
@@ -63,20 +65,26 @@ class TrailMapViewModel extends BaseModel {
 
   init(GoogleMapController googleMapController) async {
     _googleMapController = googleMapController;
-    // Create a custom pink marker using the app's pink color
-    _pinLocationIcon = await MapMarkerUtils.createPinkMarker();
+    try {
+      // Create a custom pink marker using the app's pink color
+      _pinLocationIcon = await MapMarkerUtils.createPinkMarker();
 
-    dayActivities.forEach((element) {
-      if (element is VisitItineraryEvent) {
-        element.experience.visitStartTime = element.startTime;
-        _experiences.add(element.experience);
-        LatLng position = new LatLng(element.experience.latitude, element.experience.longitude);
-        _geoPoints.add(position);
-        createMarker(position, "${element.experience.experienceId}");
-      }
-    });
-    notifyListeners();
-    await getPolyLines();
+      dayActivities.forEach((element) {
+        if (element is VisitItineraryEvent) {
+          element.experience.visitStartTime = element.startTime;
+          _experiences.add(element.experience);
+          LatLng position = new LatLng(element.experience.latitude, element.experience.longitude);
+          _geoPoints.add(position);
+          createMarker(position, "${element.experience.experienceId}");
+        }
+      });
+      notifyListeners();
+      await getPolyLines();
+    } catch (e, stackTrace) {
+      _logger.severe('Failed to initialize map with markers and polylines', e, stackTrace);
+      // Continue without markers/polylines if there's an error
+      notifyListeners();
+    }
   }
 
   void createMarker(LatLng position, String name) {
@@ -89,7 +97,12 @@ class TrailMapViewModel extends BaseModel {
 
   Future<void> getPolyLines() async {
     this.polyline.clear();
-    await googlePolyline();
+    try {
+      await googlePolyline();
+    } catch (e, stackTrace) {
+      _logger.severe('Failed to get polylines', e, stackTrace);
+      // Continue without polylines if there's an error
+    }
     notifyListeners();
   }
 
@@ -100,20 +113,25 @@ class TrailMapViewModel extends BaseModel {
       if (i + 1 < _experiences.length) {
         start = _experiences[i];
         end = _experiences[i + 1];
-        var route = await _googleMapPolyline.getCoordinatesWithLocation(
-            destination: LatLng(end.latitude, end.longitude),
-            origin: LatLng(start.latitude, start.longitude),
-            mode: RouteMode.driving);
+        try {
+          var route = await _googleMapPolyline.getCoordinatesWithLocation(
+              destination: LatLng(end.latitude, end.longitude),
+              origin: LatLng(start.latitude, start.longitude),
+              mode: RouteMode.driving);
 
-        if (route != null) {
-          this.polyline.add(Polyline(
-              polylineId: PolylineId(start.experienceId.toString()),
-              visible: true,
-              points: route,
-              color: pigPinkTwo,
-              width: 3,
-              startCap: Cap.roundCap,
-              endCap: Cap.buttCap));
+          if (route != null) {
+            this.polyline.add(Polyline(
+                polylineId: PolylineId(start.experienceId.toString()),
+                visible: true,
+                points: route,
+                color: pigPinkTwo,
+                width: 3,
+                startCap: Cap.roundCap,
+                endCap: Cap.buttCap));
+          }
+        } catch (e, stackTrace) {
+          _logger.warning('Failed to get polyline for route from ${start.experienceId} to ${end.experienceId}', e, stackTrace);
+          // Continue with other polylines
         }
       }
     }

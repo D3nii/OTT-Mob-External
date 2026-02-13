@@ -3,14 +3,15 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:onetwotrail/repositories/enums/view_state.dart';
 import 'package:onetwotrail/repositories/models/experience.dart';
+import 'package:onetwotrail/repositories/models/trail.dart';
 import 'package:onetwotrail/repositories/models/response.dart';
 import 'package:onetwotrail/repositories/models/search.dart';
 import 'package:onetwotrail/repositories/models/user.dart';
 import 'package:onetwotrail/repositories/services/application_api.dart';
+import 'package:onetwotrail/repositories/services/discovery_service.dart';
 import 'package:onetwotrail/repositories/services/search_service.dart';
 import 'package:onetwotrail/repositories/viewModels/base_model.dart';
 import 'package:rxdart/rxdart.dart';
-
 
 class SearchBarResultModel extends BaseModel {
   late SearchService _searchService;
@@ -36,9 +37,10 @@ class SearchBarResultModel extends BaseModel {
   StreamController<List<String>> _autocompleteData = BehaviorSubject();
   String _prevSearchTerm = '';
   Timer? _debounce;
-  
+
   StreamSubscription<List<String>>? _searchableTermsSubscription;
-  StreamSubscription<ApplicationApiResponse<List<Experience>>>? _searchStreamSubscription;
+  StreamSubscription<ApplicationApiResponse<List<Experience>>>?
+      _searchStreamSubscription;
   StreamSubscription<bool>? _loadingStateSubscription;
 
   String get lastSearchTerm => _lastSearchTerm;
@@ -46,6 +48,11 @@ class SearchBarResultModel extends BaseModel {
   bool get showClearTextButton => _showClearTextButton;
 
   List<Experience> searchResults = [];
+
+  // Cache for placeholder data (trials, lead experiences, experiences sample)
+  List<Trail> cachedTrialSample = [];
+  List<Experience> cachedLeadExperienceSample = [];
+  List<Experience> cachedExperienceSample = [];
 
   TextEditingController get searchController => _searchController;
   ScrollController get scrollController => _scrollController;
@@ -126,7 +133,8 @@ class SearchBarResultModel extends BaseModel {
         if (_debounce != null && _debounce!.isActive) _debounce!.cancel();
         _debounce = Timer(const Duration(milliseconds: 100), () {
           _autocompleteData.add(searchableTermsList
-              .where((element) => element.toLowerCase().contains(searchTerm.toLowerCase()))
+              .where((element) =>
+                  element.toLowerCase().contains(searchTerm.toLowerCase()))
               .toList());
         });
       }
@@ -137,8 +145,9 @@ class SearchBarResultModel extends BaseModel {
 
     recentSearchesTerms = [];
     searchable = recentSearchesTerms.isNotEmpty;
-    
-    _searchableTermsSubscription = _searchService.getSearchableTerms().listen((event) {
+
+    _searchableTermsSubscription =
+        _searchService.getSearchableTerms().listen((event) {
       searchableTermsList = event;
     });
 
@@ -153,9 +162,30 @@ class SearchBarResultModel extends BaseModel {
       }
     });
 
-    _loadingStateSubscription = _searchService.loadingStateStream.listen((isLoading) {
+    _loadingStateSubscription =
+        _searchService.loadingStateStream.listen((isLoading) {
       notifyListeners();
     });
+  }
+
+  /// Initialize cached placeholder samples from discovery data (called once to prevent re-sampling)
+  void initializeCachedSamples(
+      List<Experience> allExperiences, List<Trail> allTrails) {
+    // Only initialize if not already done
+    if (cachedLeadExperienceSample.isEmpty && allExperiences.isNotEmpty) {
+      final shuffledExperiences = List<Experience>.from(allExperiences);
+      shuffledExperiences.shuffle();
+
+      cachedLeadExperienceSample = shuffledExperiences.take(7).toList();
+      cachedExperienceSample = shuffledExperiences.skip(7).take(9).toList();
+    }
+
+    if (cachedTrialSample.isEmpty && allTrails.isNotEmpty) {
+      final shuffledTrails = List<Trail>.from(allTrails);
+      shuffledTrails.shuffle();
+
+      cachedTrialSample = shuffledTrails.take(5).toList();
+    }
   }
 
   void _onScroll() {
@@ -189,7 +219,8 @@ class SearchBarResultModel extends BaseModel {
   }
 
   deleteRecentSearch(String term) {
-    recentSearchesTerms.removeWhere((element) => element.toLowerCase() == term.toLowerCase());
+    recentSearchesTerms
+        .removeWhere((element) => element.toLowerCase() == term.toLowerCase());
     String searchTerm = _searchController.text;
     searchable = (searchTerm.isEmpty && recentSearchesTerms.isNotEmpty) ||
         (searchTerm.isNotEmpty && searchableTermsList.isNotEmpty);
@@ -201,7 +232,8 @@ class SearchBarResultModel extends BaseModel {
 
     _prevSearchTerm = search;
     _searchController.text = search;
-    recentSearchesTerms.removeWhere((element) => element.toLowerCase() == search.toLowerCase());
+    recentSearchesTerms.removeWhere(
+        (element) => element.toLowerCase() == search.toLowerCase());
     recentSearchesTerms.add(search);
     recentSearchesTerms = recentSearchesTerms.reversed.toList();
     _lastSearchTerm = search;

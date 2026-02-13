@@ -31,10 +31,13 @@ class DiscoverModel extends BaseModel {
   bool _gettingPage = false;
   int _viewIndex = 0;
   BaseResponse<Map<String, dynamic>> lastServiceResponse = BaseResponse({}, 'START');
+  String? _selectedTopicName;
 
   DiscoverModel(this._discoveryService);
 
   int get viewIndex => _viewIndex;
+
+  String? get selectedTopicName => _selectedTopicName;
 
   String? get nextPageToken => _nextPageToken;
 
@@ -81,6 +84,11 @@ class DiscoverModel extends BaseModel {
       _pinLocationIcon = pinLocationIcon;
       notifyListeners();
     }
+  }
+
+  void setSelectedTopicName(String? value) {
+    _selectedTopicName = value;
+    notifyListeners();
   }
 
   Future<DiscoverModel> initState() async {

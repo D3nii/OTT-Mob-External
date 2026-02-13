@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// A descriptor that specifies the content of a [PageBanner].
@@ -64,16 +65,32 @@ class PageBanner extends StatefulWidget {
 class _PageBannerState extends State<PageBanner> {
   int _currentPage = 0;
   PageController _pageController = PageController();
+  Timer? _autoRotateTimer;
+  final Duration _autoRotateInterval = Duration(seconds: 4);
+  final Duration _animationDuration = Duration(milliseconds: 500);
 
   @override
   void initState() {
     super.initState();
     _pageController.addListener(_handlePageChange);
+
+    // start auto-rotate
+    _autoRotateTimer = Timer.periodic(_autoRotateInterval, (_) {
+      if (!mounted || widget.pages.isEmpty) return;
+      final next = (_pageController.page?.round() ?? _currentPage) + 1;
+      final target = next % widget.pages.length;
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(target,
+            duration: _animationDuration, curve: Curves.easeInOut);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _autoRotateTimer?.cancel();
     _pageController.removeListener(_handlePageChange);
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -88,18 +105,18 @@ class _PageBannerState extends State<PageBanner> {
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height * .4,
-      child: Column(
+      child: Stack(
         children: [
-          Expanded(
+          // PageView (fills area)
+          Positioned.fill(
             child: PageView.builder(
               controller: _pageController,
               itemCount: widget.pages.length,
+              onPageChanged: (index) => setState(() => _currentPage = index),
               itemBuilder: (context, index) {
                 final item = widget.pages[index];
                 return GestureDetector(
-                  onTap: () {
-                    item.onTap(context);
-                  },
+                  onTap: () => item.onTap(context),
                   child: Stack(
                     children: [
                       Container(
@@ -112,7 +129,8 @@ class _PageBannerState extends State<PageBanner> {
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.black.withAlpha((widget.backgroundColorRatio * 255).toInt()),
+                          color: Colors.black.withAlpha(
+                              (widget.backgroundColorRatio * 255).toInt()),
                         ),
                       ),
                       Align(
@@ -150,32 +168,44 @@ class _PageBannerState extends State<PageBanner> {
               },
             ),
           ),
-          ..._createFooter(),
+
+          // Indicators: small bars centered at bottom (bottom: 20px)
+          if (widget.pages.length > 1)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 20,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: _createIndicatorBars(),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  List<Widget> _createFooter() {
-    List<Widget> children = [];
-    if (widget.pages.length > 1) {
-      children += [
-        SizedBox(height: 16),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: this._createIndicatorCircles()),
-      ];
-    }
-    return children;
-  }
+  List<Widget> _createIndicatorBars() {
+    const double inactiveWidth = 8.0;
+    const double activeWidth = 24.0;
+    const double height = 8.0;
 
-  List<Widget> _createIndicatorCircles() {
     List<Widget> widgets = [];
     for (int i = 0; i < widget.pages.length; i++) {
-      if (i != 0) {
-        widgets.add(SizedBox(width: 2));
-      }
-      widgets.add(CircleAvatar(
-        radius: 4,
-        backgroundColor: i == _currentPage ? Colors.black : Colors.grey,
+      if (i != 0) widgets.add(SizedBox(width: 8));
+
+      final bool isActive = i == _currentPage;
+      widgets.add(AnimatedContainer(
+        duration: _animationDuration,
+        curve: Curves.easeInOut,
+        width: isActive ? activeWidth : inactiveWidth,
+        height: height,
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.white54,
+          borderRadius: BorderRadius.circular(4),
+        ),
       ));
     }
     return widgets;

@@ -107,74 +107,93 @@ class _PageBannerState extends State<PageBanner> {
       height: MediaQuery.of(context).size.height * .4,
       child: Stack(
         children: [
-          // PageView (fills area)
+          // PageView with reduced size and border radius
           Positioned.fill(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.pages.length,
-              onPageChanged: (index) => setState(() => _currentPage = index),
-              itemBuilder: (context, index) {
-                final item = widget.pages[index];
-                return GestureDetector(
-                  onTap: () => item.onTap(context),
-                  child: Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: item.image,
-                            fit: BoxFit.cover,
+            child: Center(
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.35,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: widget.pages.length,
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
+                  itemBuilder: (context, index) {
+                    final item = widget.pages[index];
+                    return GestureDetector(
+                      onTap: () => item.onTap(context),
+                      child: Stack(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: item.image,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withAlpha(
-                              (widget.backgroundColorRatio * 255).toInt()),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.center,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.75,
-                              child: Text(
-                                item.primaryText,
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withAlpha(
+                                  (widget.backgroundColorRatio * 255).toInt()),
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.center,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.75,
+                                  child: Text(
+                                    item.primaryText,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Text(
+                                  item.secondaryText,
+                                  maxLines: 2,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              item.secondaryText,
-                              maxLines: 2,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
           ),
 
-          // Indicators: small bars centered at bottom (bottom: 20px)
+          // Indicators: small bars centered at bottom (bottom: 45px)
           if (widget.pages.length > 1)
             Positioned(
               left: 0,
               right: 0,
-              bottom: 20,
+              bottom: 45,
               child: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -203,7 +222,9 @@ class _PageBannerState extends State<PageBanner> {
         width: isActive ? activeWidth : inactiveWidth,
         height: height,
         decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.white54,
+          color: isActive
+              ? Colors.white.withOpacity(0.7)
+              : Colors.white.withOpacity(0.3),
           borderRadius: BorderRadius.circular(4),
         ),
       ));

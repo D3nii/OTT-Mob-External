@@ -345,7 +345,7 @@ class _TopicsCarouselState extends State<_TopicsCarousel> {
         return MouseRegion(
           cursor: SystemMouseCursors.grab,
           child: Container(
-            height: width <= 768 ? 32 : 40,
+            height: width <= 768 ? 44 : 56,
             color: Colors.grey[100],
             // Slightly reduce horizontal padding so topics sit closer together.
             padding: const EdgeInsets.symmetric(horizontal: 4),

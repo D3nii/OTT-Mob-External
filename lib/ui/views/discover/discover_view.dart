@@ -31,7 +31,8 @@ class DiscoverView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer4<ApplicationApi, DiscoveryService, User, HomeModel>(
-      builder: (context, applicationApi, discoveryService, user, homeModel, child) {
+      builder:
+          (context, applicationApi, discoveryService, user, homeModel, child) {
         return ChangeNotifierProvider<DiscoverModel>(create: (_) {
           var model = DiscoverModel(discoveryService)
             ..user = user
@@ -62,17 +63,23 @@ class DiscoverView extends StatelessWidget {
                         _AppBarWithSearchBarContainer(),
                         Builder(builder: (context) {
                           return Expanded(
-                            child: StreamBuilder<BaseResponse<Map<String, dynamic>>>(
+                            child: StreamBuilder<
+                                    BaseResponse<Map<String, dynamic>>>(
                                 initialData: model.lastServiceResponse,
                                 stream: model.discoverDataResponse,
-                                builder:
-                                    (BuildContext context, AsyncSnapshot<BaseResponse<Map<String, dynamic>>> snapshot) {
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<
+                                            BaseResponse<Map<String, dynamic>>>
+                                        snapshot) {
                                   var response = snapshot.data;
-                                  if (response == null || response.responseStatus == 'START') {
+                                  if (response == null ||
+                                      response.responseStatus == 'START') {
                                     return Container();
                                   }
                                   model.lastServiceResponse = response;
-                                  return Provider.value(value: response, child: const _ListViewBodyContainer());
+                                  return Provider.value(
+                                      value: response,
+                                      child: const _ListViewBodyContainer());
                                 }),
                           );
                         }),
@@ -92,7 +99,8 @@ class _ListViewBodyContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<HomeModel, DiscoverModel, BaseResponse<Map<String, dynamic>>>(
+    return Consumer3<HomeModel, DiscoverModel,
+            BaseResponse<Map<String, dynamic>>>(
         builder: (context, homeModel, discoverModel, discoverResponse, _) {
       if (discoverResponse.responseStatus == ERROR) {
         return _SomethingWentWrongContainer();
@@ -102,8 +110,12 @@ class _ListViewBodyContainer extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             const _TopicsCarousel(),
-            TitleThreeSquares.getShimmer(padding: EdgeInsets.only(left: 20, right: 20)),
-            DiscoverTopicCarousel(topic: Topic.fromJson({'id': 0, 'name': 'Loading...', 'experiences': []}), showShimmer: true),
+            TitleThreeSquares.getShimmer(
+                padding: EdgeInsets.only(left: 20, right: 20)),
+            DiscoverTopicCarousel(
+                topic: Topic.fromJson(
+                    {'id': 0, 'name': 'Loading...', 'experiences': []}),
+                showShimmer: true),
           ],
         );
       }
@@ -145,14 +157,18 @@ class _ListViewBodyContainer extends StatelessWidget {
               switch (item['@type']) {
                 case 'topic':
                   itemWidget = TopicWidgetFactory.createWidgetFromDisplay(
-                      context, item['@display'], Topic.fromJson(item), discoverModel);
+                      context,
+                      item['@display'],
+                      Topic.fromJson(item),
+                      discoverModel);
                   break;
                 case 'trail':
-                  itemWidget = TrailWidgetFactory.createWidgetFromDisplay(context, item['@display'], Trail.fromJson(item));
+                  itemWidget = TrailWidgetFactory.createWidgetFromDisplay(
+                      context, item['@display'], Trail.fromJson(item));
                   break;
                 default:
                   itemWidget = Container();
-            }
+              }
             }
             var children = [
               itemWidget,
@@ -198,13 +214,24 @@ class _AppBarWithSearchBarContainer extends StatelessWidget {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: AppLocalizations.of(context)?.discoverText.toUpperCase() ?? "DISCOVER",
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white),
+                          text: AppLocalizations.of(context)
+                                  ?.discoverText
+                                  .toUpperCase() ??
+                              "DISCOVER",
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white),
                         ),
                         TextSpan(text: "\n"),
                         TextSpan(
-                          text: AppLocalizations.of(context)?.discoverHeadline ?? "Discover headline",
-                          style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.white),
+                          text:
+                              AppLocalizations.of(context)?.discoverHeadline ??
+                                  "Discover headline",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: Colors.white),
                         ),
                       ],
                     ),
@@ -276,7 +303,8 @@ class _TopicsCarouselState extends State<_TopicsCarousel> {
 
   Future<void> _loadTopics() async {
     try {
-      final applicationApi = Provider.of<ApplicationApi>(context, listen: false);
+      final applicationApi =
+          Provider.of<ApplicationApi>(context, listen: false);
       // Request enough topics to cover the full list (24+).
       final topics = await applicationApi.getTopics(
         resultsPerPage: 30,
@@ -349,55 +377,69 @@ class _TopicsCarouselState extends State<_TopicsCarousel> {
                         if (pointerSignal is PointerScrollEvent) {
                           // Translate vertical scrolling into horizontal motion.
                           final delta = pointerSignal.scrollDelta.dy;
-                          final target = (_scrollController.offset + delta).clamp(
+                          final target =
+                              (_scrollController.offset + delta).clamp(
                             0.0,
                             _scrollController.position.maxScrollExtent,
                           );
                           _scrollController.jumpTo(target);
                         }
                       },
-                      child: ListView.builder(
+                      child: ListView.separated(
                         controller: _scrollController,
                         scrollDirection: Axis.horizontal,
                         itemCount: _topics.length,
+                        // Fixed gap between topic labels so spacing is uniform.
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           final String label = _topics[index];
-                          final bool isSelected =
-                              (index == 0 && (activeTopic == null || activeTopic.isEmpty)) || label == activeTopic;
-                          return SizedBox(
-                            width: cardWidth,
-                            child: Padding(
-                              // Reduce per-card horizontal padding to shrink the visual gap.
-                              padding: const EdgeInsets.symmetric(horizontal: 2),
-                              child: GestureDetector(
-                                onTap: () {
-                                  final String? selectedName = index == 0 ? null : label;
-                                  discoverModel.setSelectedTopicName(selectedName);
-                                },
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _topics[index],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                        color: isSelected ? selectedColor : unselectedColor,
-                                      ),
+                          final bool isSelected = (index == 0 &&
+                                  (activeTopic == null ||
+                                      activeTopic.isEmpty)) ||
+                              label == activeTopic;
+                          return GestureDetector(
+                            onTap: () {
+                              final String? selectedName =
+                                  index == 0 ? null : label;
+                              discoverModel.setSelectedTopicName(selectedName);
+                            },
+                            child: Container(
+                              // Small horizontal padding so the visual gap is controlled by the separator.
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      height: 1.0,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? selectedColor
+                                          : unselectedColor,
                                     ),
-                                    const SizedBox(height: 4),
-                                    AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      height: 2,
-                                      width: isSelected ? 24 : 0,
-                                      decoration: BoxDecoration(
-                                        color: isSelected ? selectedColor : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(999),
-                                      ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    height: 2,
+                                    width: isSelected ? 24 : 0,
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? selectedColor
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(999),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -427,7 +469,12 @@ class _ArrowButton extends StatefulWidget {
 
   final bool enabled;
 
-  const _ArrowButton({Key? key, required this.icon, required this.onTap, required this.enabled}) : super(key: key);
+  const _ArrowButton(
+      {Key? key,
+      required this.icon,
+      required this.onTap,
+      required this.enabled})
+      : super(key: key);
 
   @override
   State<_ArrowButton> createState() => _ArrowButtonState();
@@ -449,14 +496,13 @@ class _ArrowButtonState extends State<_ArrowButton> {
           setState(() => _hovering = false);
         }
       },
-      cursor: widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      cursor:
+          widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
       child: GestureDetector(
         onTap: widget.enabled ? widget.onTap : null,
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 150),
-          opacity: widget.enabled
-              ? (_hovering ? 1.0 : 0.8)
-              : 0.3,
+          opacity: widget.enabled ? (_hovering ? 1.0 : 0.8) : 0.3,
           child: AnimatedScale(
             duration: const Duration(milliseconds: 150),
             scale: widget.enabled && _hovering ? 1.1 : 1.0,
@@ -480,7 +526,8 @@ class _ArrowButtonState extends State<_ArrowButton> {
 class _TopicSearchResults extends StatefulWidget {
   final String topicName;
 
-  const _TopicSearchResults({Key? key, required this.topicName}) : super(key: key);
+  const _TopicSearchResults({Key? key, required this.topicName})
+      : super(key: key);
 
   @override
   State<_TopicSearchResults> createState() => _TopicSearchResultsState();
@@ -509,7 +556,8 @@ class _TopicSearchResultsState extends State<_TopicSearchResults> {
     if (response.statusCode != 200) {
       return [];
     }
-    final Map<String, dynamic> parsed = json.jsonDecode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> parsed =
+        json.jsonDecode(response.body) as Map<String, dynamic>;
     final List<dynamic> entries = parsed['entries'] as List<dynamic>? ?? [];
     final experiences = <Experience>[];
     for (final entry in entries) {
@@ -606,13 +654,16 @@ class _SomethingWentWrongContainer extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                   color: Colors.black,
                 ),
-                text: AppLocalizations.of(context)?.somethingWentWrongRequestText ?? "Something went wrong",
+                text: AppLocalizations.of(context)
+                        ?.somethingWentWrongRequestText ??
+                    "Something went wrong",
                 children: [
                   TextSpan(text: ". "),
                   TextSpan(
                     text: AppLocalizations.of(context)?.tryAgain ?? "Try again",
                     style: TextStyle(decoration: TextDecoration.underline),
-                    recognizer: TapGestureRecognizer()..onTap = () => model.initState(),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => model.initState(),
                   )
                 ]),
           ),

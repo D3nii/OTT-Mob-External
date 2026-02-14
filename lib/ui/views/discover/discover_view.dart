@@ -618,7 +618,8 @@ class _TopicSearchResultsState extends State<_TopicSearchResults> {
               experiences: experiences,
               experienceNameFontSize: 14,
               experienceDestinationFontSize: 12,
-              experienceWidthRatio: 0.6,
+              // Match app-wide card sizing so topic results use the same card dimensions.
+              experienceWidthRatio: 0.4,
               onTap: (ctx, experience) {
                 Navigator.pushNamed(ctx, '/experience', arguments: experience);
               },

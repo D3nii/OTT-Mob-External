@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert' as JSON;
 
 import 'package:flutter/cupertino.dart';
 import 'package:onetwotrail/repositories/enums/view_state.dart';
@@ -35,6 +36,9 @@ class SearchBarResultModel extends BaseModel {
   bool searchable = true;
   List<String> searchableTermsList = [];
   StreamController<List<String>> _autocompleteData = BehaviorSubject();
+  // Autocomplete experience suggestions (used by the autofill widget)
+  StreamController<List<Experience>> _autocompleteExperienceData =
+      BehaviorSubject<List<Experience>>();
   String _prevSearchTerm = '';
   Timer? _debounce;
 
@@ -114,6 +118,8 @@ class SearchBarResultModel extends BaseModel {
   String get prevSearchTerm => _prevSearchTerm;
 
   Stream<List<String>> get autocompleteData => _autocompleteData.stream;
+  Stream<List<Experience>> get autocompleteExperienceData =>
+      _autocompleteExperienceData.stream;
 
   bool get isLoadingMore => _searchService.isLoadingSearch;
   bool get hasMoreResults => _searchService.hasMoreResults;
@@ -136,6 +142,8 @@ class SearchBarResultModel extends BaseModel {
               .where((element) =>
                   element.toLowerCase().contains(searchTerm.toLowerCase()))
               .toList());
+          // fetch a small set of experience suggestions (thumbnails + names)
+          _fetchAutocompleteExperiences(searchTerm);
         });
       }
       notifyListeners();
@@ -188,6 +196,35 @@ class SearchBarResultModel extends BaseModel {
     }
   }
 
+  /// Fetch up to 8 experiences matching the partial search term for autocomplete
+  void _fetchAutocompleteExperiences(String searchTerm) async {
+    try {
+      if (searchTerm.trim().isEmpty) {
+        _autocompleteExperienceData.add([]);
+        return;
+      }
+
+      final response = await _applicationApi.search(searchTerm, {}, 1, 8);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> parsed = JSON.json.decode(response.body);
+        final List<Experience> experiences = [];
+        if (parsed.containsKey('entries')) {
+          for (var entry in parsed['entries']) {
+            try {
+              experiences
+                  .add(Experience.fromJson(entry as Map<String, dynamic>));
+            } catch (_) {}
+          }
+        }
+        _autocompleteExperienceData.add(experiences);
+      } else {
+        _autocompleteExperienceData.add([]);
+      }
+    } catch (_) {
+      _autocompleteExperienceData.add([]);
+    }
+  }
+
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     if (isLoadingMore || !hasMoreResults) return;
@@ -211,11 +248,41 @@ class SearchBarResultModel extends BaseModel {
       String searchTerm = _searchController.text;
       searchable = (searchTerm.isEmpty && recentSearchesTerms.isNotEmpty) ||
           (searchTerm.isNotEmpty && searchableTermsList.isNotEmpty);
+
+      // When search field is focused with empty text, show popular/featured experiences
+      if (searchTerm.isEmpty) {
+        _fetchDefaultExperiences();
+      }
     } else {
       searchable = value;
+      _autocompleteExperienceData.add([]);
     }
 
     notifyListeners();
+  }
+
+  /// Fetch default featured experiences to show when search field is open but empty
+  void _fetchDefaultExperiences() async {
+    try {
+      final response = await _applicationApi.search('', {}, 1, 8);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> parsed = JSON.json.decode(response.body);
+        final List<Experience> experiences = [];
+        if (parsed.containsKey('entries')) {
+          for (var entry in parsed['entries']) {
+            try {
+              experiences
+                  .add(Experience.fromJson(entry as Map<String, dynamic>));
+            } catch (_) {}
+          }
+        }
+        _autocompleteExperienceData.add(experiences);
+      } else {
+        _autocompleteExperienceData.add([]);
+      }
+    } catch (_) {
+      _autocompleteExperienceData.add([]);
+    }
   }
 
   deleteRecentSearch(String term) {
@@ -275,6 +342,7 @@ class SearchBarResultModel extends BaseModel {
   @override
   void dispose() {
     _autocompleteData.close();
+    _autocompleteExperienceData.close();
     _scrollController.dispose();
     _searchListener?.cancel();
     _debounce?.cancel();

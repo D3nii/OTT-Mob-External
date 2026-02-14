@@ -86,8 +86,10 @@ class SearchBarView extends BaseWidget {
                                       child: TextField(
                                         controller:
                                             resultModel.searchController,
-                                        onTap: () => resultModel
-                                            .changeSearchableState(true),
+                                        onTap: () {
+                                          resultModel
+                                              .changeSearchableState(true);
+                                        },
                                         onSubmitted: (value) {
                                           resultModel.submitSearch(value);
                                         },
@@ -505,104 +507,205 @@ class _AutofillWidget extends StatelessWidget {
               stream: model.autocompleteData,
               builder:
                   (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
-                if (!snapshot.hasData) {
-                  return Container();
-                }
+                final suggestions =
+                    snapshot.hasData ? (snapshot.data ?? []) : [];
 
-                if (snapshot.data!.isEmpty) {
-                  if (model.recentSearchesTerms.isNotEmpty &&
-                      model.searchController.text.isEmpty) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                          child: Text(
-                            "Recent Searches",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontFamily: "Poppins",
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: ListView.builder(
-                              physics: BouncingScrollPhysics(),
-                              itemCount: model.recentSearchesTerms.length,
-                              padding: const EdgeInsets.all(16),
-                              itemBuilder: (BuildContext context, int index) {
-                                return ListTile(
-                                  onTap: () {
-                                    FocusScope.of(context).unfocus();
-                                    model.submitSearch(
-                                        model.recentSearchesTerms[index]);
-                                  },
-                                  dense: true,
-                                  leading: Icon(
-                                    Icons.history,
+                return StreamBuilder<List<Experience>>(
+                    stream: model.autocompleteExperienceData,
+                    builder: (BuildContext context,
+                        AsyncSnapshot<List<Experience>> expSnapshot) {
+                      final expSuggestions =
+                          expSnapshot.hasData ? (expSnapshot.data ?? []) : [];
+
+                      // If no suggestions and no experiences, fall back to recent searches
+                      if (expSuggestions.isEmpty && suggestions.isEmpty) {
+                        if (model.recentSearchesTerms.isNotEmpty &&
+                            model.searchController.text.isEmpty) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                                child: Text(
+                                  "Recent Searches",
+                                  style: TextStyle(
                                     color: Colors.black,
+                                    fontFamily: "Poppins",
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
                                   ),
-                                  title: Text(
-                                    model.recentSearchesTerms[index],
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontFamily: "Poppins",
-                                      fontWeight: FontWeight.w300,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  trailing: IconButton(
-                                    icon: Icon(
-                                      Icons.close,
-                                      color: Colors.black,
-                                    ),
-                                    onPressed: () {
-                                      model.deleteRecentSearch(
-                                          model.recentSearchesTerms[index]);
-                                    },
-                                  ),
-                                );
-                              }),
-                        ),
-                      ],
-                    );
-                  }
-                  return Container();
-                }
+                                ),
+                              ),
+                              Expanded(
+                                child: ListView.builder(
+                                    physics: BouncingScrollPhysics(),
+                                    itemCount: model.recentSearchesTerms.length,
+                                    padding: const EdgeInsets.all(16),
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      return ListTile(
+                                        onTap: () {
+                                          FocusScope.of(context).unfocus();
+                                          model.submitSearch(
+                                              model.recentSearchesTerms[index]);
+                                        },
+                                        dense: true,
+                                        leading: Icon(
+                                          Icons.history,
+                                          color: Colors.black,
+                                        ),
+                                        title: Text(
+                                          model.recentSearchesTerms[index],
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontFamily: "Poppins",
+                                            fontWeight: FontWeight.w300,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        trailing: IconButton(
+                                          icon: Icon(
+                                            Icons.close,
+                                            color: Colors.black,
+                                          ),
+                                          onPressed: () {
+                                            model.deleteRecentSearch(model
+                                                .recentSearchesTerms[index]);
+                                          },
+                                        ),
+                                      );
+                                    }),
+                              ),
+                            ],
+                          );
+                        }
+                        return Container();
+                      }
 
-                return ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    itemCount: snapshot.data?.length ?? 0,
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (BuildContext context, int index) {
-                      return ListTile(
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          model.submitSearch(snapshot.data![index]);
-                        },
-                        dense: true,
-                        leading: Icon(
-                          Icons.search,
-                          color: Colors.black,
-                        ),
-                        title: SubstringHighlight(
-                          text: snapshot.data![index],
-                          term: model.prevSearchTerm,
-                          textStyle: TextStyle(
-                            color: Colors.black,
-                            fontFamily: "Poppins",
-                            fontWeight: FontWeight.w300,
-                            fontSize: 14,
-                          ),
-                          textStyleHighlight: TextStyle(
-                            color: Colors.black,
-                            fontFamily: "Poppins",
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
+                      // Build a combined ListView: horizontal experience tiles (up to 8)
+                      // followed by up to 8 text suggestions
+                      return ListView(
+                        physics: BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          if (expSuggestions.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Text(
+                                'Experiences',
+                                style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: Colors.black),
+                              ),
+                            ),
+                            Container(
+                              height: 120,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: expSuggestions.length > 8
+                                    ? 8
+                                    : expSuggestions.length,
+                                itemBuilder: (context, i) {
+                                  final e = expSuggestions[i];
+                                  return InkWell(
+                                    onTap: () {
+                                      FocusScope.of(context).unfocus();
+                                      Provider.of<EventClient>(context,
+                                              listen: false)
+                                          .createEvent(Event(
+                                              EventName
+                                                  .experience_profile_viewed,
+                                              EventSourceView.search_experience,
+                                              {
+                                            EventTag.experience_id:
+                                                e.experienceId.toString(),
+                                            EventTag.experience_name: e.name,
+                                            EventTag.search_query:
+                                                model.prevSearchTerm,
+                                          }));
+                                      // Insert experience name into search box and run the search
+                                      model.submitSearch(e.name);
+                                    },
+                                    child: Container(
+                                      width: 100,
+                                      margin: EdgeInsets.only(right: 8),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: CachedNetworkImage(
+                                              imageUrl: e.imageUrls.isNotEmpty
+                                                  ? e.imageUrls.first
+                                                  : '',
+                                              width: 100,
+                                              height: 72,
+                                              fit: BoxFit.cover,
+                                              placeholder: (ctx, url) =>
+                                                  Container(
+                                                      width: 100,
+                                                      height: 72,
+                                                      color: Colors.grey[200]),
+                                              errorWidget: (ctx, url, error) =>
+                                                  Container(
+                                                      width: 100,
+                                                      height: 72,
+                                                      color: Colors.grey[200]),
+                                            ),
+                                          ),
+                                          SizedBox(height: 6),
+                                          Text(
+                                            e.name,
+                                            style: TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 12,
+                                                color: Colors.black),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                          ],
+
+                          // text suggestions (limit to 8)
+                          ...suggestions.take(8).map((s) {
+                            return ListTile(
+                              onTap: () {
+                                FocusScope.of(context).unfocus();
+                                model.submitSearch(s);
+                              },
+                              dense: true,
+                              leading: Icon(Icons.search, color: Colors.black),
+                              title: SubstringHighlight(
+                                text: s,
+                                term: model.prevSearchTerm,
+                                textStyle: TextStyle(
+                                  color: Colors.black,
+                                  fontFamily: "Poppins",
+                                  fontWeight: FontWeight.w300,
+                                  fontSize: 14,
+                                ),
+                                textStyleHighlight: TextStyle(
+                                  color: Colors.black,
+                                  fontFamily: "Poppins",
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ],
                       );
                     });
               }),

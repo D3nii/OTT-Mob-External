@@ -44,7 +44,25 @@ class ApplicationApi {
   late Logger _log;
   late SharedPreferences _preferences;
 
-  ApplicationApi(String baseUrl, Duration timeout, SharedPreferences preferences) {
+  // --- Topics cache + notification -------------------------------------------------
+  List<Topic>? _cachedTopics;
+  String? _cachedTopicsToken;
+  Future<List<Topic>>? _ongoingGetTopicsRequest;
+  final StreamController<List<Topic>?> _topicsStreamController =
+      StreamController<List<Topic>?>.broadcast();
+  Stream<List<Topic>?> get topicsStream => _topicsStreamController.stream;
+  void clearTopicsCache() {
+    _cachedTopics = null;
+    _cachedTopicsToken = null;
+    // Notify listeners that cache was cleared (emit null)
+    try {
+      _topicsStreamController.add(null);
+    } catch (_) {}
+  }
+  // -------------------------------------------------------------------------------
+
+  ApplicationApi(
+      String baseUrl, Duration timeout, SharedPreferences preferences) {
     contextStream = StreamController<ApplicationApiContext>.broadcast();
     _baseUrl = "$baseUrl/v1";
     _timeout = timeout;
@@ -69,7 +87,8 @@ class ApplicationApi {
     }
     _log.info("No token in context, waiting for token from stream");
     try {
-      _context = await contextStream.stream.firstWhere((apiToken) => apiToken.token.isNotEmpty);
+      _context = await contextStream.stream
+          .firstWhere((apiToken) => apiToken.token.isNotEmpty);
       _log.info("Received context with token from stream");
     } catch (e) {
       _log.warning("Failed to get token from stream: $e");
@@ -81,23 +100,36 @@ class ApplicationApi {
   Future<String> _getBearer() async {
     _log.info("Getting bearer token");
     var context = await registeredContext();
-    _log.info("Bearer token is ${context.token.isNotEmpty ? 'present' : 'empty'}");
+    _log.info(
+        "Bearer token is ${context.token.isNotEmpty ? 'present' : 'empty'}");
     return context.token;
   }
 
-  Future<void> updateContext({String? token, bool? pickTopics, bool? firstTime, bool? isAdmin}) async {
-    _log.fine("Updating context token=$token pickTopics=$pickTopics firstTime=$firstTime isAdmin=$isAdmin");
+  Future<void> updateContext(
+      {String? token, bool? pickTopics, bool? firstTime, bool? isAdmin}) async {
+    _log.fine(
+        "Updating context token=$token pickTopics=$pickTopics firstTime=$firstTime isAdmin=$isAdmin");
     try {
       // Initialize default values if not provided and not in preferences
-      bool pickTopicsValue =
-          pickTopics ?? (_preferences.containsKey("pickTopics") ? _preferences.getBool('pickTopics')! : false);
+      bool pickTopicsValue = pickTopics ??
+          (_preferences.containsKey("pickTopics")
+              ? _preferences.getBool('pickTopics')!
+              : false);
 
-      bool firstTimeValue =
-          firstTime ?? (_preferences.containsKey("firstTime") ? _preferences.getBool('firstTime')! : true);
+      bool firstTimeValue = firstTime ??
+          (_preferences.containsKey("firstTime")
+              ? _preferences.getBool('firstTime')!
+              : true);
 
-      String tokenValue = token ?? (_preferences.containsKey("token") ? _preferences.getString('token')! : '');
+      String tokenValue = token ??
+          (_preferences.containsKey("token")
+              ? _preferences.getString('token')!
+              : '');
 
-      bool isAdminValue = isAdmin ?? (_preferences.containsKey('isAdmin') ? _preferences.getBool('isAdmin')! : false);
+      bool isAdminValue = isAdmin ??
+          (_preferences.containsKey('isAdmin')
+              ? _preferences.getBool('isAdmin')!
+              : false);
 
       _log.info(
           "Found token in preferences: ${tokenValue.isNotEmpty ? 'present' : 'empty'} pickTopics=$pickTopicsValue firstTime=$firstTimeValue isAdmin=$isAdminValue");
@@ -115,7 +147,14 @@ class ApplicationApi {
       }
 
       // Create new context
-      _context = ApplicationApiContext(tokenValue, firstTimeValue, isAdminValue);
+      _context =
+          ApplicationApiContext(tokenValue, firstTimeValue, isAdminValue);
+      // If token changed, clear topic cache to avoid stale/duplicated data.
+      if (token != null) {
+        try {
+          clearTopicsCache();
+        } catch (_) {}
+      }
       contextStream.add(_context);
       _log.info(
           "Updated context: hasToken=${_context.hasToken} firstTime=${_context.firstTime} isAdmin=${_context.isAdmin}");
@@ -135,7 +174,8 @@ class ApplicationApi {
     }
   }
 
-  Future<Response> doHttpCall(Future<http.Response> Function() call, {int retries = 3}) async {
+  Future<Response> doHttpCall(Future<http.Response> Function() call,
+      {int retries = 3}) async {
     late Response response;
     while (retries > 0) {
       try {
@@ -165,7 +205,8 @@ class ApplicationApi {
       await updateContext(token: '');
     }
     if (response.statusCode >= 400 && response.statusCode < 500) {
-      _log.warning("http: client error (${response.statusCode})", response.body);
+      _log.warning(
+          "http: client error (${response.statusCode})", response.body);
       _logErrorsFromResponse(response);
     }
     if (response.statusCode >= 500) {
@@ -197,7 +238,9 @@ class ApplicationApi {
   }
 
   Future<http.Response> doHttpGet(String path,
-      {bool allowUnregistered = false, bool preferRegistered = false, Map<String, String>? queryParameters}) async {
+      {bool allowUnregistered = false,
+      bool preferRegistered = false,
+      Map<String, String>? queryParameters}) async {
     _log.info("Preparing HTTP GET request to $path");
     var headers = {
       "Content-Type": "application/json",
@@ -209,7 +252,8 @@ class ApplicationApi {
 
     if (!allowUnregistered || preferRegistered) {
       var token = await _getBearer();
-      _log.info("Adding authorization header with token: ${token.isNotEmpty ? 'present' : 'empty'}");
+      _log.info(
+          "Adding authorization header with token: ${token.isNotEmpty ? 'present' : 'empty'}");
       headers['Authorization'] = 'Bearer $token';
     } else {
       _log.info("Skipping authorization header for unauthenticated request");
@@ -232,7 +276,8 @@ class ApplicationApi {
       headers['Authorization'] = 'Bearer ${await _getBearer()}';
     }
     var url = Uri.parse("$_baseUrl/$path");
-    return doHttpCall(() => http.post(url, headers: headers, body: jsonEncode(body)));
+    return doHttpCall(
+        () => http.post(url, headers: headers, body: jsonEncode(body)));
   }
 
   Future<http.Response> doHttpPatch(String path, Map<String, dynamic> body,
@@ -245,7 +290,8 @@ class ApplicationApi {
       headers['Authorization'] = 'Bearer ${await _getBearer()}';
     }
     var url = Uri.parse("$_baseUrl/$path");
-    return doHttpCall(() => http.patch(url, headers: headers, body: jsonEncode(body)));
+    return doHttpCall(
+        () => http.patch(url, headers: headers, body: jsonEncode(body)));
   }
 
   Future<http.Response> doHttpPut(String path, Map<String, dynamic> body,
@@ -258,10 +304,12 @@ class ApplicationApi {
       headers['Authorization'] = 'Bearer ${await _getBearer()}';
     }
     var url = Uri.parse("$_baseUrl/$path");
-    return doHttpCall(() => http.put(url, headers: headers, body: jsonEncode(body)));
+    return doHttpCall(
+        () => http.put(url, headers: headers, body: jsonEncode(body)));
   }
 
-  Future<http.Response> doHttpDelete(String path, {String? baseUrl, bool allowUnregistered = false}) async {
+  Future<http.Response> doHttpDelete(String path,
+      {String? baseUrl, bool allowUnregistered = false}) async {
     var headers = {
       'Accept': 'application/json',
     };
@@ -272,7 +320,8 @@ class ApplicationApi {
     return doHttpCall(() => http.delete(url, headers: headers));
   }
 
-  Future<Response> signUp(String firstName, String lastName, String email, String password, String countryCode) async {
+  Future<Response> signUp(String firstName, String lastName, String email,
+      String password, String countryCode) async {
     _log.fine("signing up $email");
     final body = <String, dynamic>{
       "first_name": firstName,
@@ -284,7 +333,8 @@ class ApplicationApi {
     return await doHttpPost("auth/register", body, allowUnregistered: true);
   }
 
-  Future<Response> signInWithEmailAndPassword(String email, String password) async {
+  Future<Response> signInWithEmailAndPassword(
+      String email, String password) async {
     _log.fine("signing in $email");
     var body = {
       "email": email,
@@ -293,7 +343,8 @@ class ApplicationApi {
     return doHttpPost('auth/email', body, allowUnregistered: true);
   }
 
-  Future<ApplicationApiResponse> signInWithEmailAndPasswordProxy(String email, String password) async {
+  Future<ApplicationApiResponse> signInWithEmailAndPasswordProxy(
+      String email, String password) async {
     Response response = await signInWithEmailAndPassword(email, password);
     if (response.statusCode >= 400) {
       return ApplicationApiResponse(
@@ -315,7 +366,8 @@ class ApplicationApi {
               visitedExperiences: [],
               password: false));
     }
-    Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> data =
+        jsonDecode(response.body) as Map<String, dynamic>;
     await updateContext(
       token: data['token'],
       pickTopics: data['pick_topics'],
@@ -355,7 +407,8 @@ class ApplicationApi {
     return doHttpPatch("auth/forgotPassword", body, allowUnregistered: true);
   }
 
-  Future<Response> checkCodeInApi(String passwordToken, String password, String passwordConfirmation) async {
+  Future<Response> checkCodeInApi(String passwordToken, String password,
+      String passwordConfirmation) async {
     _log.fine("resetting password");
     var body = {
       "reset_password_token": passwordToken,
@@ -375,14 +428,16 @@ class ApplicationApi {
     return doHttpPost("discovery", body, allowUnregistered: true);
   }
 
-  Future<Response> getTopicExperiences(int topicId, {int pageSize = 25, String? pageToken}) async {
+  Future<Response> getTopicExperiences(int topicId,
+      {int pageSize = 25, String? pageToken}) async {
     var hasPageToken = pageToken != null && pageToken.isNotEmpty;
     _log.fine("getting experiences of topic $topicId pageToken=$hasPageToken");
     var body = {'topic_id': '$topicId', 'page_size': pageSize};
     if (hasPageToken) {
       body['page_token'] = pageToken;
     }
-    return doHttpPost("discover_experiences_for_topic", body, allowUnregistered: true);
+    return doHttpPost("discover_experiences_for_topic", body,
+        allowUnregistered: true);
   }
 
   Future<Response> getSearchFilters() async {
@@ -395,18 +450,26 @@ class ApplicationApi {
     return doHttpGet('search/searchable_terms', allowUnregistered: true);
   }
 
-  Future<Response> search(String searchQuery, Map<String, dynamic> filters, int page, int perPage) async {
+  Future<Response> search(String searchQuery, Map<String, dynamic> filters,
+      int page, int perPage) async {
     _log.fine("searching $searchQuery");
-    var body = {'filters': filters.values.toList(), 'per_page': perPage, 'q': searchQuery, 'page': page};
+    var body = {
+      'filters': filters.values.toList(),
+      'per_page': perPage,
+      'q': searchQuery,
+      'page': page
+    };
     return doHttpPost('search', body, allowUnregistered: true);
   }
 
-  Future<Response> _updateTrailFromMap(Map<String, Object> trail, int trailId) async {
+  Future<Response> _updateTrailFromMap(
+      Map<String, Object> trail, int trailId) async {
     var body = {'trail': trail};
     return doHttpPut("trails/$trailId", body);
   }
 
-  Future<ApplicationApiResponse> reportExperience(Issue issue, String painLevel) async {
+  Future<ApplicationApiResponse> reportExperience(
+      Issue issue, String painLevel) async {
     _log.fine("reporting experience ${issue.idExperience}");
     var body = {
       'flaggable_id': issue.idExperience,
@@ -433,7 +496,11 @@ class ApplicationApi {
   }
 
   Future<Response> _updateTrailFromFields(
-      String name, String description, List<String> collaborators, int trailId, bool collaboratorsChanged) async {
+      String name,
+      String description,
+      List<String> collaborators,
+      int trailId,
+      bool collaboratorsChanged) async {
     var body;
     if (description == "" && collaboratorsChanged) {
       body = {
@@ -445,7 +512,11 @@ class ApplicationApi {
       };
     } else {
       body = {
-        "trail": {'collaborators': collaborators, "description": description, "name": name}
+        "trail": {
+          'collaborators': collaborators,
+          "description": description,
+          "name": name
+        }
       };
     }
     return doHttpPut("trails/$trailId", body);
@@ -480,46 +551,88 @@ class ApplicationApi {
     return doHttpPost("auth/validate_email", body, allowUnregistered: true);
   }
 
-  Future<Response> signInWithApple(String jwt, String userId, String code) async {
+  Future<Response> signInWithApple(
+      String jwt, String userId, String code) async {
     _log.fine("signing in with apple");
     var body = {"jwt": jwt, "user_id": userId, "code": code};
     return doHttpPost("auth/apple", body, allowUnregistered: true);
   }
 
-  Future<List<Topic>> getTopics({required int resultsPerPage, required String token}) async {
-    _log.fine("getting topics page $resultsPerPage");
-    var queryParameters = {
-      "resultsPerPage": "$resultsPerPage",
-    };
-    queryParameters['token'] = token;
-    var response = await doHttpGet("topics/list", allowUnregistered: true, queryParameters: queryParameters);
-    if (response.statusCode >= 400) {
-      return [];
+  /// Returns cached topics when available. Use [forceRefresh] to fetch from network.
+  /// Deduplicates concurrent requests so the endpoint is not called multiple
+  /// times when multiple widgets request topics simultaneously.
+  Future<List<Topic>> getTopics(
+      {required int resultsPerPage,
+      required String token,
+      bool forceRefresh = false}) async {
+    _log.fine(
+        "getting topics page $resultsPerPage (forceRefresh=$forceRefresh)");
+
+    // Return cached copy when available and not forcing refresh and token matches.
+    if (!forceRefresh && _cachedTopics != null && _cachedTopicsToken == token) {
+      _log.fine("returning cached topics (${_cachedTopics!.length})");
+      return _cachedTopics!;
     }
-    Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
-    final List<Topic> topics = [];
-    for (var topicData in data['entries'] as List) {
-      Topic newTopic = Topic(
-        id: topicData['id'] as int,
-        name: topicData['name'] as String,
-        imageUrl: topicData['image'] as String,
-        experiences: [],
-        description: '',
-        nextPageToken: '',
-        resultsPerPage: 0,
-      );
-      topics.add(newTopic);
+
+    // If there's already an in-flight request, return that future (dedupe).
+    if (_ongoingGetTopicsRequest != null) {
+      _log.fine("awaiting ongoing topics request");
+      return _ongoingGetTopicsRequest!;
     }
-    return topics;
+
+    // Start network call and cache the Future so concurrent callers reuse it.
+    _ongoingGetTopicsRequest = () async {
+      try {
+        var queryParameters = {
+          "resultsPerPage": "$resultsPerPage",
+        };
+        queryParameters['token'] = token;
+        var response = await doHttpGet("topics/list",
+            allowUnregistered: true, queryParameters: queryParameters);
+        if (response.statusCode >= 400) {
+          _log.warning("topics list returned status ${response.statusCode}");
+          return <Topic>[];
+        }
+        Map<String, dynamic> data =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        final List<Topic> topics = [];
+        for (var topicData in data['entries'] as List) {
+          Topic newTopic = Topic(
+            id: topicData['id'] as int,
+            name: topicData['name'] as String,
+            imageUrl: topicData['image'] as String,
+            experiences: [],
+            description: '',
+            nextPageToken: '',
+            resultsPerPage: 0,
+          );
+          topics.add(newTopic);
+        }
+        // Update cache and notify subscribers
+        _cachedTopics = topics;
+        _cachedTopicsToken = token;
+        try {
+          _topicsStreamController.add(_cachedTopics);
+        } catch (_) {}
+        return topics;
+      } finally {
+        // Clear the ongoing request so future calls can start a new one when needed.
+        _ongoingGetTopicsRequest = null;
+      }
+    }();
+
+    return _ongoingGetTopicsRequest!;
   }
 
   Future<Experience?> getExperience(int experienceId) async {
     _log.fine("getting experience $experienceId");
-    var response = await doHttpGet('experiences/$experienceId', allowUnregistered: true);
+    var response =
+        await doHttpGet('experiences/$experienceId', allowUnregistered: true);
     if (response.statusCode >= 400) {
       return null;
     }
-    Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
     return Experience.fromJson(data);
   }
 
@@ -530,7 +643,8 @@ class ApplicationApi {
       _log.warning("Failed to get user profile: ${response.statusCode}");
       return null;
     }
-    Map<String, dynamic> extractedData = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> extractedData =
+        json.decode(response.body) as Map<String, dynamic>;
     _log.info("Got raw user profile data: ${extractedData}");
     _log.info("Got country from API: ${extractedData['country']}");
     final User user = User.fromJson(extractedData);
@@ -538,7 +652,8 @@ class ApplicationApi {
     return user;
   }
 
-  Future<ott.BaseResponse<User>> updateUserProfile(Map<String, Object> profile) async {
+  Future<ott.BaseResponse<User>> updateUserProfile(
+      Map<String, Object> profile) async {
     _log.info("Updating user profile info with data: $profile");
 
     var response = await doHttpPut("account/profile", profile);
@@ -562,12 +677,14 @@ class ApplicationApi {
               password: false),
           ott.ERROR);
     }
-    Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
     _log.info("Updated user profile successfully");
     return ott.BaseResponse<User>(User.fromJson(data), ott.SUCCESS);
   }
 
-  Future<User> updateUserPassword(String newPassword, {String? oldPassword}) async {
+  Future<User> updateUserPassword(String newPassword,
+      {String? oldPassword}) async {
     _log.info("updating user password");
     var body = {
       "new": newPassword,
@@ -576,12 +693,15 @@ class ApplicationApi {
       body["old"] = oldPassword;
     }
     var response = await doHttpPut("account/password", body);
-    Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
     return User.fromJson(data);
   }
 
-  Future<ApplicationApiResponse<List<Trail>>> getUserTrails({int? pageSize, String? pageToken}) async {
-    _log.info("getting user trails with pageSize=$pageSize pageToken=${pageToken != null ? 'present' : 'null'}");
+  Future<ApplicationApiResponse<List<Trail>>> getUserTrails(
+      {int? pageSize, String? pageToken}) async {
+    _log.info(
+        "getting user trails with pageSize=$pageSize pageToken=${pageToken != null ? 'present' : 'null'}");
 
     Map<String, String> queryParameters = {};
     if (pageSize != null) {
@@ -591,13 +711,18 @@ class ApplicationApi {
       queryParameters['page_token'] = pageToken;
     }
 
-    var response = await doHttpGet("trails", queryParameters: queryParameters.isNotEmpty ? queryParameters : null);
+    var response = await doHttpGet("trails",
+        queryParameters: queryParameters.isNotEmpty ? queryParameters : null);
     if (response.statusCode >= 400) {
       return ApplicationApiResponse<List<Trail>>(
-          statusCode: response.statusCode, result: false, responseBody: "", responseObject: []);
+          statusCode: response.statusCode,
+          result: false,
+          responseBody: "",
+          responseObject: []);
     }
 
-    var parseResult = await _parseSearchResultTrailsWithPagination(response.body);
+    var parseResult =
+        await _parseSearchResultTrailsWithPagination(response.body);
     return ApplicationApiResponse<List<Trail>>(
         statusCode: response.statusCode,
         result: true,
@@ -606,10 +731,11 @@ class ApplicationApi {
         nextPageToken: parseResult['nextPageToken']);
   }
 
-  Future<Map<String, dynamic>> _parseSearchResultTrailsWithPagination(String body) async {
+  Future<Map<String, dynamic>> _parseSearchResultTrailsWithPagination(
+      String body) async {
     Map<String, dynamic> parse = json.decode(body) as Map<String, dynamic>;
     List<Trail> trails = [];
-    
+
     final entries = parse['entries'];
     if (entries is List) {
       for (var value in entries) {
@@ -631,8 +757,10 @@ class ApplicationApi {
 
   Future<ott.BaseResponse<Trail>> getTrail({required int trailId}) async {
     _log.info("getting trail $trailId");
-    var response = await doHttpGet('trails/$trailId', allowUnregistered: true, preferRegistered: true);
-    Map<String, dynamic> body = json.decode(response.body) as Map<String, dynamic>;
+    var response = await doHttpGet('trails/$trailId',
+        allowUnregistered: true, preferRegistered: true);
+    Map<String, dynamic> body =
+        json.decode(response.body) as Map<String, dynamic>;
     if (response.statusCode >= 400) {
       return ott.BaseResponse<Trail>(
           Trail(
@@ -662,7 +790,8 @@ class ApplicationApi {
     return response.statusCode == 200;
   }
 
-  Future<ott.BaseResponse<Trail>> createTrail(Map<String, Object> trailMap) async {
+  Future<ott.BaseResponse<Trail>> createTrail(
+      Map<String, Object> trailMap) async {
     _log.info("creating trail");
     final requestBody = {'trail': trailMap};
     var response = await doHttpPost("trails", requestBody);
@@ -686,12 +815,14 @@ class ApplicationApi {
           ott.ERROR)
         ..errorText = response.body;
     }
-    Map<String, dynamic> responseBody = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> responseBody =
+        json.decode(response.body) as Map<String, dynamic>;
     Trail trail = Trail.fromJson(responseBody);
     return ott.BaseResponse<Trail>(trail, ott.SUCCESS);
   }
 
-  Future<ApplicationApiResponse<Trail>> updateTrail(Map<String, Object> trailMap, int trailId) async {
+  Future<ApplicationApiResponse<Trail>> updateTrail(
+      Map<String, Object> trailMap, int trailId) async {
     _log.info("updating trail $trailId");
     var response = await _updateTrailFromMap(trailMap, trailId);
     if (response.statusCode >= 400) {
@@ -716,16 +847,21 @@ class ApplicationApi {
         ),
       );
     }
-    Map<String, dynamic> responseBody = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> responseBody =
+        json.decode(response.body) as Map<String, dynamic>;
     return ApplicationApiResponse<Trail>(
-        statusCode: 200, result: true, responseBody: response.body, responseObject: Trail.fromJson(responseBody));
+        statusCode: 200,
+        result: true,
+        responseBody: response.body,
+        responseObject: Trail.fromJson(responseBody));
   }
 
   Future<ApplicationApiResponse> deleteTrail(Trail trail) async {
     _log.info("deleting trail ${trail.id}");
     var response = await doHttpDelete("trails/${trail.id}");
     if (response.statusCode >= 400) {
-      ApplicationApiResponse<void> responseFromTheApiObject = ApplicationApiResponse<void>(
+      ApplicationApiResponse<void> responseFromTheApiObject =
+          ApplicationApiResponse<void>(
         statusCode: response.statusCode,
         responseBody: response.body,
         result: false,
@@ -741,7 +877,8 @@ class ApplicationApi {
     );
   }
 
-  Future<ApplicationApiResponse<Trail>> publishTrail(Trail originalTrail) async {
+  Future<ApplicationApiResponse<Trail>> publishTrail(
+      Trail originalTrail) async {
     _log.info("publishing trail ${originalTrail.id}");
     var response = await doHttpPatch("trails/${originalTrail.id}/publish", {});
     if (response.statusCode >= 400) {
@@ -752,7 +889,8 @@ class ApplicationApi {
         responseObject: originalTrail,
       );
     }
-    Map<String, dynamic> responseBody = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> responseBody =
+        json.decode(response.body) as Map<String, dynamic>;
     return ApplicationApiResponse<Trail>(
       statusCode: response.statusCode,
       result: true,
@@ -761,9 +899,11 @@ class ApplicationApi {
     );
   }
 
-  Future<ApplicationApiResponse<Trail>> unpublishTrail(Trail originalTrail) async {
+  Future<ApplicationApiResponse<Trail>> unpublishTrail(
+      Trail originalTrail) async {
     _log.info("unpublishing trail ${originalTrail.id}");
-    var response = await doHttpPatch("trails/${originalTrail.id}/unpublish", {});
+    var response =
+        await doHttpPatch("trails/${originalTrail.id}/unpublish", {});
     if (response.statusCode >= 400) {
       return ApplicationApiResponse<Trail>(
         statusCode: response.statusCode,
@@ -772,7 +912,8 @@ class ApplicationApi {
         responseObject: originalTrail,
       );
     }
-    Map<String, dynamic> responseBody = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> responseBody =
+        json.decode(response.body) as Map<String, dynamic>;
     return ApplicationApiResponse<Trail>(
       statusCode: response.statusCode,
       result: true,
@@ -781,10 +922,12 @@ class ApplicationApi {
     );
   }
 
-  Future<ApplicationApiResponse<Itinerary>> getItinerary(int itineraryId) async {
+  Future<ApplicationApiResponse<Itinerary>> getItinerary(
+      int itineraryId) async {
     _log.info("getting itinerary $itineraryId");
     var response = await doHttpGet('itineraries/$itineraryId');
-    Map<String, dynamic> responseBody = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> responseBody =
+        json.decode(response.body) as Map<String, dynamic>;
     if (response.statusCode >= 400) {
       return ApplicationApiResponse<Itinerary>(
           statusCode: response.statusCode,
@@ -805,13 +948,18 @@ class ApplicationApi {
     }
     Itinerary itinerary = Itinerary.fromJson(responseBody);
     return ApplicationApiResponse<Itinerary>(
-        statusCode: response.statusCode, result: true, responseBody: "", responseObject: itinerary);
+        statusCode: response.statusCode,
+        result: true,
+        responseBody: "",
+        responseObject: itinerary);
   }
 
-  Future<ApplicationApiResponse<Itinerary>> updateItineraryWithApplicationApiResponse(
-      int itineraryId, Map<String, Object> data) async {
+  Future<ApplicationApiResponse<Itinerary>>
+      updateItineraryWithApplicationApiResponse(
+          int itineraryId, Map<String, Object> data) async {
     var response = await _updateItinerary(itineraryId, data);
-    Map<String, dynamic> responseBody = json.decode(response.body) as Map<String, dynamic>;
+    Map<String, dynamic> responseBody =
+        json.decode(response.body) as Map<String, dynamic>;
     if (response.statusCode >= 400) {
       return ApplicationApiResponse<Itinerary>(
           statusCode: response.statusCode,
@@ -833,23 +981,32 @@ class ApplicationApi {
     Itinerary itinerary;
     itinerary = Itinerary.fromJson(responseBody);
     return ApplicationApiResponse<Itinerary>(
-        statusCode: response.statusCode, result: true, responseBody: response.body, responseObject: itinerary);
+        statusCode: response.statusCode,
+        result: true,
+        responseBody: response.body,
+        responseObject: itinerary);
   }
 
-  Future<Response> _updateItinerary(int itineraryId, Map<String, Object> requestBody) async {
+  Future<Response> _updateItinerary(
+      int itineraryId, Map<String, Object> requestBody) async {
     _log.info("updating itinerary $itineraryId");
     var response = await doHttpPut("itineraries/$itineraryId", requestBody);
     return response;
   }
 
-  Future<ApplicationApiResponse<Trail>> updateTrailFromFields(String name, String smallDescription,
-      List<String> listOfCollaborators, int trailId, bool listOfCollaboratorsChange) async {
+  Future<ApplicationApiResponse<Trail>> updateTrailFromFields(
+      String name,
+      String smallDescription,
+      List<String> listOfCollaborators,
+      int trailId,
+      bool listOfCollaboratorsChange) async {
     _log.info("updating trail $trailId from fields");
-    Response response =
-        await _updateTrailFromFields(name, smallDescription, listOfCollaborators, trailId, listOfCollaboratorsChange);
+    Response response = await _updateTrailFromFields(name, smallDescription,
+        listOfCollaborators, trailId, listOfCollaboratorsChange);
     if (response.statusCode == 422) {
       String emails = '';
-      final emailPattern = RegExp(r'\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b', caseSensitive: false, multiLine: true);
+      final emailPattern = RegExp(r'\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b',
+          caseSensitive: false, multiLine: true);
       final matches = emailPattern.allMatches(response.body);
       for (final Match match in matches) {
         emails += response.body.substring(match.start, match.end) + "\n";
@@ -897,9 +1054,13 @@ class ApplicationApi {
         ),
       );
     }
-    var trail = Trail.fromJson(json.decode(response.body) as Map<String, dynamic>);
+    var trail =
+        Trail.fromJson(json.decode(response.body) as Map<String, dynamic>);
     return ApplicationApiResponse<Trail>(
-        responseBody: response.body, statusCode: response.statusCode, responseObject: trail, result: true);
+        responseBody: response.body,
+        statusCode: response.statusCode,
+        responseObject: trail,
+        result: true);
   }
 
   Future<ott.BaseResponse<void>> deleteAccount() async {
@@ -915,6 +1076,7 @@ class ApplicationApi {
 
   Future<Response> sendVerificationEmail(String email) {
     _log.info("sending confirmation email to $email");
-    return doHttpPost("auth/verification", {"email": email}, allowUnregistered: true);
+    return doHttpPost("auth/verification", {"email": email},
+        allowUnregistered: true);
   }
 }

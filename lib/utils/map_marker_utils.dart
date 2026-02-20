@@ -16,46 +16,35 @@ class MapMarkerUtils {
 
     final double width = size;
     final double height = size;
+    final double s = size / 24.0; // Scale factor from SVG 24x24 viewbox
 
-    final double radius = width * 0.4;
-    final Offset topCenter = Offset(width / 2, radius + 2);
-
-    // Draw the pin shape
+    // Draw the pin shape path from map-marker-red.svg
     final Paint pinPaint = Paint()
-      ..color = const Color(0xFFEF5350) // Clean red color
+      ..color = const Color(0xFFFA5252) // Exact fill color from SVG
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
     final Path path = Path();
-    // Start at the bottom tip
-    path.moveTo(width / 2, height);
-
-    // Draw the pin body with smooth curves
-    path.quadraticBezierTo(
-      width * 0.9,
-      height * 0.6,
-      width / 2 + radius,
-      topCenter.dy,
-    );
-
-    path.arcToPoint(
-      Offset(width / 2 - radius, topCenter.dy),
-      radius: Radius.circular(radius),
-      clockwise: false,
-    );
-
-    path.quadraticBezierTo(width * 0.1, height * 0.6, width / 2, height);
+    // Outer shape path from SVG
+    path.moveTo(12 * s, 2 * s);
+    path.cubicTo(8.13 * s, 2 * s, 5 * s, 5.13 * s, 5 * s, 9 * s);
+    path.cubicTo(5 * s, 14.25 * s, 12 * s, 22 * s, 12 * s, 22 * s);
+    path.relativeMoveTo(0, 0);
+    path.cubicTo(12 * s, 22 * s, 19 * s, 14.25 * s, 19 * s, 9 * s);
+    path.cubicTo(19 * s, 5.13 * s, 15.87 * s, 2 * s, 12 * s, 2 * s);
     path.close();
 
-    canvas.drawPath(path, pinPaint);
+    // Inner hole path from SVG
+    final Path hole = Path();
+    hole.addOval(Rect.fromCircle(
+      center: Offset(12 * s, 9 * s),
+      radius: 2.5 * s,
+    ));
 
-    // subtle dark border for definition (no white used)
-    final Paint borderPaint = Paint()
-      ..color = Colors.black.withOpacity(0.1)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5
-      ..isAntiAlias = true;
-    canvas.drawPath(path, borderPaint);
+    // Combine paths to create a transparent center hole (no white)
+    final Path finalPath = Path.combine(PathOperation.difference, path, hole);
+
+    canvas.drawPath(finalPath, pinPaint);
 
     // Convert to image
     final ui.Image image = await pictureRecorder.endRecording().toImage(

@@ -20,7 +20,7 @@ class ExperienceLocationMap extends StatelessWidget {
   }
 
   Future<Marker> getExperienceMarker() async {
-    BitmapDescriptor markerIcon = await MapMarkerUtils.createPinkMarker();
+    BitmapDescriptor markerIcon = await MapMarkerUtils.createRedMarker();
 
     return Marker(
       markerId: MarkerId(experience.name),
@@ -37,7 +37,8 @@ class ExperienceLocationMap extends StatelessWidget {
         color: grey125Color,
         child: Center(
           child: Text(
-            AppLocalizations.of(context)?.notGeoPointToShowText ?? 'No location to show',
+            AppLocalizations.of(context)?.notGeoPointToShowText ??
+                'No location to show',
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -62,9 +63,13 @@ class ExperienceLocationMap extends StatelessWidget {
 
               return GestureDetector(
                 onTap: () {
-                  ShowDialogMaps().showDialogMapsExperience(context, experience, afterLaunch: () {
-                    Navigator.pop(context);
-                  });
+                  ShowDialogMaps().showDialogMapsExperience(
+                    context,
+                    experience,
+                    afterLaunch: () {
+                      Navigator.pop(context);
+                    },
+                  );
                 },
                 child: AbsorbPointer(
                   absorbing: true,

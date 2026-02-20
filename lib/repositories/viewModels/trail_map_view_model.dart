@@ -13,7 +13,8 @@ import 'package:snapping_sheet/snapping_sheet.dart';
 
 class TrailMapViewModel extends BaseModel {
   BitmapDescriptor? _pinLocationIcon;
-  final ControllerPageBoardAndItineraryModel controllerPageBoardAndItineraryModel;
+  final ControllerPageBoardAndItineraryModel
+  controllerPageBoardAndItineraryModel;
   GoogleMapController? _googleMapController;
   late final GoogleMapPolyline _googleMapPolyline;
   LatLng? firstPinned;
@@ -23,18 +24,21 @@ class TrailMapViewModel extends BaseModel {
   final ScrollController scrollController = ScrollController();
   final Set<Marker> markers = {};
   final Set<Polyline> polyline = {};
-  final SnappingPosition snappingSheetPositionCollapsed = SnappingPosition.pixels(
-    snappingCurve: Curves.fastLinearToSlowEaseIn,
-    snappingDuration: const Duration(milliseconds: 500),
-    positionPixels: 152,
-  );
-  final SnappingPosition snappingSheetPositionExpanded = SnappingPosition.factor(
-    positionFactor: 0.8,
-    snappingCurve: Curves.easeOutExpo,
-    snappingDuration: const Duration(milliseconds: 500),
-  );
+  final SnappingPosition snappingSheetPositionCollapsed =
+      SnappingPosition.pixels(
+        snappingCurve: Curves.fastLinearToSlowEaseIn,
+        snappingDuration: const Duration(milliseconds: 500),
+        positionPixels: 152,
+      );
+  final SnappingPosition snappingSheetPositionExpanded =
+      SnappingPosition.factor(
+        positionFactor: 0.8,
+        snappingCurve: Curves.easeOutExpo,
+        snappingDuration: const Duration(milliseconds: 500),
+      );
   TrailItineraryViewModel? trailItineraryViewModel;
-  final SnappingSheetController snappingSheetController = SnappingSheetController();
+  final SnappingSheetController snappingSheetController =
+      SnappingSheetController();
   int _currentExperienceIndex = 0;
   int totalSecond = 0;
   bool _isExpanded = false;
@@ -57,20 +61,27 @@ class TrailMapViewModel extends BaseModel {
 
   List<LatLng> get geoPoints => _geoPoints;
 
-  TrailMapViewModel(this.dayActivities, this.controllerPageBoardAndItineraryModel, String googleMapsApiKey) {
+  TrailMapViewModel(
+    this.dayActivities,
+    this.controllerPageBoardAndItineraryModel,
+    String googleMapsApiKey,
+  ) {
     _googleMapPolyline = GoogleMapPolyline(apiKey: googleMapsApiKey);
   }
 
   init(GoogleMapController googleMapController) async {
     _googleMapController = googleMapController;
-    // Create a custom pink marker using the app's pink color
-    _pinLocationIcon = await MapMarkerUtils.createPinkMarker();
+    // Create a custom red marker
+    _pinLocationIcon = await MapMarkerUtils.createRedMarker();
 
     dayActivities.forEach((element) {
       if (element is VisitItineraryEvent) {
         element.experience.visitStartTime = element.startTime;
         _experiences.add(element.experience);
-        LatLng position = new LatLng(element.experience.latitude, element.experience.longitude);
+        LatLng position = new LatLng(
+          element.experience.latitude,
+          element.experience.longitude,
+        );
         _geoPoints.add(position);
         createMarker(position, "${element.experience.experienceId}");
       }
@@ -81,9 +92,12 @@ class TrailMapViewModel extends BaseModel {
 
   void createMarker(LatLng position, String name) {
     Marker newMarker = Marker(
-        markerId: MarkerId("$name"),
-        position: position,
-        icon: _pinLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta));
+      markerId: MarkerId("$name"),
+      position: position,
+      icon:
+          _pinLocationIcon ??
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+    );
     markers.add(newMarker);
   }
 
@@ -101,19 +115,23 @@ class TrailMapViewModel extends BaseModel {
         start = _experiences[i];
         end = _experiences[i + 1];
         var route = await _googleMapPolyline.getCoordinatesWithLocation(
-            destination: LatLng(end.latitude, end.longitude),
-            origin: LatLng(start.latitude, start.longitude),
-            mode: RouteMode.driving);
+          destination: LatLng(end.latitude, end.longitude),
+          origin: LatLng(start.latitude, start.longitude),
+          mode: RouteMode.driving,
+        );
 
         if (route != null) {
-          this.polyline.add(Polyline(
+          this.polyline.add(
+            Polyline(
               polylineId: PolylineId(start.experienceId.toString()),
               visible: true,
               points: route,
               color: pigPinkTwo,
               width: 3,
               startCap: Cap.roundCap,
-              endCap: Cap.buttCap));
+              endCap: Cap.buttCap,
+            ),
+          );
         }
       }
     }
@@ -125,8 +143,17 @@ class TrailMapViewModel extends BaseModel {
 
   void moveCameraToExperience(int index) {
     if (_googleMapController != null && index < _experiences.length) {
-      _googleMapController!.animateCamera(CameraUpdate.newCameraPosition(
-          CameraPosition(target: LatLng(_experiences[index].latitude, _experiences[index].longitude), zoom: 15)));
+      _googleMapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(
+              _experiences[index].latitude,
+              _experiences[index].longitude,
+            ),
+            zoom: 15,
+          ),
+        ),
+      );
     }
   }
 

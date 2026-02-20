@@ -14,14 +14,14 @@ import 'package:onetwotrail/utils/map_marker_utils.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DiscoverModel extends BaseModel {
-
   final DiscoveryService _discoveryService;
   bool _suggestedExpanded = true;
   BitmapDescriptor? _pinLocationIcon;
   Map<String, dynamic> filters = {};
   int? _totalSuggestedTrails;
   Stream<BaseResponse<Map<String, dynamic>>>? discoverDataResponse;
-  StreamController<Map<String, dynamic>> _filtersStreamController = StreamController.broadcast();
+  StreamController<Map<String, dynamic>> _filtersStreamController =
+      StreamController.broadcast();
   late HomeModel _homeModel;
   User? _user;
   FocusNode _focusNode = FocusNode();
@@ -30,7 +30,10 @@ class DiscoverModel extends BaseModel {
   String? _nextPageToken;
   bool _gettingPage = false;
   int _viewIndex = 0;
-  BaseResponse<Map<String, dynamic>> lastServiceResponse = BaseResponse({}, 'START');
+  BaseResponse<Map<String, dynamic>> lastServiceResponse = BaseResponse(
+    {},
+    'START',
+  );
   String? _selectedTopicName;
 
   DiscoverModel(this._discoveryService);
@@ -43,7 +46,8 @@ class DiscoverModel extends BaseModel {
 
   bool get suggestedExpanded => _suggestedExpanded;
 
-  StreamController<List<Trail>> get suggestedTrailController => _suggestedTrailController;
+  StreamController<List<Trail>> get suggestedTrailController =>
+      _suggestedTrailController;
 
   BitmapDescriptor? get pinLocationIcon => _pinLocationIcon;
 
@@ -96,14 +100,16 @@ class DiscoverModel extends BaseModel {
     lastServiceResponse = BaseResponse({}, 'RESET');
     discoverDataResponse = null;
     _discoveryService.initialize();
-      discoverDataResponse = _discoveryService.discoveryResponses;
-    _discoveryService.getDiscoveryPage(pageToken: _nextPageToken).then((nextPageToken) {
+    discoverDataResponse = _discoveryService.discoveryResponses;
+    _discoveryService.getDiscoveryPage(pageToken: _nextPageToken).then((
+      nextPageToken,
+    ) {
       _nextPageToken = nextPageToken;
       _gettingPage = false;
     });
     _suggestedTrailController = BehaviorSubject();
-    // Create a custom pink marker using the app's pink color
-    pinLocationIcon = await MapMarkerUtils.createPinkMarker();
+    // Create a custom red marker
+    pinLocationIcon = await MapMarkerUtils.createRedMarker();
     homeModel.discoverScrollController.addListener(_updateDiscoverScrollState);
     return this;
   }
@@ -111,9 +117,11 @@ class DiscoverModel extends BaseModel {
   _updateDiscoverScrollState() {
     focusNode.requestFocus();
     // Get displayable height in pixels
-    double displayableHeight = homeModel.discoverScrollController.position.viewportDimension;
+    double displayableHeight =
+        homeModel.discoverScrollController.position.viewportDimension;
     // Get the pixels left to scroll to reach the bottom
-    double pixelsLeftToScroll = homeModel.discoverScrollController.position.maxScrollExtent -
+    double pixelsLeftToScroll =
+        homeModel.discoverScrollController.position.maxScrollExtent -
         homeModel.discoverScrollController.position.pixels;
     // Whether the pixels left to scroll is less than the height of the displayable area
     bool tooFewPixelsLeft = pixelsLeftToScroll < displayableHeight;
@@ -123,7 +131,9 @@ class DiscoverModel extends BaseModel {
     bool shouldGetNextPage = tooFewPixelsLeft && hasNextPage;
     if (shouldGetNextPage && !_gettingPage) {
       _gettingPage = true;
-      _discoveryService.getDiscoveryPage(pageToken: _nextPageToken).then((page) {
+      _discoveryService.getDiscoveryPage(pageToken: _nextPageToken).then((
+        page,
+      ) {
         _nextPageToken = page;
         _gettingPage = false;
       });
@@ -150,16 +160,22 @@ class DiscoverModel extends BaseModel {
     Set<Marker> trailMarkers = Set();
     for (Experience exp in trail.experiences) {
       Marker newMarker = Marker(
-          markerId: MarkerId(exp.experienceId.toString()),
-          alpha: 1.0,
-          position: LatLng(exp.latitude, exp.longitude),
-          icon: _pinLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta));
+        markerId: MarkerId(exp.experienceId.toString()),
+        alpha: 1.0,
+        position: LatLng(exp.latitude, exp.longitude),
+        icon:
+            _pinLocationIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      );
       trailMarkers.add(newMarker);
     }
-      return trailMarkers;
+    return trailMarkers;
   }
 
-  showTrailDetails({required BuildContext context, required Trail trail}) async {
+  showTrailDetails({
+    required BuildContext context,
+    required Trail trail,
+  }) async {
     Navigator.push(
       context,
       MaterialPageRoute(

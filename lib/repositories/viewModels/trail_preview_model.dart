@@ -25,7 +25,7 @@ class PreviewTrailModel extends BaseModel {
     status: TrailStatus.PAUSED,
     lockVersion: 0,
     itineraryId: 0,
-    itineraryEstimatedTime: Duration.zero
+    itineraryEstimatedTime: Duration.zero,
   );
   BitmapDescriptor? _pinLocationIcon;
   int? _totalSuggestedTrails;
@@ -74,7 +74,7 @@ class PreviewTrailModel extends BaseModel {
   set currentTrailPreview(Trail trail) {
     _currentTrailPreview = trail;
     notifyListeners();
-    }
+  }
 
   set pinLocationIcon(BitmapDescriptor? pinLocationIcon) {
     if (pinLocationIcon != _pinLocationIcon) {
@@ -90,8 +90,8 @@ class PreviewTrailModel extends BaseModel {
       return;
     }
     currentTrailPreview = trail;
-    // Create a custom pink marker using the app's pink color
-    pinLocationIcon = await MapMarkerUtils.createPinkMarker();
+    // Create a custom red marker
+    pinLocationIcon = await MapMarkerUtils.createRedMarker();
     showTrailDetails(trail, false);
   }
 
@@ -99,13 +99,16 @@ class PreviewTrailModel extends BaseModel {
     Set<Marker> trailMarkers = Set();
     for (Experience exp in trail.experiences) {
       Marker newMarker = Marker(
-          markerId: MarkerId(exp.experienceId.toString()),
-          alpha: 1.0,
-          position: LatLng(exp.latitude, exp.longitude),
-          icon: _pinLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta));
+        markerId: MarkerId(exp.experienceId.toString()),
+        alpha: 1.0,
+        position: LatLng(exp.latitude, exp.longitude),
+        icon:
+            _pinLocationIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      );
       trailMarkers.add(newMarker);
     }
-      return trailMarkers;
+    return trailMarkers;
   }
 
   Future<void> showTrailDetails(Trail trail, bool delayed) async {
@@ -115,7 +118,9 @@ class PreviewTrailModel extends BaseModel {
       await Future.delayed(Duration(seconds: 1));
     }
 
-    BaseResponse<Trail> response = await _trailService.getTrailDetails(trailId: trail.id);
+    BaseResponse<Trail> response = await _trailService.getTrailDetails(
+      trailId: trail.id,
+    );
 
     showErrorStatus = response.responseStatus == ERROR;
     if (!showErrorStatus && mounted) {
@@ -127,8 +132,10 @@ class PreviewTrailModel extends BaseModel {
   }
 
   void onTrailMapCreated(GoogleMapController controller) {
-    controller.animateCamera(CameraUpdate.newLatLngBounds(currentTrailPreview.mapBounds, 50));
-    }
+    controller.animateCamera(
+      CameraUpdate.newLatLngBounds(currentTrailPreview.mapBounds, 50),
+    );
+  }
 
   Future<bool> addCurrentTrailToCollection(BuildContext context) async {
     _addRequested = true;
@@ -138,7 +145,9 @@ class PreviewTrailModel extends BaseModel {
       'name': currentTrailPreview.name,
       'description': currentTrailPreview.description,
       'collaborators': [],
-      'experience_ids': currentTrailPreview.experiences.map((e) => e.experienceId).toList()
+      'experience_ids': currentTrailPreview.experiences
+          .map((e) => e.experienceId)
+          .toList(),
     };
 
     BaseResponse<Trail> response = await _trailService.createTrail(data);
@@ -159,13 +168,9 @@ class PreviewTrailModel extends BaseModel {
     return true;
   }
 
-  addExperienceCallback({
-    int? experienceId,
-  }) {}
+  addExperienceCallback({int? experienceId}) {}
 
-  moreOptionsExperienceCallback({
-    int? experienceId,
-  }) {}
+  moreOptionsExperienceCallback({int? experienceId}) {}
 
   @override
   void dispose() {
@@ -186,9 +191,10 @@ class PreviewTrailModel extends BaseModel {
       status: TrailStatus.PAUSED,
       lockVersion: 0,
       itineraryId: 0,
-      itineraryEstimatedTime: Duration.zero
+      itineraryEstimatedTime: Duration.zero,
     );
-    ApplicationApiResponse responseFromTheApiObject = await _trailService.deleteTrail(trail);
+    ApplicationApiResponse responseFromTheApiObject = await _trailService
+        .deleteTrail(trail);
     return responseFromTheApiObject;
   }
 

@@ -1,8 +1,10 @@
+// v2/widget/three_squares.dart
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/v2/util/string.dart';
+import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ThreeSquares extends StatelessWidget {
@@ -27,71 +29,131 @@ class ThreeSquares extends StatelessWidget {
       closedElevation: 0,
       openBuilder: (context, _) => mainAction(context),
       closedBuilder: (context, openContainer) {
+        // overlapping stack of three images inside a fixed-height container
         return Container(
-          height: height ?? MediaQuery.of(context).size.width * .5,
+          height: height ?? 200,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8.0),
             child: InkWell(
               onTap: () => openContainer(),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 50,
-                    child: Container(
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                            fit: BoxFit.cover,
-                            image: mainImage,
-                          ),
-                          color: Colors.black12),
-                      margin: EdgeInsets.only(right: 4),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 25,
-                    child: Container(
-                      color: Colors.black12,
-                      child: Column(
-                        children: <Widget>[
-                          Expanded(
-                            flex: 1,
-                            child: InkWell(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black26,
-                                  image: DecorationImage(
-                                    fit: BoxFit.cover,
-                                    image: secondaryTopImage,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: InkWell(
-                              child: Container(
-                                margin: EdgeInsets.only(top: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black38,
-                                  image: DecorationImage(
-                                    fit: BoxFit.cover,
-                                    image: secondaryBottomImage,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              child: _OverlappingImageStack(
+                mainImage: mainImage,
+                secondaryTopImage: secondaryTopImage,
+                secondaryBottomImage: secondaryBottomImage,
+                cardHeight: height ?? 200,
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+/// Internal widget that displays the three images as a horizontal overlapping stack
+/// and handles hover/scale interaction. The leftmost card is rendered on top by
+/// ordering children such that index 0 is last.
+class _OverlappingImageStack extends StatefulWidget {
+  final ImageProvider mainImage;
+  final ImageProvider secondaryTopImage;
+  final ImageProvider secondaryBottomImage;
+  final double cardHeight;
+
+  const _OverlappingImageStack({
+    required this.mainImage,
+    required this.secondaryTopImage,
+    required this.secondaryBottomImage,
+    required this.cardHeight,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  _OverlappingImageStackState createState() => _OverlappingImageStackState();
+}
+
+class _OverlappingImageStackState extends State<_OverlappingImageStack> {
+  int? _hoveredIndex;
+
+  List<ImageProvider> get _images => [
+        widget.mainImage,
+        widget.secondaryTopImage,
+        widget.secondaryBottomImage,
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    const double cardWidth = 280.0;
+    const double overlapOffset = 80.0; // cardWidth - 200px overlap shift
+
+    List<Widget> children = [];
+    for (int i = 0; i < _images.length; i++) {
+      Widget card = _HoverableImageCard(
+        image: _images[i],
+        width: cardWidth,
+        height: widget.cardHeight,
+        hovered: _hoveredIndex == i,
+        onHoverChanged: (hovering) {
+          setState(() {
+            _hoveredIndex = hovering ? i : null;
+          });
+        },
+      );
+      children.add(Positioned(left: i * overlapOffset, child: card));
+    }
+
+    // bring hovered card to the top of the stack (last child)
+    if (_hoveredIndex != null) {
+      Widget hovered = children.removeAt(_hoveredIndex!);
+      children.add(hovered);
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: children,
+    );
+  }
+}
+
+class _HoverableImageCard extends StatelessWidget {
+  final ImageProvider image;
+  final double width;
+  final double height;
+  final bool hovered;
+  final ValueChanged<bool> onHoverChanged;
+
+  const _HoverableImageCard({
+    required this.image,
+    required this.width,
+    required this.height,
+    required this.hovered,
+    required this.onHoverChanged,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => onHoverChanged(true),
+      onExit: (_) => onHoverChanged(false),
+      child: AnimatedContainer(
+      duration: Duration(milliseconds: 200),
+      transform: hovered ? (Matrix4.identity()..scale(1.02)) : Matrix4.identity(),
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            image: DecorationImage(image: image, fit: BoxFit.cover),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 12,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -160,9 +222,16 @@ class SlidableThreeSquares extends ThreeSquares {
 }
 
 class TitleThreeSquares extends ThreeSquares {
-  final String headlineText;
+  // kept for compatibility but not rendered by default
+  final String? headlineText;
+
+  /// Optional description shown under the header title
+  final String? headerDescription;
 
   final String titleText;
+
+  /// New badge text that appears to the right of the trail name in the header
+  final String? durationText;
 
   final String summaryTitleText;
   final String summaryBodyText;
@@ -173,7 +242,9 @@ class TitleThreeSquares extends ThreeSquares {
 
   TitleThreeSquares({
     required this.titleText,
-    required this.headlineText,
+    this.headlineText,
+    this.durationText,
+    this.headerDescription,
     required this.summaryTitleText,
     required this.summaryBodyText,
     required this.padding,
@@ -196,64 +267,90 @@ class TitleThreeSquares extends ThreeSquares {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // Add one line of text with the heading text.
-          // Capitalize all the text and make it a bit smaller.
-          Text(
-            headlineText.toUpperCase(),
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontFamily: "Poppins",
-              fontWeight: FontWeight.w300,
-              fontSize: 12,
-              color: Colors.grey,
-              backgroundColor: textBackgroundColor,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          // header row with name and optional duration badge
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      titleText,
+                      style: TextStyle(
+                        fontFamily: "Poppins",
+                        fontWeight: FontWeight.w700,
+                        fontSize: 25,
+                        color: viridian,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (headerDescription != null && headerDescription!.trim().isNotEmpty) ...[
+                      SizedBox(height: 4),
+                      Text(
+                        headerDescription!,
+                        style: TextStyle(
+                          fontFamily: "Poppins",
+                          fontWeight: FontWeight.w300,
+                          fontSize: 14,
+                          color: Color(0xFF666666),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ]
+                  ],
+                ),
+              ),
+              if (durationText != null) ...[
+                UIHelper.horizontalSpace(8),
+                Container(
+                  // push down slightly so it lines up more with the
+                  // middle of the title text rather than the top edge
+                  margin: EdgeInsets.only(top: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: tomato,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    durationText!,
+                    // smaller font to de‑emphasize
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ]
+            ],
           ),
-          Text(
-            titleText,
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontFamily: "Poppins",
-              fontWeight: FontWeight.w700,
-              fontSize: 24,
-              color: Colors.black,
-              backgroundColor: textBackgroundColor,
-            ),
-          ),
-          // Add a 4 pixel vertical margin between the sections.
           UIHelper.verticalSpace(8),
           super.build(context),
-          // Add a 4 pixel vertical margin between the sections.
           UIHelper.verticalSpace(8),
-          // Add a text to serve as the title of the summary section.
-          // It is bold and 2 points bigger than the body text.
-          // It only has one line.
-          Text(
-            summaryTitleText,
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontFamily: "Poppins",
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: Colors.black,
-              backgroundColor: textBackgroundColor,
+          // footer title (only show if it's not the same as the header title)
+          if (summaryTitleText.trim().isNotEmpty && summaryTitleText.trim() != titleText.trim())
+            Text(
+              summaryTitleText,
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontFamily: "Poppins",
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: Colors.black,
+                backgroundColor: textBackgroundColor,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          // Add text under the three squares.
-          // It contains the summary text.
-          // If it is longer than two lines, truncate it using an ellipsis.
+          // description under images
           Text(
             summaryBodyText,
             textAlign: TextAlign.left,
             style: TextStyle(
               fontFamily: "Poppins",
               fontWeight: FontWeight.w300,
-              fontSize: 12,
-              color: Colors.black,
+              fontSize: 14,
+              color: Color(0xFF666666),
               backgroundColor: textBackgroundColor,
             ),
             maxLines: 2,
@@ -273,10 +370,10 @@ class TitleThreeSquares extends ThreeSquares {
         child: IgnorePointer(
           child: TitleThreeSquares(
             textBackgroundColor: Colors.black,
-            headlineText: createRandomText(80),
             titleText: createRandomText(8),
-            summaryTitleText: createRandomText(80),
-            summaryBodyText: createRandomText(160),
+            durationText: createRandomText(4),
+            summaryTitleText: createRandomText(8),
+            summaryBodyText: createRandomText(80),
             mainImage: emptyImage,
             secondaryTopImage: emptyImage,
             secondaryBottomImage: emptyImage,

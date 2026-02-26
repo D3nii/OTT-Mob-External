@@ -1,3 +1,4 @@
+// v2/trail/widgets.dart
 import 'package:flutter/material.dart';
 import 'package:onetwotrail/repositories/models/trail.dart';
 import 'package:onetwotrail/ui/views/trail_preview/trail_preview_view.dart';
@@ -38,15 +39,20 @@ class TrailWidgetFactory {
   }
 
   static TitleThreeSquares createTitleThreeSquares(BuildContext context, Trail trail) {
-    // Convert the duration to a human-readable text.
-    var summaryTitleText = fromDurationToText(context, trail.itineraryEstimatedTime);
-    // Join the names of the experiences with a comma and space.
-    var summaryBodyText = trail.experiences.map((e) => e.name).join(', ');
+    // Convert the duration to a human-readable text for the badge.
+    var durationText = fromDurationToText(context, trail.itineraryEstimatedTime);
+
+    // The footer will repeat the trail name as the title and show
+    // the listing description in the body.
+    var footerTitle = trail.name;
+    var footerBody = trail.listingDescription;
+
     return TitleThreeSquares(
       titleText: trail.name,
-      headlineText: trail.description,
-      summaryTitleText: summaryTitleText,
-      summaryBodyText: summaryBodyText,
+      durationText: durationText,
+      headerDescription: trail.description,
+      summaryTitleText: footerTitle,
+      summaryBodyText: footerBody,
       mainImage: trail.imageProviders[0],
       secondaryTopImage: trail.imageProviders[1],
       secondaryBottomImage: trail.imageProviders[2],

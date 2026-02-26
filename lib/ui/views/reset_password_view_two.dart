@@ -10,6 +10,7 @@ import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/widgets/base_widget.dart';
 import 'package:onetwotrail/ui/widgets/circular_progress_bar.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/dialog.dart';
 import 'package:provider/provider.dart';
 
@@ -37,25 +38,10 @@ class ResetPasswordViewTwo extends BaseWidget {
                     padding: EdgeInsets.symmetric(horizontal: UIHelper.defaultHorizontalPadding(context)),
                     children: <Widget>[
                       UIHelper.verticalSpace(48),
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Row(
-                          children: <Widget>[
-                            RotatedBox(
-                              quarterTurns: 2,
-                              child: Image.asset(
-                                'assets/icons/00AtomsBtnArrow.png',
-                                color: tealish,
-                                height: 20,
-                              ),
-                            ),
-                            UIHelper.horizontalSpace(9),
-                            Text(
-                              AppLocalizations.of(context)?.backText ?? "Back",
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                            )
-                          ],
-                        ),
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: tealish,
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
                       UIHelper.verticalSpace(65),
                       Container(

@@ -14,6 +14,7 @@ import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/widgets/base_widget.dart';
 import 'package:onetwotrail/ui/widgets/bottom_buttoms.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/carousel_experiences_images.dart';
 import 'package:onetwotrail/ui/widgets/experience_horizontal_list.dart';
 import 'package:onetwotrail/ui/widgets/experience_location_map.dart';
@@ -250,12 +251,11 @@ class AppBarContainer extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                          icon: Icon(Icons.arrow_back_ios),
-                          color: Colors.white,
-                          onPressed: () {
-                            Navigator.pop(context);
-                          }),
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: Colors.white,
+                        onPressed: () => Navigator.pop(context),
+                      ),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

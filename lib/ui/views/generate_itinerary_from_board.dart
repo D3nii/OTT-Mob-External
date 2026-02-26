@@ -13,6 +13,7 @@ import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/views/dialog_content_view.dart';
 import 'package:onetwotrail/ui/widgets/base_widget.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/dialog.dart';
 import 'package:provider/provider.dart';
 
@@ -673,17 +674,10 @@ class AppBarGenerateContainer extends StatelessWidget {
               padding: EdgeInsets.only(left: 10, top: MediaQuery.of(context).padding.top),
               child: Row(
                 children: [
-                  Container(
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      highlightColor: Colors.transparent,
-                    ),
+                  CupertinoBackButton(
+                    label: AppLocalizations.of(context)?.backText ?? "Back",
+                    color: Colors.white,
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),

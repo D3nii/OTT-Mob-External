@@ -10,14 +10,12 @@ import 'package:onetwotrail/repositories/services/discovery_service.dart';
 import 'package:onetwotrail/repositories/viewModels/base_model.dart';
 import 'package:onetwotrail/repositories/viewModels/home_model.dart';
 import 'package:onetwotrail/ui/views/trail_preview/trail_preview_view.dart';
-import 'package:onetwotrail/utils/map_marker_utils.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DiscoverModel extends BaseModel {
 
   final DiscoveryService _discoveryService;
   bool _suggestedExpanded = true;
-  BitmapDescriptor? _pinLocationIcon;
   Map<String, dynamic> filters = {};
   int? _totalSuggestedTrails;
   Stream<BaseResponse<Map<String, dynamic>>>? discoverDataResponse;
@@ -44,8 +42,6 @@ class DiscoverModel extends BaseModel {
   bool get suggestedExpanded => _suggestedExpanded;
 
   StreamController<List<Trail>> get suggestedTrailController => _suggestedTrailController;
-
-  BitmapDescriptor? get pinLocationIcon => _pinLocationIcon;
 
   int? get totalSuggestedTrails => _totalSuggestedTrails;
 
@@ -79,13 +75,6 @@ class DiscoverModel extends BaseModel {
     }
   }
 
-  set pinLocationIcon(BitmapDescriptor? pinLocationIcon) {
-    if (pinLocationIcon != _pinLocationIcon) {
-      _pinLocationIcon = pinLocationIcon;
-      notifyListeners();
-    }
-  }
-
   void setSelectedTopicName(String? value) {
     _selectedTopicName = value;
     notifyListeners();
@@ -102,8 +91,6 @@ class DiscoverModel extends BaseModel {
       _gettingPage = false;
     });
     _suggestedTrailController = BehaviorSubject();
-    // Create a custom pink marker using the app's pink color
-    pinLocationIcon = await MapMarkerUtils.createPinkMarker();
     homeModel.discoverScrollController.addListener(_updateDiscoverScrollState);
     return this;
   }
@@ -153,7 +140,7 @@ class DiscoverModel extends BaseModel {
           markerId: MarkerId(exp.experienceId.toString()),
           alpha: 1.0,
           position: LatLng(exp.latitude, exp.longitude),
-          icon: _pinLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta));
+          icon: BitmapDescriptor.defaultMarker);
       trailMarkers.add(newMarker);
     }
       return trailMarkers;

@@ -9,6 +9,7 @@ import 'package:onetwotrail/repositories/models/base_response.dart';
 import 'package:onetwotrail/repositories/viewModels/main_filter_model.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/own_check_box/ownCheckBox.dart';
 import 'package:provider/provider.dart';
 
@@ -120,18 +121,10 @@ class AppBarFilterContainer extends StatelessWidget {
                   child: Row(
                     children: [
                       UIHelper.horizontalSpace(mediaQuery.width * 0.053),
-                      InkWell(
-                        child: Container(
-                          padding: EdgeInsets.only(bottom: mediaQuery.height * 0.01),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.arrow_back_ios,
-                            color: Colors.white,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: Colors.white,
+                        onPressed: () => Navigator.pop(context),
                       ),
                       UIHelper.horizontalSpace(mediaQuery.width * 0.053),
                       Container(

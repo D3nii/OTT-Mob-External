@@ -9,7 +9,6 @@ import 'package:onetwotrail/repositories/models/trail.dart';
 import 'package:onetwotrail/repositories/services/profile_service.dart';
 import 'package:onetwotrail/repositories/services/trail_service.dart';
 import 'package:onetwotrail/repositories/viewModels/base_model.dart';
-import 'package:onetwotrail/utils/map_marker_utils.dart';
 
 class PreviewTrailModel extends BaseModel {
   Trail _currentTrailPreview = Trail(
@@ -27,7 +26,6 @@ class PreviewTrailModel extends BaseModel {
     itineraryId: 0,
     itineraryEstimatedTime: Duration.zero
   );
-  BitmapDescriptor? _pinLocationIcon;
   int? _totalSuggestedTrails;
   late TrailService _trailService;
   late ProfileService _profileService;
@@ -43,8 +41,6 @@ class PreviewTrailModel extends BaseModel {
   get addRequested => _addRequested;
 
   Trail get currentTrailPreview => _currentTrailPreview;
-
-  BitmapDescriptor? get pinLocationIcon => _pinLocationIcon;
 
   int? get totalSuggestedTrails => _totalSuggestedTrails;
 
@@ -76,13 +72,6 @@ class PreviewTrailModel extends BaseModel {
     notifyListeners();
     }
 
-  set pinLocationIcon(BitmapDescriptor? pinLocationIcon) {
-    if (pinLocationIcon != _pinLocationIcon) {
-      _pinLocationIcon = pinLocationIcon;
-      notifyListeners();
-    }
-  }
-
   PreviewTrailModel(this._trailService, this._profileService);
 
   initState(Trail trail) async {
@@ -90,8 +79,6 @@ class PreviewTrailModel extends BaseModel {
       return;
     }
     currentTrailPreview = trail;
-    // Create a custom pink marker using the app's pink color
-    pinLocationIcon = await MapMarkerUtils.createPinkMarker();
     showTrailDetails(trail, false);
   }
 
@@ -102,7 +89,7 @@ class PreviewTrailModel extends BaseModel {
           markerId: MarkerId(exp.experienceId.toString()),
           alpha: 1.0,
           position: LatLng(exp.latitude, exp.longitude),
-          icon: _pinLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta));
+          icon: BitmapDescriptor.defaultMarker);
       trailMarkers.add(newMarker);
     }
       return trailMarkers;

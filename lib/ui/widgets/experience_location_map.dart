@@ -3,7 +3,6 @@ import 'package:onetwotrail/l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:onetwotrail/repositories/models/experience.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
-import 'package:onetwotrail/utils/map_marker_utils.dart';
 import 'package:onetwotrail/utils/show_dialog_maps.dart';
 
 class ExperienceLocationMap extends StatelessWidget {
@@ -19,13 +18,11 @@ class ExperienceLocationMap extends StatelessWidget {
     return LatLng(experience.latitude, experience.longitude);
   }
 
-  Future<Marker> getExperienceMarker() async {
-    BitmapDescriptor markerIcon = await MapMarkerUtils.createPinkMarker();
-
+  Marker getExperienceMarker() {
     return Marker(
       markerId: MarkerId(experience.name),
       position: getExperienceLatLng(),
-      icon: markerIcon,
+      icon: BitmapDescriptor.defaultMarker,
     );
   }
 
@@ -50,41 +47,29 @@ class ExperienceLocationMap extends StatelessWidget {
           height: 160,
           width: double.infinity,
           color: grey125Color,
-          child: FutureBuilder<Marker>(
-            future: getExperienceMarker(),
-            builder: (context, snapshot) {
-              // Show a loading indicator while the marker is being created
-              if (!snapshot.hasData) {
-                return Center(
-                  child: CircularProgressIndicator(color: pigPinkTwo),
-                );
-              }
-
-              return GestureDetector(
-                onTap: () {
-                  ShowDialogMaps().showDialogMapsExperience(context, experience, afterLaunch: () {
-                    Navigator.pop(context);
-                  });
-                },
-                child: AbsorbPointer(
-                  absorbing: true,
-                  child: GoogleMap(
-                    mapToolbarEnabled: false,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: false,
-                    rotateGesturesEnabled: false,
-                    scrollGesturesEnabled: false,
-                    tiltGesturesEnabled: false,
-                    zoomGesturesEnabled: false,
-                    initialCameraPosition: CameraPosition(
-                      target: getExperienceLatLng(),
-                      zoom: 12,
-                    ),
-                    markers: Set<Marker>.from([snapshot.data!]),
-                  ),
-                ),
-              );
+          child: GestureDetector(
+            onTap: () {
+              ShowDialogMaps().showDialogMapsExperience(context, experience, afterLaunch: () {
+                Navigator.pop(context);
+              });
             },
+            child: AbsorbPointer(
+              absorbing: true,
+              child: GoogleMap(
+                mapToolbarEnabled: false,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                rotateGesturesEnabled: false,
+                scrollGesturesEnabled: false,
+                tiltGesturesEnabled: false,
+                zoomGesturesEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  target: getExperienceLatLng(),
+                  zoom: 12,
+                ),
+                markers: {getExperienceMarker()},
+              ),
+            ),
           ),
         ),
       ],

@@ -10,6 +10,7 @@ import 'package:onetwotrail/repositories/services/profile_service.dart';
 import 'package:onetwotrail/repositories/viewModels/update_password_view_model.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/password_condition_indicator.dart';
 import 'package:provider/provider.dart';
 
@@ -65,14 +66,10 @@ class UpdatePasswordView extends StatelessWidget {
                                 child: Padding(
                                   padding: EdgeInsets.only(bottom: 16, left: 20),
                                   child: Row(children: [
-                                    Container(
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.arrow_back_ios,
-                                          color: Colors.white,
-                                        ),
-                                        onPressed: () => Navigator.of(context).pop(),
-                                      ),
+                                    CupertinoBackButton(
+                                      label: AppLocalizations.of(context)?.backText ?? "Back",
+                                      color: Colors.white,
+                                      onPressed: () => Navigator.of(context).pop(),
                                     ),
                                     Container(
                                       padding: EdgeInsets.only(left: 5),

@@ -58,11 +58,12 @@ class DiscoverView extends StatelessWidget {
                     onTap: () {
                       model.focusNode.requestFocus();
                     },
-                    child: Column(
-                      children: [
-                        _AppBarWithSearchBarContainer(),
-                        Builder(builder: (context) {
-                          return Expanded(
+                    child: SafeArea(
+                      top: true,
+                      bottom: false,
+                      child: Column(
+                        children: [
+                          Expanded(
                             child: StreamBuilder<
                                     BaseResponse<Map<String, dynamic>>>(
                                 initialData: model.lastServiceResponse,
@@ -81,9 +82,9 @@ class DiscoverView extends StatelessWidget {
                                       value: response,
                                       child: const _ListViewBodyContainer());
                                 }),
-                          );
-                        }),
-                      ],
+                          ),
+                        ],
+                      ),
                     )),
               ),
             );
@@ -187,63 +188,6 @@ class _ListViewBodyContainer extends StatelessWidget {
   }
 }
 
-class _AppBarWithSearchBarContainer extends StatelessWidget {
-  const _AppBarWithSearchBarContainer({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<DiscoverModel>(builder: (context, model, _) {
-      Size mediaQuery = MediaQuery.of(context).size;
-      return Container(
-        height: mediaQuery.height * 0.15,
-        child: Stack(
-          children: [
-            Container(
-              width: mediaQuery.width,
-              height: mediaQuery.height * 0.15,
-              child: Image.asset(
-                'assets/background_images/brand_bg_header.png',
-                fit: BoxFit.fill,
-              ),
-            ),
-            SafeArea(
-                bottom: false,
-                child: Center(
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: AppLocalizations.of(context)
-                                  ?.discoverText
-                                  .toUpperCase() ??
-                              "DISCOVER",
-                          style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white),
-                        ),
-                        TextSpan(text: "\n"),
-                        TextSpan(
-                          text:
-                              AppLocalizations.of(context)?.discoverHeadline ??
-                                  "Discover headline",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                              color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                ))
-          ],
-        ),
-      );
-    });
-  }
-}
-
 class _TopicsCarousel extends StatefulWidget {
   const _TopicsCarousel({Key? key}) : super(key: key);
 
@@ -254,38 +198,19 @@ class _TopicsCarousel extends StatefulWidget {
 class _TopicsCarouselState extends State<_TopicsCarousel> {
   List<String> _topics = const ['All'];
   final ScrollController _scrollController = ScrollController();
-  bool _canScrollLeft = false;
-  bool _canScrollRight = false;
 
   static const Duration _smoothScrollDuration = Duration(milliseconds: 300);
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_updateScrollState);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollState());
     _loadTopics();
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_updateScrollState);
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _updateScrollState() {
-    if (!_scrollController.hasClients) return;
-    final maxExtent = _scrollController.position.maxScrollExtent;
-    final offset = _scrollController.offset;
-    final bool canLeft = offset > 0;
-    final bool canRight = offset < maxExtent;
-    if (canLeft != _canScrollLeft || canRight != _canScrollRight) {
-      setState(() {
-        _canScrollLeft = canLeft;
-        _canScrollRight = canRight;
-      });
-    }
   }
 
   Future<void> _scrollByCards(int direction, double cardWidth) async {
@@ -347,8 +272,7 @@ class _TopicsCarouselState extends State<_TopicsCarousel> {
           child: Container(
             height: width <= 768 ? 44 : 56,
             color: Colors.grey[100],
-            // Slightly reduce horizontal padding so topics sit closer together.
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Focus(
               autofocus: false,
               onKey: (FocusNode node, RawKeyEvent event) {
@@ -365,12 +289,6 @@ class _TopicsCarouselState extends State<_TopicsCarousel> {
               },
               child: Row(
                 children: [
-                  // Left arrow (always visible, enabled only when it can scroll left)
-                  _ArrowButton(
-                    icon: Icons.arrow_back_ios_new,
-                    enabled: _canScrollLeft,
-                    onTap: () => _scrollByCards(-1, cardWidth),
-                  ),
                   Expanded(
                     child: Listener(
                       onPointerSignal: (pointerSignal) {
@@ -447,78 +365,12 @@ class _TopicsCarouselState extends State<_TopicsCarousel> {
                       ),
                     ),
                   ),
-                  // Right arrow (always visible, enabled only when it can scroll right)
-                  _ArrowButton(
-                    icon: Icons.arrow_forward_ios,
-                    enabled: _canScrollRight,
-                    onTap: () => _scrollByCards(1, cardWidth),
-                  ),
                 ],
               ),
             ),
           ),
         );
       },
-    );
-  }
-}
-
-class _ArrowButton extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  final bool enabled;
-
-  const _ArrowButton(
-      {Key? key,
-      required this.icon,
-      required this.onTap,
-      required this.enabled})
-      : super(key: key);
-
-  @override
-  State<_ArrowButton> createState() => _ArrowButtonState();
-}
-
-class _ArrowButtonState extends State<_ArrowButton> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) {
-        if (widget.enabled) {
-          setState(() => _hovering = true);
-        }
-      },
-      onExit: (_) {
-        if (widget.enabled) {
-          setState(() => _hovering = false);
-        }
-      },
-      cursor:
-          widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: widget.enabled ? widget.onTap : null,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 150),
-          opacity: widget.enabled ? (_hovering ? 1.0 : 0.8) : 0.3,
-          child: AnimatedScale(
-            duration: const Duration(milliseconds: 150),
-            scale: widget.enabled && _hovering ? 1.1 : 1.0,
-            child: Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              child: Icon(
-                widget.icon,
-                size: 18,
-                color: widget.enabled ? Colors.black87 : Colors.black26,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

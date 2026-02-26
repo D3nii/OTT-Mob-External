@@ -12,6 +12,7 @@ import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/views/my_trail_board_and_itinerary/board_view.dart';
 import 'package:onetwotrail/ui/views/my_trail_board_and_itinerary/trail_itinerary_view.dart';
 import 'package:onetwotrail/ui/widgets/base_widget.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/dialog.dart';
 import 'package:onetwotrail/ui/widgets/show_dialog_component_delete_trail.dart';
 import 'package:onetwotrail/ui/widgets/tab_board_item.dart';
@@ -243,18 +244,10 @@ class AppBarContainer extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         child: Row(
                           children: <Widget>[
-                            Expanded(
-                              flex: 20,
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.arrow_back_ios,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                                onPressed: () {
-                                  return Navigator.pop(context, true);
-                                },
-                              ),
+                            CupertinoBackButton(
+                              label: AppLocalizations.of(context)?.backText ?? "Back",
+                              color: Colors.white,
+                              onPressed: () => Navigator.pop(context, true),
                             ),
                             Expanded(
                               flex: 80,

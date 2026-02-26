@@ -12,6 +12,7 @@ import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/widgets/base_widget.dart';
 import 'package:onetwotrail/ui/widgets/circular_progress_bar.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/dialog.dart';
 import 'package:provider/provider.dart';
 
@@ -51,40 +52,10 @@ class ResetPasswordSendEmail extends BaseWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       UIHelper.verticalSpace(mediaQuery.height * 0.06),
-                      /*AppBar*/ Container(
-                        height: mediaQuery.height * 0.025,
-                        width: double.infinity,
-                        child: InkWell(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                  alignment: Alignment.centerLeft,
-                                  child: Transform.rotate(
-                                    angle: pi,
-                                    child: Image.asset(
-                                      "assets/icons/00AtomsBtnArrow.png",
-                                      color: tealish,
-                                    ),
-                                  )),
-                              UIHelper.horizontalSpace(mediaQuery.width * 0.03),
-                              Container(
-                                alignment: Alignment.centerLeft,
-                                child: AutoSizeText(
-                                  AppLocalizations.of(context)?.backText ?? "Back",
-                                  maxFontSize: 16,
-                                  minFontSize: 12,
-                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black),
-                                ),
-                              )
-                            ],
-                          ),
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                        ),
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: tealish,
+                        onPressed: () => Navigator.pop(context),
                       ),
                       UIHelper.verticalSpace(mediaQuery.height * 0.062),
                       AutoSizeText(

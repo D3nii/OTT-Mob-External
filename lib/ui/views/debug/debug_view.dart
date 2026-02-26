@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:onetwotrail/l10n/app_localizations.dart';
 import 'package:onetwotrail/repositories/viewModels/debug_view_model.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:provider/provider.dart';
@@ -67,12 +69,10 @@ class DebugView extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Row(
                     children: [
-                      Container(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: Icon(Icons.arrow_back_ios, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: Colors.white,
+                        onPressed: () => Navigator.pop(context),
                       ),
                       UIHelper.horizontalSpace(mediaQuery.width * 0.053),
                       Expanded(

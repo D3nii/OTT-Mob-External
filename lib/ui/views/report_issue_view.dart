@@ -6,6 +6,7 @@ import 'package:onetwotrail/repositories/services/application_api.dart';
 import 'package:onetwotrail/repositories/viewModels/report_issue_model.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/own_check_box/ownCheckBox.dart';
 import 'package:provider/provider.dart';
 
@@ -193,17 +194,10 @@ class _AppBarContainer extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
-                      Container(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: Colors.white,
+                        onPressed: () => Navigator.pop(context),
                       ),
                       UIHelper.horizontalSpace(mediaQuery.width * 0.053),
                       Expanded(

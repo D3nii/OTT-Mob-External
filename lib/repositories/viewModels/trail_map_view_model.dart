@@ -8,11 +8,9 @@ import 'package:onetwotrail/repositories/viewModels/base_model.dart';
 import 'package:onetwotrail/repositories/viewModels/controller_page_board_controller_model.dart';
 import 'package:onetwotrail/repositories/viewModels/trail_itinerary_view_model.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
-import 'package:onetwotrail/utils/map_marker_utils.dart';
 import 'package:snapping_sheet/snapping_sheet.dart';
 
 class TrailMapViewModel extends BaseModel {
-  BitmapDescriptor? _pinLocationIcon;
   final ControllerPageBoardAndItineraryModel controllerPageBoardAndItineraryModel;
   GoogleMapController? _googleMapController;
   late final GoogleMapPolyline _googleMapPolyline;
@@ -63,8 +61,6 @@ class TrailMapViewModel extends BaseModel {
 
   init(GoogleMapController googleMapController) async {
     _googleMapController = googleMapController;
-    // Create a custom pink marker using the app's pink color
-    _pinLocationIcon = await MapMarkerUtils.createPinkMarker();
 
     dayActivities.forEach((element) {
       if (element is VisitItineraryEvent) {
@@ -83,7 +79,7 @@ class TrailMapViewModel extends BaseModel {
     Marker newMarker = Marker(
         markerId: MarkerId("$name"),
         position: position,
-        icon: _pinLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta));
+        icon: BitmapDescriptor.defaultMarker);
     markers.add(newMarker);
   }
 

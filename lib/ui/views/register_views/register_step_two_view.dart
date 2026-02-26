@@ -8,6 +8,7 @@ import 'package:onetwotrail/repositories/viewModels/register_page_model.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/widgets/dots_item.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/password_condition_indicator.dart';
 import 'package:onetwotrail/ui/widgets/rounded_textfield.dart';
 import 'package:provider/provider.dart';
@@ -51,39 +52,14 @@ class RegisterStepTwoView extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: <Widget>[
-                        Container(
-                          alignment: Alignment.centerLeft,
-                          margin: EdgeInsets.zero,
-                          padding: const EdgeInsets.fromLTRB(40, 0, 40, 0),
-                          height: 40,
-                          child: SizedBox(
-                            width: 100,
-                            child: Padding(
-                              padding: EdgeInsets.zero,
-                              child: TextButton(
-                                onPressed: () => model.backToPageOne(context),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: <Widget>[
-                                    ImageIcon(
-                                      AssetImage("assets/icons/arrow_back.png"),
-                                      size: 17,
-                                      color: tealish,
-                                    ),
-                                    UIHelper.horizontalSpace(6),
-                                    Text(
-                                      AppLocalizations.of(context)?.backText ?? "Back",
-                                      style: TextStyle(
-                                        fontFamily: "Poppins",
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(32, 0, 0, 0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: CupertinoBackButton(
+                              label: AppLocalizations.of(context)?.backText ?? "Back",
+                              color: tealish,
+                              onPressed: () => model.backToPageOne(context),
                             ),
                           ),
                         ),

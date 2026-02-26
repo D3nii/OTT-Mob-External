@@ -220,3 +220,8 @@ test: .fvm
 xcode:
 	@open ios/Runner.xcworkspace
 .PHONY: xcode
+
+
+
+#  ~/flutter/bin/flutter run -d chrome --flavor development --dart-define-from-file=dart-definitions/development.json
+#  ~/flutter/bin/flutter run -d emulator-5554 --flavor development --dart-define-from-file=dart-definitions/development.json

@@ -9,6 +9,7 @@ import 'package:onetwotrail/repositories/viewModels/profile_edit_view_model.dart
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/country_list.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:provider/provider.dart';
 
 class ProfileUserInformationView extends StatelessWidget {
@@ -330,14 +331,10 @@ class _ContainerOfAppBar extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.only(bottom: 16, left: 20),
                 child: Row(children: [
-                  Container(
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => model.tryToLeave(context),
-                    ),
+                  CupertinoBackButton(
+                    label: AppLocalizations.of(context)?.backText ?? "Back",
+                    color: Colors.white,
+                    onPressed: () => model.tryToLeave(context),
                   ),
                   Container(
                     padding: EdgeInsets.only(left: 5),

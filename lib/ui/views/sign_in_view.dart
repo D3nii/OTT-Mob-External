@@ -10,6 +10,7 @@ import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/widgets/base_widget.dart';
 import 'package:onetwotrail/ui/widgets/circular_progress_bar.dart';
+import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:onetwotrail/ui/widgets/dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -57,38 +58,12 @@ class SignInView extends BaseWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
+                            Align(
                               alignment: Alignment.centerLeft,
-                              height: 40,
-                              child: SizedBox(
-                                width: 100,
-                                child: Padding(
-                                  padding: EdgeInsets.zero,
-                                  child: GestureDetector(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: <Widget>[
-                                        ImageIcon(
-                                          AssetImage("assets/icons/arrow_back.png"),
-                                          size: 17,
-                                          color: Colors.white,
-                                        ),
-                                        UIHelper.horizontalSpace(6),
-                                        Text(
-                                          AppLocalizations.of(context)?.backText ?? "Back",
-                                          style: TextStyle(
-                                            fontFamily: "Poppins",
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              child: CupertinoBackButton(
+                                label: AppLocalizations.of(context)?.backText ?? "Back",
+                                color: Colors.white,
+                                onPressed: () => Navigator.of(context).pop(),
                               ),
                             ),
                             UIHelper.verticalSpace(10),

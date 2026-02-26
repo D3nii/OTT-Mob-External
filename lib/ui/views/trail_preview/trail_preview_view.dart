@@ -150,8 +150,15 @@ class AppBarGenerateContainer extends StatelessWidget {
   }
 }
 
-class TrailPreviewViewBody extends StatelessWidget {
+class TrailPreviewViewBody extends StatefulWidget {
   const TrailPreviewViewBody({Key? key}) : super(key: key);
+
+  @override
+  State<TrailPreviewViewBody> createState() => _TrailPreviewViewBodyState();
+}
+
+class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
+  bool _showAllExperiences = false;
 
   @override
   Widget build(BuildContext parentContext) {
@@ -159,6 +166,9 @@ class TrailPreviewViewBody extends StatelessWidget {
       builder: (context, model, _) {
         final height = MediaQuery.of(context).size.height;
         final heightForOptionalView = height - height * 0.3;
+        final experienceCount = _showAllExperiences 
+          ? model.currentTrailPreview.experiences.length
+          : (model.currentTrailPreview.experiences.length > 6 ? 6 : model.currentTrailPreview.experiences.length);
         return StreamBuilder<BaseResponse<User>>(
             initialData: model.profileService.userResponse,
             stream: model.profileService.userResponseStream,
@@ -189,9 +199,9 @@ class TrailPreviewViewBody extends StatelessWidget {
                                 margin: const EdgeInsets.all(0),
                                 width: double.maxFinite,
                                 child: GridView.builder(
-                                  padding: EdgeInsets.fromLTRB(0, 0, 0, 14),
+                                  padding: EdgeInsets.fromLTRB(0, 0, 0, 6),
                                   physics: NeverScrollableScrollPhysics(),
-                                  itemCount: model.currentTrailPreview.experiences.length,
+                                  itemCount: experienceCount,
                                   shrinkWrap: true,
                                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 2,
@@ -225,6 +235,61 @@ class TrailPreviewViewBody extends StatelessWidget {
                                   },
                                 ),
                               ),
+                              if (model.currentTrailPreview.experiences.length > 6 && !_showAllExperiences) ...[
+                                Padding(
+                                  padding: EdgeInsets.only(top: 4, bottom: 12),
+                                  child: Center(
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: primaryColor,
+                                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _showAllExperiences = true;
+                                        });
+                                      },
+                                      child: Text(
+                                        'Show More',
+                                        style: TextStyle(
+                                          fontFamily: "Poppins",
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              if (model.currentTrailPreview.experiences.length > 6 && _showAllExperiences) ...[
+                                Padding(
+                                  padding: EdgeInsets.only(top: 4, bottom: 12),
+                                  child: Center(
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: primaryColor,
+                                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _showAllExperiences = false;
+                                        });
+                                      },
+                                      child: Text(
+                                        'Show Less',
+                                        style: TextStyle(
+                                          fontFamily: "Poppins",
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              UIHelper.verticalSpace(8),
                               SizedBox(
                                 width: double.infinity,
                                 child: Text(

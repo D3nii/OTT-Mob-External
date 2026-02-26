@@ -1,3 +1,4 @@
+// ui/views/trail_preview/trail_preview_view.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';

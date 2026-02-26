@@ -44,6 +44,40 @@ class TrailPreviewView extends StatelessWidget {
         body: Column(
           children: [
             AppBarGenerateContainer(),
+            // Trail name and description section
+            Consumer<PreviewTrailModel>(
+              builder: (context, model, _) => Container(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      model.currentTrailPreview.name,
+                      style: TextStyle(
+                        fontFamily: "Poppins",
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      model.currentTrailPreview.description ?? '',
+                      style: TextStyle(
+                        fontFamily: "Poppins",
+                        fontSize: 14,
+                        fontWeight: FontWeight.w300,
+                        color: Color(0xFF666666),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
             Container(
                 child: Consumer<PreviewTrailModel>(
                     builder: (context, model, _) => EstimatedTimeBar(model.duration, false))),

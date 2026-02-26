@@ -87,21 +87,22 @@ class AppBarGenerateContainer extends StatelessWidget {
                         color: Colors.white,
                         onPressed: () => Navigator.pop(context, true),
                       ),
-                      Expanded(
-                        child: Container(
-                          child: Text(
-                            model.currentTrailPreview.name.toUpperCase(),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                            style: TextStyle(
-                              fontFamily: "Poppins",
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      )
+                      // Removed trail name label per design request
+                      // Expanded(
+                      //   child: Container(
+                      //     child: Text(
+                      //       model.currentTrailPreview.name.toUpperCase(),
+                      //       overflow: TextOverflow.ellipsis,
+                      //       maxLines: 2,
+                      //       style: TextStyle(
+                      //         fontFamily: "Poppins",
+                      //         fontSize: 18,
+                      //         fontWeight: FontWeight.w700,
+                      //         color: Colors.white,
+                      //       ),
+                      //     ),
+                      //   ),
+                      // )
                     ],
                   ),
                 ),

@@ -219,6 +219,8 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                       experience: experience,
                                       height: height,
                                       width: width,
+                                      experienceNameFontSize: 12,
+                                      experienceDestinationFontSize: 10,
                                       onLongPress: doNothing,
                                       onTap: () {
                                         Provider.of<EventClient>(context, listen: false).createEvent(Event(

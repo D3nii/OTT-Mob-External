@@ -170,6 +170,7 @@ class TrailPreviewViewBody extends StatelessWidget {
                         ? ListView(
                             padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
                             children: <Widget>[
+                              UIHelper.verticalSpace(12),
                               SizedBox(
                                 width: double.infinity,
                                 child: Text(
@@ -250,8 +251,59 @@ class TrailPreviewViewBody extends StatelessWidget {
                                     gestureRecognizers: Set()
                                       ..add(Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()))),
                               ),
+                              UIHelper.verticalSpace(20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: Text(
+                                  'Related Experiences',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              UIHelper.verticalSpace(10),
+                              SizedBox(
+                                height: 260,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: model.currentTrailPreview.experiences.length > 5 ? 5 : model.currentTrailPreview.experiences.length,
+                                  itemBuilder: (context, index) {
+                                    var experience = model.currentTrailPreview.experiences[index];
+                                    var width = MediaQuery.of(context).size.width / 2.5;
+                                    var height = width;
+                                    var itemCount = model.currentTrailPreview.experiences.length > 5 ? 5 : model.currentTrailPreview.experiences.length;
+                                    return Container(
+                                      margin: EdgeInsets.only(
+                                        right: index == itemCount - 1 ? 14 : 12,
+                                      ),
+                                      child: experienceItem(
+                                        context: context,
+                                        experience: experience,
+                                        height: height,
+                                        width: width,
+                                        onLongPress: doNothing,
+                                        onTap: () {
+                                          Provider.of<EventClient>(context, listen: false).createEvent(Event(
+                                              EventName.experience_profile_viewed, EventSourceView.trail_experience, {
+                                            EventTag.experience_id: experience.experienceId.toString(),
+                                            EventTag.experience_name: experience.name,
+                                            EventTag.trail_id: model.currentTrailPreview.id.toString(),
+                                            EventTag.trail_name: model.currentTrailPreview.name,
+                                          }));
+                                        },
+                                        showAddToTrailButton: false,
+                                        showMoreOptionsButton: false,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
                               Container(
-                                height: 150,
+                                height: 50,
                               ),
                             ],
                           )

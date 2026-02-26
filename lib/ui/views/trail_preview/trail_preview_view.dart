@@ -47,7 +47,7 @@ class TrailPreviewView extends StatelessWidget {
             // Trail name and description section
             Consumer<PreviewTrailModel>(
               builder: (context, model, _) => Container(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -170,12 +170,25 @@ class TrailPreviewViewBody extends StatelessWidget {
                         ? ListView(
                             padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
                             children: <Widget>[
+                              SizedBox(
+                                width: double.infinity,
+                                child: Text(
+                                  'Experiences',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              UIHelper.verticalSpace(10),
                               Container(
                                 padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                                 margin: const EdgeInsets.all(0),
                                 width: double.maxFinite,
                                 child: GridView.builder(
-                                  padding: EdgeInsets.fromLTRB(0, 14, 0, 14),
+                                  padding: EdgeInsets.fromLTRB(0, 0, 0, 14),
                                   physics: NeverScrollableScrollPhysics(),
                                   itemCount: model.currentTrailPreview.experiences.length,
                                   shrinkWrap: true,

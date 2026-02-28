@@ -39,7 +39,7 @@ class ExperienceInfo extends BaseWidget {
       child: Consumer<ExperienceInfoModel>(
         builder: (context, model, _) {
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: const Color(0xFFF5F5F7),
             body: Column(
               children: <Widget>[
                 AppBarContainer(model.experience),
@@ -233,7 +233,7 @@ class AppBarContainer extends StatelessWidget {
     Size mediaQuery = MediaQuery.of(_context).size;
     return Consumer<ExperienceInfoModel>(builder: (context, model, _) {
       return Container(
-          height: 132,
+          height: 160,
           width: mediaQuery.width,
           child: Stack(
             children: [
@@ -244,11 +244,24 @@ class AppBarContainer extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
+              Container(
+                width: mediaQuery.width,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.3),
+                    ],
+                  ),
+                ),
+              ),
               SafeArea(
                 bottom: false,
-                child: Container(
-                  width: double.infinity,
-                  child: Row(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       CupertinoBackButton(
@@ -256,30 +269,40 @@ class AppBarContainer extends StatelessWidget {
                         color: Colors.white,
                         onPressed: () => Navigator.pop(context),
                       ),
+                      const SizedBox(height: 8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               experience.name.toUpperCase(),
                               textAlign: TextAlign.start,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
-                            Text(
-                              "${experience.destinationName}",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
                                 color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5,
                               ),
                             ),
+                            if (experience.destinationName.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                experience.destinationName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -290,6 +313,36 @@ class AppBarContainer extends StatelessWidget {
   }
 }
 
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+  final Clip clipBehavior;
+
+  const _SectionCard({
+    Key? key,
+    required this.child,
+    this.clipBehavior = Clip.none,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: clipBehavior,
+      child: child,
+    );
+  }
+}
+
 class _ReportIssueButton extends StatelessWidget {
   final Experience experience;
 
@@ -297,54 +350,32 @@ class _ReportIssueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext _context) {
-    return Container(
-      height: 40,
-      width: 160,
-      child: TextButton(
-        style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
-          backgroundColor: Color.fromRGBO(0, 0, 0, 0.7),
-        ),
-        child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                AppLocalizations.of(_context)?.reportIssuesText ?? "Report issues",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.white),
-              ),
-              UIHelper.horizontalSpace(8),
-              Container(
-                height: 24,
-                width: 24,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    Align(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
-                        ),
-                        height: 16,
-                        width: 16,
-                      ),
-                    ),
-                    Align(
-                      child: Icon(
-                        Icons.info,
-                        color: tomato,
-                        size: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ]),
-        onPressed: () {
-          Navigator.pushNamed(_context, '/reportIssue', arguments: experience);
-        },
+    return TextButton(
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        backgroundColor: const Color(0xFFF5F5F7),
       ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(Icons.info_outline, color: tomato, size: 18),
+          UIHelper.horizontalSpace(8),
+          Text(
+            AppLocalizations.of(_context)?.reportIssuesText ?? "Report issues",
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1D1D1F),
+            ),
+          ),
+        ],
+      ),
+      onPressed: () {
+        Navigator.pushNamed(_context, '/reportIssue', arguments: experience);
+      },
     );
   }
 }
@@ -359,110 +390,118 @@ class ContainerOfListViewBody extends StatelessWidget {
         return Stack(
           children: [
             ListView(
-              physics: ClampingScrollPhysics(),
-              padding: EdgeInsets.only(top: 16),
+              physics: const ClampingScrollPhysics(),
+              padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
               children: <Widget>[
-                Container(
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.width * 0.4,
-                  child: CarouselExperiencesImages(model.experience),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: ExperienceFacilitiesListView(model.experience),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: ExperienceLocationMap(model.experience),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                  child: model.experience.description.isNotEmpty
-                      ? Column(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                capitalizeFirstLetter(AppLocalizations.of(context)?.description ?? "Description"),
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                            ExpandableText(
-                              maxLines: 5,
-                              textSpan: TextSpan(
-                                text: model.experience.description,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              moreSpan: TextSpan(
-                                  text: 'more',
-                                  style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black, fontSize: 13)),
-                            ),
-                          ],
-                        )
-                      : Container(),
-                ),
-                Padding(
-                    padding: EdgeInsets.only(top: 16),
-                    child: experienceHorizontalList(
-                      context: context,
-                      experiences: model.experience.related,
-                      experienceNameFontSize: 14,
-                      experienceDestinationFontSize: 12,
-                      experienceWidthRatio: 0.4,
-                      onLongPress: (_context, _experience) => doNothing(),
-                      onTap: (_context, _experience) {
-                        Navigator.pushNamed(_context, '/experienceInfo', arguments: _experience);
-                      },
-                      paddingLeft: 16,
-                      paddingRight: 16,
-                      showAddToTrailButton: false,
-                      showMoreOptionsButton: false,
-                      spaceBetweenExperiences: 8,
-                      title: AppLocalizations.of(context)?.relatedText ?? "Related",
-                      titleFontSize: 24,
-                    )),
-                Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: experienceHorizontalList(
-                      context: context,
-                      experiences: model.experience.nearBy,
-                      experienceNameFontSize: 14,
-                      experienceDestinationFontSize: 12,
-                      experienceWidthRatio: 0.4,
-                      onLongPress: (_context, _experience) => doNothing(),
-                      onTap: (_context, _experience) {
-                        Navigator.pushNamed(_context, '/experienceInfo', arguments: _experience);
-                      },
-                      paddingLeft: 16,
-                      paddingRight: 16,
-                      showAddToTrailButton: false,
-                      showMoreOptionsButton: false,
-                      spaceBetweenExperiences: 8,
-                      title: AppLocalizations.of(context)?.nearbyText ?? "Nearby",
-                      titleFontSize: 24,
-                    )),
-                Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Container(
-                    alignment: Alignment.center,
-                    height: 92,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
                     width: double.infinity,
-                    child: _ReportIssueButton(model.experience),
+                    height: MediaQuery.of(context).size.width * 0.5,
+                    child: CarouselExperiencesImages(model.experience),
                   ),
                 ),
-                Container(
-                  height: 128,
+                const SizedBox(height: 20),
+                if (ExperienceDetailsHelper.getExperienceFeatures(model.experience).isNotEmpty)
+                  _SectionCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      child: ExperienceFacilitiesListView(model.experience),
+                    ),
+                  ),
+                if (ExperienceDetailsHelper.getExperienceFeatures(model.experience).isNotEmpty)
+                  const SizedBox(height: 20),
+                _SectionCard(
+                  clipBehavior: Clip.antiAlias,
+                  child: ExperienceLocationMap(model.experience),
                 ),
+                const SizedBox(height: 20),
+                if (model.experience.description.isNotEmpty)
+                  _SectionCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            capitalizeFirstLetter(AppLocalizations.of(context)?.description ?? "Description"),
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1D1D1F),
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ExpandableText(
+                            maxLines: 5,
+                            textSpan: TextSpan(
+                              text: model.experience.description,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF6E6E73),
+                                height: 1.4,
+                              ),
+                            ),
+                            moreSpan: const TextSpan(
+                              text: 'more',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: tealish,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (model.experience.description.isNotEmpty) const SizedBox(height: 20),
+                experienceHorizontalList(
+                  context: context,
+                  experiences: model.experience.related,
+                  experienceNameFontSize: 15,
+                  experienceDestinationFontSize: 13,
+                  experienceWidthRatio: 0.42,
+                  onLongPress: (_context, _experience) => doNothing(),
+                  onTap: (_context, _experience) {
+                    Navigator.pushNamed(_context, '/experienceInfo', arguments: _experience);
+                  },
+                  paddingLeft: 0,
+                  paddingRight: 16,
+                  showAddToTrailButton: false,
+                  showMoreOptionsButton: false,
+                  spaceBetweenExperiences: 12,
+                  title: AppLocalizations.of(context)?.relatedText ?? "Related",
+                  titleFontSize: 17,
+                  itemBackgroundColor: const Color(0xFFF5F5F7),
+                ),
+                const SizedBox(height: 32),
+                experienceHorizontalList(
+                  context: context,
+                  experiences: model.experience.nearBy,
+                  experienceNameFontSize: 15,
+                  experienceDestinationFontSize: 13,
+                  experienceWidthRatio: 0.42,
+                  onLongPress: (_context, _experience) => doNothing(),
+                  onTap: (_context, _experience) {
+                    Navigator.pushNamed(_context, '/experienceInfo', arguments: _experience);
+                  },
+                  paddingLeft: 0,
+                  paddingRight: 16,
+                  showAddToTrailButton: false,
+                  showMoreOptionsButton: false,
+                  spaceBetweenExperiences: 12,
+                  title: AppLocalizations.of(context)?.nearbyText ?? "Nearby",
+                  titleFontSize: 17,
+                  itemBackgroundColor: const Color(0xFFF5F5F7),
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: _ReportIssueButton(model.experience),
+                ),
+                const SizedBox(height: 88),
               ],
             ),
             Column(
@@ -471,8 +510,18 @@ class ContainerOfListViewBody extends StatelessWidget {
                   child: Container(),
                 ),
                 Container(
-                  height: 128,
+                  height: 88,
                   width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
                   child: BottomButtoms(model.experience, () async {
                     await showCupertinoModalBottomSheet<String>(
                       shape: RoundedRectangleBorder(
@@ -548,34 +597,38 @@ class ExperienceFacilitiesListView extends StatelessWidget {
     return Consumer<ExperienceInfoModel>(
       builder: (context, model, _) {
         List<ExperienceFeature> features = ExperienceDetailsHelper.getExperienceFeatures(experience);
-        return Container(
-          height: 80,
-          child: ListView.builder(
-            physics: BouncingScrollPhysics(),
+        return SizedBox(
+          height: 72,
+          child: ListView.separated(
+            physics: const BouncingScrollPhysics(),
             shrinkWrap: true,
             scrollDirection: Axis.horizontal,
             itemCount: features.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 24),
             itemBuilder: (context, int index) {
-              return Container(
+              return SizedBox(
+                width: 64,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      height: 32,
+                    SizedBox(
+                      height: 28,
                       child: features[index].image,
                     ),
-                    Container(
-                      height: 32,
-                      width: 72,
-                      child: Text(
-                        features[index].label,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.black, fontSize: 10),
+                    const SizedBox(height: 8),
+                    Text(
+                      features[index].label,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF6E6E73),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        height: 1.2,
                       ),
-                    )
+                    ),
                   ],
                 ),
               );

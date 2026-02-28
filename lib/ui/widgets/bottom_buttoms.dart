@@ -40,42 +40,31 @@ class BottomButtoms extends StatelessWidget {
         Expanded(
           flex: 60,
           child: Padding(
-            padding: const EdgeInsets.only(top: 32, bottom: 32, left: 32, right: 32),
-            child: Container(
-                child: ElevatedButton(
+            padding: const EdgeInsets.only(top: 12, bottom: 12, left: 24, right: 24),
+            child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                elevation: 0, backgroundColor: tealish,
+                elevation: 0,
+                backgroundColor: tealish,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(35.0),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Container(
-                    alignment: Alignment.center,
-                    padding: EdgeInsets.only(right: 5),
-                    child: AutoSizeText(
-                      AppLocalizations.of(context)?.addToTrailText ?? 'Add to Trail',
-                      maxLines: 1,
-                      maxFontSize: 14,
-                      minFontSize: 10,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        wordSpacing: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+              child: AutoSizeText(
+                AppLocalizations.of(context)?.addToTrailText ?? 'Add to Trail',
+                maxLines: 1,
+                maxFontSize: 13,
+                minFontSize: 11,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
               ),
               onPressed: () async {
                 await runBasedOnUser(context, onRegistered: () async => addTrail());
               },
-            )),
+            ),
           ),
         ),
       ],

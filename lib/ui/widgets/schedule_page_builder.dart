@@ -89,20 +89,25 @@ class SchedulePageBuilder extends StatelessWidget {
                             children: [
                               ListView.builder(
                                 shrinkWrap: true,
+                                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                                 itemCount: dayList.length + 1,
                                 itemBuilder: (BuildContext context, int indexOfItem) {
                                   if (indexOfItem == dayList.length) {
-                                    return Container(
-                                      height: 128,
-                                    );
+                                    return const SizedBox(height: 100);
                                   }
                                   if (dayList[indexOfItem] is VisitItineraryEvent) {
-                                    return ItineraryExperienceContainer(dayList[indexOfItem] as VisitItineraryEvent);
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: ItineraryExperienceContainer(dayList[indexOfItem] as VisitItineraryEvent),
+                                    );
                                   }
                                   if (dayList[indexOfItem] is TransitItineraryEvent) {
                                     TransitItineraryEvent item = dayList[indexOfItem] as TransitItineraryEvent;
-                                    return TimeToTheOtherExperienceContainer(
-                                        item.duration, indexOfItem == (dayList.length - 1));
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: TimeToTheOtherExperienceContainer(
+                                          item.duration, indexOfItem == (dayList.length - 1)),
+                                    );
                                   }
                                   return Container();
                                 },
@@ -304,13 +309,13 @@ Widget _slidableChildContainer(
           Padding(
               padding: EdgeInsets.symmetric(horizontal: padding),
               child: OpenContainer(
-                transitionDuration: Duration(milliseconds: 500),
+                transitionDuration: const Duration(milliseconds: 500),
                 transitionType: ContainerTransitionType.fade,
                 closedElevation: 0,
-                closedColor: Colors.transparent,
-                openColor: Color(0xfff9f9f9),
+                closedColor: Colors.white,
+                openColor: const Color(0xFFF5F5F7),
                 closedShape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
                     side: BorderSide(color: Colors.transparent, style: BorderStyle.none)),
                 openBuilder: (context, _) => Provider.value(
                   value: scheduleExperienceItem.experience,
@@ -492,7 +497,10 @@ class ScrollContainer extends StatelessWidget {
       builder: (context, model, _) {
         Size mediaQuery = MediaQuery.of(context).size;
         return Container(
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: tealish, width: 2))),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: tealish.withOpacity(0.3), width: 1)),
+          ),
           height: mediaQuery.height * 0.062,
           width: mediaQuery.width,
           child: Row(
@@ -521,7 +529,7 @@ class ScrollContainer extends StatelessWidget {
                   // Number of the day in the schedule
                   child: Text(
                     "${capitalizeFirstLetter(AppLocalizations.of(context)?.day ?? "Day")}: ${index + 1}",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black),
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF1D1D1F)),
                   ),
                 ),
               ),
@@ -581,7 +589,7 @@ class MapButton extends StatelessWidget {
     return Consumer2<SchedulePageViewModel, ControllerPageBoardAndItineraryModel>(
       builder: (context, model, controllerPageBoardAndItineraryModel, _) {
         return Container(
-          height: 50,
+          height: 44,
           child: Row(
             children: [
               Flexible(
@@ -595,7 +603,8 @@ class MapButton extends StatelessWidget {
                   child: TextButton(
                     style: TextButton.styleFrom(
                       backgroundColor: viridian,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -616,7 +625,7 @@ class MapButton extends StatelessWidget {
                             alignment: Alignment.center,
                             child: Text(
                               AppLocalizations.of(context)?.mapText ?? "Map",
-                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
                             ),
                           ),
                         ),

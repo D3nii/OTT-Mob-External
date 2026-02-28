@@ -26,18 +26,15 @@ class CarouselExperiencesImages extends StatelessWidget {
                 return ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: experience.imageUrls.length,
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    separatorBuilder: (_, __) => Container(
-                          width: 7,
-                          height: 1,
-                        ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (BuildContext ctxt, int index) {
                       Map<String, Object> value = {'experience': experience, 'index': index};
                       return OpenContainer(
                         openElevation: 0,
                         closedElevation: 0,
                         closedColor: Colors.transparent,
-                        closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                        closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                         openBuilder: (context, _) => Provider<Map<String, Object>>.value(
                           key: ValueKey(experience.imageUrls[index]),
                           value: value,
@@ -47,11 +44,11 @@ class CarouselExperiencesImages extends StatelessWidget {
                           decoration: BoxDecoration(
                               color: grey125Color,
                               borderRadius: BorderRadius.all(
-                                Radius.circular(10),
+                                Radius.circular(12),
                               )),
                           width: MediaQuery.of(context).size.width * 0.4,
                           child: ClipRRect(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
                             child: InkWell(
                               child: Image.network(
                                 experience.imageUrls[index],

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:onetwotrail/l10n/app_localizations.dart';
 import 'package:onetwotrail/repositories/models/experience.dart';
 import 'package:onetwotrail/repositories/viewModels/images_carrousel_widget_model.dart';
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
-import 'package:onetwotrail/ui/widgets/cupertino_back_button.dart';
 import 'package:provider/provider.dart';
 
 class ImagesCarrouselWidget extends StatelessWidget {
@@ -122,12 +120,21 @@ class _AppBarContainerForImages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Size mediaQuery = MediaQuery.of(context).size;
-    return Padding(
-      padding: EdgeInsets.only(left: mediaQuery.width * 0.05, top: mediaQuery.height * 0.07),
-      child: CupertinoBackButton(
-        label: AppLocalizations.of(context)?.backText ?? 'Back',
-        color: Colors.white,
-        onPressed: () => Navigator.of(context).pop(),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: EdgeInsets.only(left: mediaQuery.width * 0.05, top: 8),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 28),
+            onPressed: () => Navigator.of(context).pop(),
+            padding: const EdgeInsets.all(4),
+            style: IconButton.styleFrom(
+              minimumSize: const Size(44, 44),
+            ),
+          ),
+        ),
       ),
     );
   }

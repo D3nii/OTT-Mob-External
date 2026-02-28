@@ -135,6 +135,32 @@ class HomeModel extends BaseModel {
     currentTab = selectedIndex;
   }
 
+  static const double _scrollToTopThreshold = 200.0;
+
+  bool get showScrollToTopButton {
+    if (_currentTab == 0 && discoverScrollController.hasClients) {
+      return discoverScrollController.positions.isNotEmpty &&
+          discoverScrollController.offset > _scrollToTopThreshold;
+    }
+    if (_currentTab == 2 && profileScrollController.hasClients) {
+      return profileScrollController.positions.isNotEmpty &&
+          profileScrollController.offset > _scrollToTopThreshold;
+    }
+    return false;
+  }
+
+  void scrollToTop() {
+    if (_currentTab == 0 && discoverScrollController.hasClients) {
+      discoverScrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
+      );
+    } else if (_currentTab == 2 && profileScrollController.hasClients) {
+      scrollProfileToTop();
+    }
+  }
+
   void _updateDiscoverScrollState() {
     if (discoverScrollController.position.pixels < 0) {
       return;
@@ -145,6 +171,7 @@ class HomeModel extends BaseModel {
       _showTabBar();
     }
     _discoverScrollPosition = discoverScrollController.position.pixels;
+    notifyListeners();
   }
 
   void _updateMyTrailsScrollState() {
@@ -157,6 +184,7 @@ class HomeModel extends BaseModel {
       _showTabBar();
     }
     _myTrailsScrollPosition = myTrailsScrollController.position.pixels;
+    notifyListeners();
   }
 
   void _updateProfileScrollState() {
@@ -169,6 +197,7 @@ class HomeModel extends BaseModel {
       _showTabBar();
     }
     _profileScrollPosition = profileScrollController.position.pixels;
+    notifyListeners();
   }
 
   void _showTabBar() {

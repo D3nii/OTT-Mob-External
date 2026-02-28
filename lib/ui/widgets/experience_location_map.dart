@@ -44,7 +44,7 @@ class ExperienceLocationMap extends StatelessWidget {
     return Column(
       children: [
         Container(
-          height: 160,
+          height: 180,
           width: double.infinity,
           color: grey125Color,
           child: GestureDetector(

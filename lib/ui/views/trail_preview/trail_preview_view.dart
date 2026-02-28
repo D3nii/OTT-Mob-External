@@ -40,40 +40,42 @@ class TrailPreviewView extends StatelessWidget {
         return PreviewTrailModel(trailService, profileService)..initState(trail);
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF5F5F7),
         body: Column(
           children: [
             AppBarGenerateContainer(),
             // Trail name and description section
             Consumer<PreviewTrailModel>(
               builder: (context, model, _) => Container(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       model.currentTrailPreview.name,
-                      style: TextStyle(
-                        fontFamily: "Poppins",
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1D1D1F),
+                        letterSpacing: -0.4,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 6),
-                    Text(
-                      model.currentTrailPreview.description ?? '',
-                      style: TextStyle(
-                        fontFamily: "Poppins",
-                        fontSize: 14,
-                        fontWeight: FontWeight.w300,
-                        color: Color(0xFF666666),
+                    if ((model.currentTrailPreview.description ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        model.currentTrailPreview.description ?? '',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xFF6E6E73),
+                          height: 1.4,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -109,6 +111,20 @@ class AppBarGenerateContainer extends StatelessWidget {
                 child: Image.asset(
                   'assets/main_filter/appbar_background_image.png',
                   fit: BoxFit.fill,
+                ),
+              ),
+              Container(
+                height: mediaQuery.height * 0.13,
+                width: mediaQuery.width,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.3),
+                    ],
+                  ),
                 ),
               ),
               Align(
@@ -178,36 +194,33 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                   children: <Widget>[
                     model.state != ViewState.Busy && !model.showErrorStatus
                         ? ListView(
-                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                             children: <Widget>[
-                              UIHelper.verticalSpace(12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: Text(
-                                  'Experiences',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5,
-                                  ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Experiences',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1D1D1F),
+                                  letterSpacing: -0.4,
                                 ),
                               ),
-                              UIHelper.verticalSpace(10),
+                              const SizedBox(height: 16),
                               Container(
-                                padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-                                margin: const EdgeInsets.all(0),
+                                padding: EdgeInsets.zero,
+                                margin: EdgeInsets.zero,
                                 width: double.maxFinite,
                                 child: GridView.builder(
-                                  padding: EdgeInsets.fromLTRB(0, 0, 0, 6),
-                                  physics: NeverScrollableScrollPhysics(),
+                                  padding: EdgeInsets.zero,
+                                  physics: const NeverScrollableScrollPhysics(),
                                   itemCount: experienceCount,
                                   shrinkWrap: true,
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 2,
-                                      crossAxisSpacing: 14.0,
-                                      mainAxisSpacing: 14.0,
-                                      mainAxisExtent: 260),
+                                      crossAxisSpacing: 12.0,
+                                      mainAxisSpacing: 12.0,
+                                      mainAxisExtent: 240),
                                   itemBuilder: (context, index) {
                                     // Get the max size from the context
                                     var width = MediaQuery.of(context).size.width / 2 - 14;
@@ -233,30 +246,33 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                       },
                                       showAddToTrailButton: true,
                                       showMoreOptionsButton: false,
+                                      backgroundColor: const Color(0xFFF5F5F7),
                                     );
                                   },
                                 ),
                               ),
                               if (model.currentTrailPreview.experiences.length > 6 && !_showAllExperiences) ...[
                                 Padding(
-                                  padding: EdgeInsets.only(top: 4, bottom: 12),
+                                  padding: const EdgeInsets.only(top: 8, bottom: 16),
                                   child: Center(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
-                                        backgroundColor: primaryColor,
-                                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                                        backgroundColor: tealish,
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
                                       ),
                                       onPressed: () {
                                         setState(() {
                                           _showAllExperiences = true;
                                         });
                                       },
-                                      child: Text(
+                                      child: const Text(
                                         'Show More',
                                         style: TextStyle(
-                                          fontFamily: "Poppins",
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -266,24 +282,26 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                               ],
                               if (model.currentTrailPreview.experiences.length > 6 && _showAllExperiences) ...[
                                 Padding(
-                                  padding: EdgeInsets.only(top: 4, bottom: 12),
+                                  padding: const EdgeInsets.only(top: 8, bottom: 16),
                                   child: Center(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
-                                        backgroundColor: primaryColor,
-                                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                                        backgroundColor: tealish,
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
                                       ),
                                       onPressed: () {
                                         setState(() {
                                           _showAllExperiences = false;
                                         });
                                       },
-                                      child: Text(
+                                      child: const Text(
                                         'Show Less',
                                         style: TextStyle(
-                                          fontFamily: "Poppins",
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -291,24 +309,23 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                   ),
                                 ),
                               ],
-                              UIHelper.verticalSpace(8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: Text(
-                                  AppLocalizations.of(context)!.experiencesOnTheMap,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5,
-                                  ),
+                              const SizedBox(height: 24),
+                              Text(
+                                AppLocalizations.of(context)!.experiencesOnTheMap,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1D1D1F),
+                                  letterSpacing: -0.4,
                                 ),
                               ),
-                              UIHelper.verticalSpace(10),
-                              Container(
-                                height: 200,
-                                color: Colors.black26,
-                                child: GoogleMap(
+                              const SizedBox(height: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  height: 200,
+                                  color: Colors.black26,
+                                  child: GoogleMap(
                                     initialCameraPosition: CameraPosition(
                                       target: LatLng(
                                           model.currentTrailPreview.latitude, model.currentTrailPreview.longitude),
@@ -317,21 +334,19 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                     markers: model.getMarkers(trail: model.currentTrailPreview),
                                     gestureRecognizers: Set()
                                       ..add(Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()))),
-                              ),
-                              UIHelper.verticalSpace(20),
-                              SizedBox(
-                                width: double.infinity,
-                                child: Text(
-                                  'Related Experiences',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black,
-                                    letterSpacing: 0.5,
-                                  ),
                                 ),
                               ),
-                              UIHelper.verticalSpace(10),
+                              const SizedBox(height: 24),
+                              const Text(
+                                'Related Experiences',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1D1D1F),
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
                               SizedBox(
                                 height: 260,
                                 child: ListView.builder(
@@ -345,7 +360,7 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                     var itemCount = model.currentTrailPreview.experiences.length > 5 ? 5 : model.currentTrailPreview.experiences.length;
                                     return Container(
                                       margin: EdgeInsets.only(
-                                        right: index == itemCount - 1 ? 14 : 12,
+                                        right: index == itemCount - 1 ? 0 : 12,
                                       ),
                                       child: experienceItem(
                                         context: context,
@@ -364,6 +379,7 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                         },
                                         showAddToTrailButton: false,
                                         showMoreOptionsButton: false,
+                                        backgroundColor: const Color(0xFFF5F5F7),
                                       ),
                                     );
                                   },
@@ -407,81 +423,68 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                         ? Align(
                             alignment: Alignment.bottomCenter,
                             child: Container(
-                              padding: EdgeInsets.fromLTRB(31, 28, 20, 40),
-                              color: Colors.white,
-                              child: Row(
-                                children: <Widget>[
-                                  // todo: restore after share reimplementation
-                                  // IconButton(
-                                  //   icon: ImageIcon(
-                                  //     AssetImage("assets/icons/send_icon.png"),
-                                  //     size: 42,
-                                  //     color: primaryColor,
-                                  //   ),
-                                  //   color: primaryColor,
-                                  //   onPressed: () {},
-                                  // ),
-                                  // Container(
-                                  //   child: UIHelper.horizontalSpace(35),
-                                  //   height: 50,
-                                  // ),
-                                  Expanded(
-                                    child: Container(
-                                      height: 50,
-                                      child: TextButton(
-                                        style: TextButton.styleFrom(
-                                          backgroundColor: primaryColor,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(30.0),
-                                          ),
-                                        ),
-                                        child: model.addRequested
-                                            ? Center(
-                                                child: SizedBox(
-                                                height: 25,
-                                                width: 25,
-                                                child: CircularProgressIndicator(
-                                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                                              ))
-                                            : Row(
-                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: <Widget>[
-                                                    Container(
-                                                      alignment: Alignment.centerRight,
-                                                      child: Text(
-                                                        AppLocalizations.of(context)!.addToMyTrailsText,
-                                                        style: TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight: FontWeight.w500,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    UIHelper.horizontalSpace(12),
-                                                  ]),
-                                        onPressed: () async {
-                                          return runBasedOnUser(context, onRegistered: () async {
-                                            if (model.addRequested) {
-                                              return;
-                                            }
-                                            bool success = await model.addCurrentTrailToCollection(context);
-                                            if (!success && model.error) {
-                                              final snackBar = SnackBar(
-                                                  content: Text(
-                                                      AppLocalizations.of(context)!.somethingWentWrongRequestText));
-                                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                              model.error = !model.error;
-                                            }
-                                          });
-                                        },
-                                      ),
-                                    ),
+                              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, -2),
                                   ),
                                 ],
                               ),
+                              child: SafeArea(
+                                top: false,
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                      backgroundColor: tealish,
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: model.addRequested
+                                        ? const Center(
+                                            child: SizedBox(
+                                              height: 22,
+                                              width: 22,
+                                              child: CircularProgressIndicator(
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                              ),
+                                            ),
+                                          )
+                                        : Text(
+                                            AppLocalizations.of(context)!.addToMyTrailsText,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                    onPressed: () async {
+                                      return runBasedOnUser(context, onRegistered: () async {
+                                        if (model.addRequested) {
+                                          return;
+                                        }
+                                        bool success = await model.addCurrentTrailToCollection(context);
+                                        if (!success && model.error) {
+                                          final snackBar = SnackBar(
+                                            content: Text(
+                                                AppLocalizations.of(context)!.somethingWentWrongRequestText),
+                                          );
+                                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                          model.error = !model.error;
+                                        }
+                                      });
+                                    },
+                                  ),
+                              ),
                             ),
-                          )
+                          ),
+                        )
                         : Container(),
                     model.showTrailAdded
                         ? AddedToTrail(

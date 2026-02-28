@@ -5,6 +5,7 @@ import 'package:onetwotrail/repositories/services/application_api.dart';
 import 'package:onetwotrail/repositories/services/trail_service.dart';
 import 'package:onetwotrail/repositories/viewModels/base_widget_model.dart';
 import 'package:onetwotrail/repositories/viewModels/home_model.dart';
+import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/widgets/base_widget.dart';
 import 'package:onetwotrail/ui/widgets/bottom_tab_bar.dart';
 import 'package:onetwotrail/utils/dialog_to_show/dialog_to_show.dart';
@@ -65,6 +66,35 @@ class HomeView extends BaseWidget {
                                         )
                                       : Container();
                                 }),
+                            Positioned(
+                              right: 16,
+                              bottom: 90,
+                              child: AnimatedOpacity(
+                                opacity: model.showScrollToTopButton ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: IgnorePointer(
+                                  ignoring: !model.showScrollToTopButton,
+                                  child: Material(
+                                    color: Colors.white,
+                                    elevation: 2,
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: InkWell(
+                                      onTap: model.scrollToTop,
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: SizedBox(
+                                        width: 36,
+                                        height: 36,
+                                        child: Icon(
+                                          Icons.keyboard_arrow_up,
+                                          size: 24,
+                                          color: tealish,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                             DialogToShow(),
                           ])
                         : Container(),

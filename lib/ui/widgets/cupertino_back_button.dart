@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// iPhone-style back button: chevron + label, matching Cupertino design.
+/// iPhone-style back button: chevron icon only.
 class CupertinoBackButton extends StatelessWidget {
   const CupertinoBackButton({
     Key? key,
@@ -21,24 +21,10 @@ class CupertinoBackButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       minSize: 0,
       onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            CupertinoIcons.back,
-            size: 22,
-            color: effectiveColor,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w400,
-              color: effectiveColor,
-            ),
-          ),
-        ],
+      child: Icon(
+        CupertinoIcons.back,
+        size: 22,
+        color: effectiveColor,
       ),
     );
   }

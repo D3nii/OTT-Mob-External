@@ -57,7 +57,7 @@ class TrailView extends BaseWidget {
                     builder: (context, model, _) {
                       Size mediaQuery = MediaQuery.of(context).size;
                       return Scaffold(
-                        backgroundColor: Colors.white,
+                        backgroundColor: const Color(0xFFF5F5F7),
                         body: Padding(
                           padding: const EdgeInsets.all(0),
                           child: SingleChildScrollView(

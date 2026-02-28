@@ -28,31 +28,29 @@ Column experienceHorizontalList({
   required double spaceBetweenExperiences,
   required String title,
   required double titleFontSize,
+  Color? itemBackgroundColor,
 }) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      SizedBox(
-        width: double.infinity,
-        child: Container(
-          padding: EdgeInsets.only(
-            left: paddingLeft,
-            right: paddingRight,
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontFamily: "Poppins",
-              fontWeight: FontWeight.w700,
-              fontSize: titleFontSize,
-              color: Colors.black,
-            ),
+      Padding(
+        padding: EdgeInsets.only(
+          left: paddingLeft,
+          right: paddingRight,
+        ),
+        child: Text(
+          title,
+          textAlign: TextAlign.left,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: titleFontSize,
+            color: const Color(0xFF1D1D1F),
+            letterSpacing: -0.4,
           ),
         ),
       ),
-      UIHelper.verticalSpace(8),
+      UIHelper.verticalSpace(12),
       Container(
         width: double.infinity,
         child: NotificationListener<OverscrollIndicatorNotification>(
@@ -75,6 +73,7 @@ Column experienceHorizontalList({
               showAddToTrailButton: showAddToTrailButton,
               showMoreOptionsButton: showMoreOptionsButton,
               spaceBetweenExperiences: spaceBetweenExperiences,
+              itemBackgroundColor: itemBackgroundColor,
             ),
           ),
         ),
@@ -96,6 +95,7 @@ Widget experiencesRow({
   bool showAddToTrailButton = true,
   bool showMoreOptionsButton = true,
   required double spaceBetweenExperiences,
+  Color? itemBackgroundColor,
 }) {
   var horizontalSpace = () => SizedBox(
         width: spaceBetweenExperiences,
@@ -118,6 +118,7 @@ Widget experiencesRow({
             },
       showAddToTrailButton: showAddToTrailButton,
       showMoreOptionsButton: showMoreOptionsButton,
+      backgroundColor: itemBackgroundColor,
     ));
     children.add(horizontalSpace());
   }
@@ -142,13 +143,14 @@ Widget experienceItem({
   bool showMoreOptionsButton = true,
   required Function() onLongPress,
   required Function() onTap,
+  Color? backgroundColor,
 }) {
   return OpenContainer<bool>(
     transitionDuration: Duration(milliseconds: 500),
     transitionType: ContainerTransitionType.fade,
     tappable: false,
     closedElevation: 0,
-    closedColor: Colors.white,
+    closedColor: backgroundColor ?? Colors.white,
     openBuilder: (context, closedContainer) {
       return MultiProvider(
         providers: [
@@ -231,7 +233,7 @@ Widget experienceItem({
                     ),
                     fit: BoxFit.cover,
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
                 child: Stack(
                   children: [
@@ -251,32 +253,26 @@ Widget experienceItem({
                 ),
               ),
               UIHelper.verticalSpace(4),
-              Container(
-                child: Text(
-                  experience.name,
-                  textAlign: TextAlign.left,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: "Poppins",
-                    fontWeight: FontWeight.w500,
-                    fontSize: experienceNameFontSize,
-                    color: Colors.black,
-                  ),
+              Text(
+                experience.name,
+                textAlign: TextAlign.left,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: experienceNameFontSize,
+                  color: const Color(0xFF1D1D1F),
                 ),
               ),
-              Container(
-                child: Text(
-                  experience.destinationName,
-                  textAlign: TextAlign.left,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: "Poppins",
-                    fontWeight: FontWeight.w300,
-                    fontSize: experienceDestinationFontSize,
-                    color: Colors.black,
-                  ),
+              Text(
+                experience.destinationName,
+                textAlign: TextAlign.left,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: experienceDestinationFontSize,
+                  color: const Color(0xFF6E6E73),
                 ),
               ),
             ],

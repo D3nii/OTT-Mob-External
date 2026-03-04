@@ -233,6 +233,8 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
+              iconSize: 32,
+              color: _currentDayIndex > 0 ? tealish : Colors.grey[400],
               icon: const Icon(Icons.chevron_left),
               onPressed: _currentDayIndex > 0
                   ? () {
@@ -251,6 +253,8 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
               ),
             ),
             IconButton(
+              iconSize: 32,
+              color: _currentDayIndex < sortedKeys.length - 1 ? tealish : Colors.grey[400],
               icon: const Icon(Icons.chevron_right),
               onPressed: _currentDayIndex < sortedKeys.length - 1
                   ? () {

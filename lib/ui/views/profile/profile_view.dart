@@ -1,3 +1,4 @@
+// ui/views/profile/profile_view.dart
 import 'dart:convert';
 
 import 'package:auto_size_text/auto_size_text.dart';
@@ -363,9 +364,8 @@ Widget _createTrailWidget(BuildContext context, Trail trail) {
           child: Column(
             children: [
               ThreeSquares(
-                mainImage: trail.imageProviders[0],
-                secondaryTopImage: trail.imageProviders[1],
-                secondaryBottomImage: trail.imageProviders[2],
+                // supply all available images; new constructor handles arbitrary count
+                images: trail.imageProviders,
                 mainAction: (BuildContext context) => Provider.value(value: trail, child: TrailView()),
                 height: constraints.maxHeight - 48 - 8,
               ),

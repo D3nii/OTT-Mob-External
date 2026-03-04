@@ -1,3 +1,4 @@
+// repositories/models/trail.dart
 import 'package:flutter/cupertino.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:onetwotrail/repositories/enums/trail_status.dart';
@@ -57,7 +58,10 @@ class Trail {
     var imageUrls = <String>[];
     for (Experience value in experiences) {
       if (value.imageUrls.isNotEmpty) {
-        imageUrls.add(value.imageUrls.first);
+        // include all images from each experience so the trail shows all available images
+        for (var img in value.imageUrls) {
+          imageUrls.add(img);
+        }
       }
     }
     for (String url in imageUrls) {

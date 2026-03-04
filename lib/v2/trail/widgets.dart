@@ -53,9 +53,7 @@ class TrailWidgetFactory {
       headerDescription: trail.description,
       summaryTitleText: footerTitle,
       summaryBodyText: footerBody,
-      mainImage: trail.imageProviders[0],
-      secondaryTopImage: trail.imageProviders[1],
-      secondaryBottomImage: trail.imageProviders[2],
+      images: trail.imageProviders,
       mainAction: (BuildContext context) => Provider.value(value: trail, child: TrailPreviewView()),
       padding: EdgeInsets.only(left: 16, right: 16),
     );

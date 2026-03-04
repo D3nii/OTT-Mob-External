@@ -1,3 +1,5 @@
+// ui/views/experience_info.dart
+import 'dart:convert';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -458,6 +460,36 @@ class ContainerOfListViewBody extends StatelessWidget {
                     ),
                   ),
                 if (model.experience.description.isNotEmpty) const SizedBox(height: 20),
+                // Contact information and schedule
+                ContactInfo(model.experience),
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: tealish,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.schedule, size: 18, color: Colors.white),
+                        UIHelper.horizontalSpace(8),
+                        Text(
+                          'Show Schedule',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => TimetablesModal(model.experience.visitTime),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
                 experienceHorizontalList(
                   context: context,
                   experiences: model.experience.related,
@@ -636,6 +668,139 @@ class ExperienceFacilitiesListView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class ContactInfo extends StatelessWidget {
+  final Experience experience;
+
+  const ContactInfo(this.experience, {Key? key}) : super(key: key);
+
+  String _truncate(String value, [int limit = 20]) {
+    if (value.length <= limit) return value;
+    return value.substring(0, limit) + '...';
+  }
+
+  Widget _buildRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20),
+          SizedBox(width: 15),
+          Expanded(
+            child: Text(
+              _truncate(text),
+              style: TextStyle(fontSize: 12, color: Color(0xFF1D1D1F)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> rows = [];
+    if (experience.phone.isNotEmpty) rows.add(_buildRow(Icons.phone, experience.phone));
+    if (experience.email.isNotEmpty) rows.add(_buildRow(Icons.email, experience.email));
+    if (experience.website.isNotEmpty) rows.add(_buildRow(Icons.language, experience.website));
+    if (experience.whatsApp.isNotEmpty) rows.add(_buildRow(Icons.message, experience.whatsApp));
+    if (experience.facebook.isNotEmpty) rows.add(_buildRow(Icons.facebook, experience.facebook));
+    if (experience.instagram.isNotEmpty) rows.add(_buildRow(Icons.camera_alt, experience.instagram));
+
+    if (rows.isEmpty) return Container();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: rows,
+      ),
+    );
+  }
+}
+
+class TimetablesModal extends StatelessWidget {
+  final String visitTimeRaw;
+
+  const TimetablesModal(this.visitTimeRaw, {Key? key}) : super(key: key);
+
+  Map<String, String> _parseVisitTime(String raw) {
+    if (raw.trim().isEmpty) return {};
+    try {
+      final decoded = json.decode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return decoded.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final schedule = _parseVisitTime(visitTimeRaw);
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 350),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Opening hours',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              Column(
+                children: days.map((day) {
+                  final hours = schedule[day.toLowerCase()] ?? schedule[day] ?? '';
+                  final display = hours.isNotEmpty ? hours : 'Closed';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(day, style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text(display, style: TextStyle(color: Color(0xFF6E6E73))),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.center,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFF5F5F7),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.close, size: 16),
+                      SizedBox(width: 8),
+                      Text('Close'),
+                    ],
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

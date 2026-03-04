@@ -173,9 +173,7 @@ class ItineraryMealSleepBlock extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isMeal
-                      ? 'Meal: $name'
-                      : 'Sleep: $name',
+                  isMeal ? 'Meal: $name' : 'Sleep: $name',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -203,72 +201,62 @@ class ItineraryMealSleepBlock extends StatelessWidget {
 
 class ItineraryTransitBlock extends StatelessWidget {
   final String transportType; // 'car' or 'walking'
-  final bool hideLine;
 
   const ItineraryTransitBlock({
     Key? key,
     this.transportType = 'car',
-    this.hideLine = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 12,
-              width: 1.5,
-              color: Colors.grey[300],
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey[200]!),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey[200]!),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    transportType == 'car'
-                        ? Icons.directions_car_rounded
-                        : Icons.directions_walk_rounded,
-                    size: 16,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  transportType == 'car'
+                      ? Icons.directions_car_rounded
+                      : Icons.directions_walk_rounded,
+                  size: 16,
+                  color: Colors.grey[600],
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Transit',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                     color: Colors.grey[600],
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Transit',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Container(
-              height: 12,
-              width: 1.5,
-              color: Colors.grey[300],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 1,
+              color: Colors.grey[200],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

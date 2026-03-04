@@ -197,17 +197,29 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
     sortedExperiences.sort((a, b) => a.visitStartTime.compareTo(b.visitStartTime));
 
     Map<int, List<Experience>> daysMap = {};
-    int currentDayCount = 0;
     
-    // Group them: we group by the actual day index instead of timestamp diffing 
-    // that might incorrectly collapse due to default timestamps
-    for (int i = 0; i < sortedExperiences.length; i++) {
+    // Determine number of days from total estimated time, or default to 1
+    int estimatedDays = model.currentTrailPreview.itineraryEstimatedTime.inDays;
+    if (estimatedDays < 1) {
+        estimatedDays = 1;
+    }
+
+    int totalExperiences = sortedExperiences.length;
+    // How many experiences per day roughly?
+    double experiencesPerDay = totalExperiences / estimatedDays;
+    if (experiencesPerDay < 1) experiencesPerDay = 1.0;
+
+    for (int i = 0; i < totalExperiences; i++) {
         var exp = sortedExperiences[i];
         
-        // As a simple heuristic if dates are all messed up: 
-        // Group them sequentially (e.g. max 5 experiences per day) or use custom logic
-        int dayKey = (i / 5).floor(); 
+        // Group them sequentially according to the estimated duration of the whole trail
+        int dayKey = (i / experiencesPerDay).floor(); 
         
+        // Safety cap so we don't exceed the estimated days (0-indexed)
+        if (dayKey >= estimatedDays) {
+            dayKey = estimatedDays - 1;
+        }
+
         daysMap.putIfAbsent(dayKey, () => []).add(exp);
     }
 

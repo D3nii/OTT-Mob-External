@@ -58,6 +58,15 @@ class PreviewTrailModel extends BaseModel {
 
   Duration get duration => _duration;
 
+  bool _isItineraryView = false;
+
+  bool get isItineraryView => _isItineraryView;
+
+  set isItineraryView(bool value) {
+    _isItineraryView = value;
+    notifyListeners();
+  }
+
   set error(bool value) {
     _error = value;
     notifyListeners();

@@ -24,6 +24,8 @@ import 'package:onetwotrail/v2/event/event_name.dart';
 import 'package:onetwotrail/v2/event/event_source_view.dart';
 import 'package:onetwotrail/v2/event/event_tag.dart';
 import 'package:provider/provider.dart';
+import 'package:onetwotrail/repositories/models/experience.dart';
+import 'package:onetwotrail/ui/views/trail_preview/itinerary_widgets.dart';
 
 import '../../widgets/circular_progress_bar.dart';
 import '../../widgets/estimated_time_bar.dart';
@@ -183,6 +185,168 @@ class TrailPreviewViewBody extends StatefulWidget {
 
 class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
   bool _showAllExperiences = false;
+  int? _selectedExperienceId;
+  int _currentDayIndex = 0;
+
+  List<Widget> _buildItineraryList(PreviewTrailModel model) {
+    List<Widget> itineraryList = [];
+    if (model.currentTrailPreview.experiences.isEmpty) return itineraryList;
+
+    final startEpoch = model.currentTrailPreview.experiences.first.visitStartTime;
+    final startDate = DateTime(startEpoch.year, startEpoch.month, startEpoch.day);
+
+    Map<int, List<Experience>> daysMap = {};
+    for (var exp in model.currentTrailPreview.experiences) {
+      final eventDate = DateTime(exp.visitStartTime.year, exp.visitStartTime.month, exp.visitStartTime.day);
+      int dayKey = eventDate.difference(startDate).inDays;
+      if (dayKey < 0) dayKey = 0;
+      daysMap.putIfAbsent(dayKey, () => []).add(exp);
+    }
+
+    var sortedKeys = daysMap.keys.toList()..sort();
+    if (sortedKeys.isEmpty) return itineraryList;
+
+    // Ensure _currentDayIndex is within bounds
+    if (_currentDayIndex >= sortedKeys.length) {
+      _currentDayIndex = sortedKeys.length - 1;
+    }
+    if (_currentDayIndex < 0) {
+      _currentDayIndex = 0;
+    }
+
+    int currentDayKey = sortedKeys[_currentDayIndex];
+    int dayNumber = currentDayKey + 1;
+    List<Experience> dayEvents = daysMap[currentDayKey]!;
+
+    itineraryList.add(
+      Padding(
+        padding: const EdgeInsets.only(top: 24, bottom: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: _currentDayIndex > 0
+                  ? () {
+                      setState(() {
+                        _currentDayIndex--;
+                      });
+                    }
+                  : null,
+            ),
+            Text(
+              'Day $dayNumber',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1D1D1F),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.chevron_right),
+              onPressed: _currentDayIndex < sortedKeys.length - 1
+                  ? () {
+                      setState(() {
+                        _currentDayIndex++;
+                      });
+                    }
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    dayEvents.sort((Experience a, Experience b) => a.visitStartTime.compareTo(b.visitStartTime));
+
+    bool hasVisit9amTo12pm = dayEvents.any((Experience e) => e.visitStartTime.hour >= 9 && e.visitStartTime.hour < 12);
+    bool hasVisit12pmTo8pm = dayEvents.any((Experience e) => e.visitStartTime.hour >= 12 && e.visitStartTime.hour < 20);
+
+    List<dynamic> itemsToRender = List.from(dayEvents);
+
+    // if (hasVisit9amTo12pm) {
+    //   int insertIndex = itemsToRender.indexWhere((e) => e is Experience && (e as Experience).visitStartTime.hour >= 9);
+    //   if (insertIndex != -1) {
+    //     itemsToRender.insert(insertIndex, {'type': 'meal', 'name': 'Breakfast', 'duration': '30 min'});
+    //   }
+    // }
+
+    // if (hasVisit12pmTo8pm) {
+    //   int insertIndex = itemsToRender.indexWhere((e) => e is Experience && (e as Experience).visitStartTime.hour >= 12);
+    //   if (insertIndex != -1) {
+    //     itemsToRender.insert(insertIndex, {'type': 'meal', 'name': 'Lunch', 'duration': '30 min'});
+    //   }
+    // }
+
+    // int dinnerIndex = itemsToRender.indexWhere((e) => e is Experience && (e as Experience).visitStartTime.hour >= 20);
+    // if (dinnerIndex != -1) {
+    //   itemsToRender.insert(dinnerIndex, {'type': 'meal', 'name': 'Dinner', 'duration': '30 min'});
+    // } else {
+    //   itemsToRender.add({'type': 'meal', 'name': 'Dinner', 'duration': '30 min'});
+    // }
+
+    // itemsToRender.add({'type': 'sleep', 'name': 'Sleep', 'duration': '8 hours'});
+
+    for (int j = 0; j < itemsToRender.length; j++) {
+      var item = itemsToRender[j];
+      bool isNextMealOrSleep = false;
+      if (j < itemsToRender.length - 1) {
+          var nextItem = itemsToRender[j + 1];
+          if ((nextItem is Map && nextItem['type'] == 'meal') || (nextItem is Map && nextItem['type'] == 'sleep')) {
+              isNextMealOrSleep = true;
+          } else if (nextItem is Experience && (nextItem.accommodation || nextItem.foodDrinks)) {
+              isNextMealOrSleep = true;
+          }
+      }
+
+      if (item is Experience) {
+        if (item.accommodation || item.foodDrinks) {
+          itineraryList.add(ItineraryMealSleepBlock(
+            experience: item,
+            isMeal: item.foodDrinks,
+          ));
+        } else {
+          itineraryList.add(ItineraryExperienceCard(
+            experience: item,
+            isSelected: _selectedExperienceId == item.experienceId,
+            onTap: () {
+              setState(() {
+                _selectedExperienceId = item.experienceId;
+              });
+            },
+          ));
+        }
+      } else if (item is Map) {
+        if (item['type'] == 'meal') {
+          itineraryList.add(ItineraryMealSleepBlock(
+            isMeal: true,
+            customName: item['name'],
+            customTitle: item['name'],
+            customDescription: '${item['duration']} duration',
+          ));
+        } else if (item['type'] == 'sleep') {
+          itineraryList.add(ItineraryMealSleepBlock(
+            isMeal: false,
+            customName: item['name'],
+            customTitle: item['name'],
+            customDescription: '${item['duration']} duration',
+          ));
+        }
+      }
+
+      bool isCurrentMealOrSleep = false;
+      if ((item is Map && item['type'] == 'meal') || (item is Map && item['type'] == 'sleep')) {
+          isCurrentMealOrSleep = true;
+      } else if (item is Experience && (item.accommodation || item.foodDrinks)) {
+          isCurrentMealOrSleep = true;
+      }
+
+      if (j < itemsToRender.length - 1 && !isCurrentMealOrSleep && !isNextMealOrSleep) {
+        itineraryList.add(const ItineraryTransitBlock());
+      }
+    }
+    return itineraryList;
+  }
 
   @override
   Widget build(BuildContext parentContext) {
@@ -203,263 +367,378 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                 child: Stack(
                   children: <Widget>[
                     model.state != ViewState.Busy && !model.showErrorStatus
-                        ? ListView(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                            children: <Widget>[
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Experiences',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1D1D1F),
-                                  letterSpacing: -0.4,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: EdgeInsets.zero,
-                                margin: EdgeInsets.zero,
-                                width: double.maxFinite,
-                                child: GridView.builder(
-                                  padding: EdgeInsets.zero,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: experienceCount,
-                                  shrinkWrap: true,
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          crossAxisSpacing: 12.0,
-                                          mainAxisSpacing: 12.0,
-                                          mainAxisExtent: 240),
-                                  itemBuilder: (context, index) {
-                                    // Get the max size from the context
-                                    var width =
-                                        MediaQuery.of(context).size.width / 2 -
-                                            14;
-                                    var height =
-                                        MediaQuery.of(context).size.width / 2 -
-                                            28;
-                                    // Return the experience item
-                                    var experience = model
-                                        .currentTrailPreview.experiences[index];
-                                    return experienceItem(
-                                      context: context,
-                                      experience: experience,
-                                      height: height,
-                                      width: width,
-                                      experienceNameFontSize: 12,
-                                      experienceDestinationFontSize: 10,
-                                      onLongPress: doNothing,
-                                      onTap: () {
-                                        Provider.of<EventClient>(context,
-                                                listen: false)
-                                            .createEvent(Event(
-                                                EventName
-                                                    .experience_profile_viewed,
-                                                EventSourceView
-                                                    .trail_experience,
-                                                {
-                                              EventTag.experience_id: experience
-                                                  .experienceId
-                                                  .toString(),
-                                              EventTag.experience_name:
-                                                  experience.name,
-                                              EventTag.trail_id: model
-                                                  .currentTrailPreview.id
-                                                  .toString(),
-                                              EventTag.trail_name: model
-                                                  .currentTrailPreview.name,
-                                            }));
-                                      },
-                                      showAddToTrailButton: true,
-                                      showMoreOptionsButton: false,
-                                      backgroundColor: const Color(0xFFF5F5F7),
-                                    );
-                                  },
-                                ),
-                              ),
-                              if (model.currentTrailPreview.experiences.length >
-                                      6 &&
-                                  !_showAllExperiences) ...[
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 8, bottom: 16),
-                                  child: Center(
-                                    child: TextButton(
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: tealish,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                        ? model.isItineraryView
+                            ? ListView(
+                                key: const PageStorageKey('itinerary_list'),
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Itinerary',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF1D1D1F),
+                                          letterSpacing: -0.5,
                                         ),
                                       ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _showAllExperiences = true;
-                                        });
+                                      Row(
+                                        children: [
+                                          TextButton(
+                                            onPressed: () {
+                                              model.isItineraryView = false;
+                                            },
+                                            child: Text(
+                                              'Show Overview',
+                                              style: TextStyle(
+                                                color: tealish,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      height: 250,
+                                      decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: GoogleMap(
+                                          initialCameraPosition: CameraPosition(
+                                            target: LatLng(
+                                                model.currentTrailPreview
+                                                    .latitude,
+                                                model.currentTrailPreview
+                                                    .longitude),
+                                          ),
+                                          onMapCreated: model.onTrailMapCreated,
+                                          markers: model.getMarkers(
+                                              trail: model.currentTrailPreview),
+                                          polylines: model.polylines,
+                                          gestureRecognizers: Set()
+                                            ..add(Factory<
+                                                    OneSequenceGestureRecognizer>(
+                                                () =>
+                                                    EagerGestureRecognizer()))),
+                                    ),
+                                  ),
+                                  ..._buildItineraryList(model),
+                                ],
+                              )
+                            : ListView(
+                                key: const PageStorageKey('overview_list'),
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                                children: <Widget>[
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Experiences',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1D1D1F),
+                                      letterSpacing: -0.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    padding: EdgeInsets.zero,
+                                    margin: EdgeInsets.zero,
+                                    width: double.maxFinite,
+                                    child: GridView.builder(
+                                      padding: EdgeInsets.zero,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: experienceCount,
+                                      shrinkWrap: true,
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 2,
+                                              crossAxisSpacing: 12.0,
+                                              mainAxisSpacing: 12.0,
+                                              mainAxisExtent: 240),
+                                      itemBuilder: (context, index) {
+                                        // Get the max size from the context
+                                        var width =
+                                            MediaQuery.of(context).size.width /
+                                                    2 -
+                                                14;
+                                        var height =
+                                            MediaQuery.of(context).size.width /
+                                                    2 -
+                                                28;
+                                        // Return the experience item
+                                        var experience = model
+                                            .currentTrailPreview
+                                            .experiences[index];
+                                        return experienceItem(
+                                          context: context,
+                                          experience: experience,
+                                          height: height,
+                                          width: width,
+                                          experienceNameFontSize: 12,
+                                          experienceDestinationFontSize: 10,
+                                          onLongPress: doNothing,
+                                          onTap: () {
+                                            Provider.of<EventClient>(context,
+                                                    listen: false)
+                                                .createEvent(Event(
+                                                    EventName
+                                                        .experience_profile_viewed,
+                                                    EventSourceView
+                                                        .trail_experience,
+                                                    {
+                                                  EventTag.experience_id:
+                                                      experience.experienceId
+                                                          .toString(),
+                                                  EventTag.experience_name:
+                                                      experience.name,
+                                                  EventTag.trail_id: model
+                                                      .currentTrailPreview.id
+                                                      .toString(),
+                                                  EventTag.trail_name: model
+                                                      .currentTrailPreview.name,
+                                                }));
+                                          },
+                                          showAddToTrailButton: true,
+                                          showMoreOptionsButton: false,
+                                          backgroundColor:
+                                              const Color(0xFFF5F5F7),
+                                        );
                                       },
-                                      child: const Text(
-                                        'Show More',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white,
+                                    ),
+                                  ),
+                                  if (model.currentTrailPreview.experiences
+                                              .length >
+                                          6 &&
+                                      !_showAllExperiences) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 8, bottom: 16),
+                                      child: Center(
+                                        child: TextButton(
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: tealish,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 24, vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _showAllExperiences = true;
+                                            });
+                                          },
+                                          child: const Text(
+                                            'Show More',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ],
-                              if (model.currentTrailPreview.experiences.length >
-                                      6 &&
-                                  _showAllExperiences) ...[
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 8, bottom: 16),
-                                  child: Center(
-                                    child: TextButton(
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: tealish,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _showAllExperiences = false;
-                                        });
-                                      },
-                                      child: const Text(
-                                        'Show Less',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white,
+                                  ],
+                                  if (model.currentTrailPreview.experiences
+                                              .length >
+                                          6 &&
+                                      _showAllExperiences) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 8, bottom: 16),
+                                      child: Center(
+                                        child: TextButton(
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: tealish,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 24, vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _showAllExperiences = false;
+                                            });
+                                          },
+                                          child: const Text(
+                                            'Show Less',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
+                                  ],
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    AppLocalizations.of(context)!
+                                        .experiencesOnTheMap,
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1D1D1F),
+                                      letterSpacing: -0.4,
+                                    ),
                                   ),
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              Text(
-                                AppLocalizations.of(context)!
-                                    .experiencesOnTheMap,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1D1D1F),
-                                  letterSpacing: -0.4,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  height: 200,
-                                  color: Colors.black26,
-                                  child: GoogleMap(
-                                      initialCameraPosition: CameraPosition(
-                                        target: LatLng(
-                                            model.currentTrailPreview.latitude,
-                                            model
-                                                .currentTrailPreview.longitude),
+                                  const SizedBox(height: 12),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      height: 200,
+                                      color: Colors.black26,
+                                      child: GoogleMap(
+                                          initialCameraPosition: CameraPosition(
+                                            target: LatLng(
+                                                model.currentTrailPreview
+                                                    .latitude,
+                                                model.currentTrailPreview
+                                                    .longitude),
+                                          ),
+                                          onMapCreated: model.onTrailMapCreated,
+                                          markers: model.getMarkers(
+                                              trail: model.currentTrailPreview),
+                                          polylines: model.polylines,
+                                          gestureRecognizers: Set()
+                                            ..add(Factory<
+                                                    OneSequenceGestureRecognizer>(
+                                                () =>
+                                                    EagerGestureRecognizer()))),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Center(
+                                    child: TextButton(
+                                      onPressed: () {
+                                        model.isItineraryView = true;
+                                      },
+                                      child: const Text(
+                                        'Show Itinerary',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
                                       ),
-                                      onMapCreated: model.onTrailMapCreated,
-                                      markers: model.getMarkers(
-                                          trail: model.currentTrailPreview),
-                                      polylines: model.polylines,
-                                      gestureRecognizers: Set()
-                                        ..add(Factory<
-                                                OneSequenceGestureRecognizer>(
-                                            () => EagerGestureRecognizer()))),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                'Related Experiences',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1D1D1F),
-                                  letterSpacing: -0.4,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                height: 260,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: EdgeInsets.zero,
-                                  itemCount: model.currentTrailPreview
-                                              .experiences.length >
-                                          5
-                                      ? 5
-                                      : model.currentTrailPreview.experiences
-                                          .length,
-                                  itemBuilder: (context, index) {
-                                    var experience = model
-                                        .currentTrailPreview.experiences[index];
-                                    var width =
-                                        MediaQuery.of(context).size.width / 2.5;
-                                    var height = width;
-                                    var itemCount = model.currentTrailPreview
-                                                .experiences.length >
-                                            5
-                                        ? 5
-                                        : model.currentTrailPreview.experiences
-                                            .length;
-                                    return Container(
-                                      margin: EdgeInsets.only(
-                                        right: index == itemCount - 1 ? 0 : 12,
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: tealish,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 10),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        elevation: 0,
                                       ),
-                                      child: experienceItem(
-                                        context: context,
-                                        experience: experience,
-                                        height: height,
-                                        width: width,
-                                        onLongPress: doNothing,
-                                        onTap: () {
-                                          Provider.of<EventClient>(context,
-                                                  listen: false)
-                                              .createEvent(Event(
-                                                  EventName
-                                                      .experience_profile_viewed,
-                                                  EventSourceView
-                                                      .trail_experience,
-                                                  {
-                                                EventTag.experience_id:
-                                                    experience.experienceId
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  const Text(
+                                    'Related Experiences',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1D1D1F),
+                                      letterSpacing: -0.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    height: 260,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: EdgeInsets.zero,
+                                      itemCount: model.currentTrailPreview
+                                                  .experiences.length >
+                                              5
+                                          ? 5
+                                          : model.currentTrailPreview
+                                              .experiences.length,
+                                      itemBuilder: (context, index) {
+                                        var experience = model
+                                            .currentTrailPreview
+                                            .experiences[index];
+                                        var width =
+                                            MediaQuery.of(context).size.width /
+                                                2.5;
+                                        var height = width;
+                                        var itemCount = model
+                                                    .currentTrailPreview
+                                                    .experiences
+                                                    .length >
+                                                5
+                                            ? 5
+                                            : model.currentTrailPreview
+                                                .experiences.length;
+                                        return Container(
+                                          margin: EdgeInsets.only(
+                                            right:
+                                                index == itemCount - 1 ? 0 : 12,
+                                          ),
+                                          child: experienceItem(
+                                            context: context,
+                                            experience: experience,
+                                            height: height,
+                                            width: width,
+                                            onLongPress: doNothing,
+                                            onTap: () {
+                                              Provider.of<EventClient>(context,
+                                                      listen: false)
+                                                  .createEvent(Event(
+                                                      EventName
+                                                          .experience_profile_viewed,
+                                                      EventSourceView
+                                                          .trail_experience,
+                                                      {
+                                                    EventTag.experience_id:
+                                                        experience.experienceId
+                                                            .toString(),
+                                                    EventTag.experience_name:
+                                                        experience.name,
+                                                    EventTag.trail_id: model
+                                                        .currentTrailPreview.id
                                                         .toString(),
-                                                EventTag.experience_name:
-                                                    experience.name,
-                                                EventTag.trail_id: model
-                                                    .currentTrailPreview.id
-                                                    .toString(),
-                                                EventTag.trail_name: model
-                                                    .currentTrailPreview.name,
-                                              }));
-                                        },
-                                        showAddToTrailButton: false,
-                                        showMoreOptionsButton: false,
-                                        backgroundColor:
-                                            const Color(0xFFF5F5F7),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              Container(
-                                height: 50,
-                              ),
-                            ],
-                          )
+                                                    EventTag.trail_name: model
+                                                        .currentTrailPreview
+                                                        .name,
+                                                  }));
+                                            },
+                                            showAddToTrailButton: false,
+                                            showMoreOptionsButton: false,
+                                            backgroundColor:
+                                                const Color(0xFFF5F5F7),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                              )
                         : model.state == ViewState.Busy
                             ? Container(
                                 height: heightForOptionalView,

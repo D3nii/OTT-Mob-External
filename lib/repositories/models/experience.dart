@@ -109,6 +109,62 @@ class Experience {
     required this.wheelchairAccessible,
   });
 
+  factory Experience.dummy({
+    required String title,
+    required String name,
+    required String description,
+    required bool isMeal,
+  }) {
+    return Experience(
+      experienceId: -1,
+      experienceInTrailId: -1,
+      accommodation: !isMeal,
+      active: true,
+      adultsOnly: false,
+      allTerrainVehicleOnly: false,
+      approved: true,
+      birdWatching: false,
+      camping: false,
+      carbonNeutral: false,
+      description: description,
+      destinationName: '',
+      draftId: '',
+      email: '',
+      evCharger: false,
+      facebook: '',
+      foodDrinks: isMeal,
+      imageUrls: [],
+      instagram: '',
+      internet: false,
+      latitude: 0,
+      likes: 0,
+      longitude: 0,
+      name: name,
+      nearBy: [],
+      parking: false,
+      paymentMethods: [],
+      petFriendly: false,
+      phone: '',
+      publicTransport: false,
+      recommendations: '',
+      related: [],
+      securityLockers: false,
+      showers: false,
+      smokingArea: false,
+      stayTime: Duration.zero,
+      title: title,
+      toilets: false,
+      topics: [],
+      visitEndTime: DateTime.now(),
+      visitStartTime: DateTime.now(),
+      visited: false,
+      website: '',
+      whatsApp: '',
+      wheelchairAccessible: false,
+    );
+  }
+
+
   factory Experience.fromJson(Map<String, dynamic> json) {
     return Experience(
       experienceId: _fromDynamicMapToExperienceId(json),

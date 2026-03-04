@@ -288,88 +288,99 @@ class TitleThreeSquares extends ThreeSquares {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      titleText,
-                      style: TextStyle(
-                        fontFamily: "Poppins",
-                        fontWeight: FontWeight.w700,
-                        fontSize: 25,
-                        color: viridian,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (headerDescription != null && headerDescription!.trim().isNotEmpty) ...[
-                      SizedBox(height: 4),
+          GestureDetector(
+            onTap: () => mainAction(context),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        headerDescription!,
+                        titleText,
                         style: TextStyle(
                           fontFamily: "Poppins",
-                          fontWeight: FontWeight.w300,
-                          fontSize: 14,
-                          color: Color(0xFF666666),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 25,
+                          color: viridian,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ]
-                  ],
-                ),
-              ),
-              if (durationText != null) ...[
-                UIHelper.horizontalSpace(8),
-                Container(
-                  margin: EdgeInsets.only(top: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: tomato,
-                    borderRadius: BorderRadius.circular(20),
+                      if (headerDescription != null && headerDescription!.trim().isNotEmpty) ...[
+                        SizedBox(height: 4),
+                        Text(
+                          headerDescription!,
+                          style: TextStyle(
+                            fontFamily: "Poppins",
+                            fontWeight: FontWeight.w300,
+                            fontSize: 14,
+                            color: Color(0xFF666666),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ]
+                    ],
                   ),
-                  child: Text(
-                    durationText!,
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),
                 ),
-              ]
-            ],
+                if (durationText != null) ...[
+                  UIHelper.horizontalSpace(8),
+                  Container(
+                    margin: EdgeInsets.only(top: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: tomato,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      durationText!,
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ]
+              ],
+            ),
           ),
           UIHelper.verticalSpace(8),
           super.build(context),
           UIHelper.verticalSpace(8),
-          if (summaryTitleText.trim().isNotEmpty && summaryTitleText.trim() != titleText.trim())
-            Text(
-              summaryTitleText,
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                fontFamily: "Poppins",
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: Colors.black,
-                backgroundColor: textBackgroundColor,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+          GestureDetector(
+            onTap: () => mainAction(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (summaryTitleText.trim().isNotEmpty && summaryTitleText.trim() != titleText.trim())
+                  Text(
+                    summaryTitleText,
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      fontFamily: "Poppins",
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Colors.black,
+                      backgroundColor: textBackgroundColor,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                Text(
+                  summaryBodyText,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontFamily: "Poppins",
+                    fontWeight: FontWeight.w300,
+                    fontSize: 14,
+                    color: Color(0xFF666666),
+                    backgroundColor: textBackgroundColor,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          Text(
-            summaryBodyText,
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontFamily: "Poppins",
-              fontWeight: FontWeight.w300,
-              fontSize: 14,
-              color: Color(0xFF666666),
-              backgroundColor: textBackgroundColor,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

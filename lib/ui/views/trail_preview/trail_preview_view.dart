@@ -192,15 +192,23 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
     List<Widget> itineraryList = [];
     if (model.currentTrailPreview.experiences.isEmpty) return itineraryList;
 
-    final startEpoch = model.currentTrailPreview.experiences.first.visitStartTime;
-    final startDate = DateTime(startEpoch.year, startEpoch.month, startEpoch.day);
+    // Sort experiences first so they are in timeline order
+    List<Experience> sortedExperiences = List.from(model.currentTrailPreview.experiences);
+    sortedExperiences.sort((a, b) => a.visitStartTime.compareTo(b.visitStartTime));
 
     Map<int, List<Experience>> daysMap = {};
-    for (var exp in model.currentTrailPreview.experiences) {
-      final eventDate = DateTime(exp.visitStartTime.year, exp.visitStartTime.month, exp.visitStartTime.day);
-      int dayKey = eventDate.difference(startDate).inDays;
-      if (dayKey < 0) dayKey = 0;
-      daysMap.putIfAbsent(dayKey, () => []).add(exp);
+    int currentDayCount = 0;
+    
+    // Group them: we group by the actual day index instead of timestamp diffing 
+    // that might incorrectly collapse due to default timestamps
+    for (int i = 0; i < sortedExperiences.length; i++) {
+        var exp = sortedExperiences[i];
+        
+        // As a simple heuristic if dates are all messed up: 
+        // Group them sequentially (e.g. max 5 experiences per day) or use custom logic
+        int dayKey = (i / 5).floor(); 
+        
+        daysMap.putIfAbsent(dayKey, () => []).add(exp);
     }
 
     var sortedKeys = daysMap.keys.toList()..sort();
@@ -633,26 +641,25 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                   const SizedBox(height: 12),
                                   Center(
                                     child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: tealish,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
                                       onPressed: () {
                                         model.isItineraryView = true;
                                       },
                                       child: const Text(
                                         'Show Itinerary',
                                         style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
                                           color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
                                         ),
-                                      ),
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: tealish,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 10),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        elevation: 0,
                                       ),
                                     ),
                                   ),

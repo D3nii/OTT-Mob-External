@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_map_polyline_new/google_map_polyline_new.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:onetwotrail/repositories/enums/trail_status.dart';
 import 'package:onetwotrail/repositories/enums/view_state.dart';
@@ -9,23 +10,23 @@ import 'package:onetwotrail/repositories/models/trail.dart';
 import 'package:onetwotrail/repositories/services/profile_service.dart';
 import 'package:onetwotrail/repositories/services/trail_service.dart';
 import 'package:onetwotrail/repositories/viewModels/base_model.dart';
+import 'package:onetwotrail/ui/share/app_colors.dart';
 
 class PreviewTrailModel extends BaseModel {
   Trail _currentTrailPreview = Trail(
-    id: 0,
-    name: '',
-    description: '',
-    listingDescription: '',
-    author: '',
-    collaborators: [],
-    experiences: [],
-    latitude: 0,
-    longitude: 0,
-    status: TrailStatus.PAUSED,
-    lockVersion: 0,
-    itineraryId: 0,
-    itineraryEstimatedTime: Duration.zero
-  );
+      id: 0,
+      name: '',
+      description: '',
+      listingDescription: '',
+      author: '',
+      collaborators: [],
+      experiences: [],
+      latitude: 0,
+      longitude: 0,
+      status: TrailStatus.PAUSED,
+      lockVersion: 0,
+      itineraryId: 0,
+      itineraryEstimatedTime: Duration.zero);
   int? _totalSuggestedTrails;
   late TrailService _trailService;
   late ProfileService _profileService;
@@ -35,6 +36,11 @@ class PreviewTrailModel extends BaseModel {
   bool _isAdded = true;
   bool _error = false;
   Duration _duration = Duration.zero;
+  final Set<Polyline> _polylines = {};
+  final String _googleMapsApiKey;
+  late final GoogleMapPolyline _googleMapPolyline;
+
+  Set<Polyline> get polylines => _polylines;
 
   bool get showTrailAdded => _showTrailAdded;
 
@@ -70,9 +76,12 @@ class PreviewTrailModel extends BaseModel {
   set currentTrailPreview(Trail trail) {
     _currentTrailPreview = trail;
     notifyListeners();
-    }
+  }
 
-  PreviewTrailModel(this._trailService, this._profileService);
+  PreviewTrailModel(
+      this._trailService, this._profileService, this._googleMapsApiKey) {
+    _googleMapPolyline = GoogleMapPolyline(apiKey: _googleMapsApiKey);
+  }
 
   initState(Trail trail) async {
     if (state == ViewState.Busy) {
@@ -92,7 +101,7 @@ class PreviewTrailModel extends BaseModel {
           icon: BitmapDescriptor.defaultMarker);
       trailMarkers.add(newMarker);
     }
-      return trailMarkers;
+    return trailMarkers;
   }
 
   Future<void> showTrailDetails(Trail trail, bool delayed) async {
@@ -102,20 +111,47 @@ class PreviewTrailModel extends BaseModel {
       await Future.delayed(Duration(seconds: 1));
     }
 
-    BaseResponse<Trail> response = await _trailService.getTrailDetails(trailId: trail.id);
+    BaseResponse<Trail> response =
+        await _trailService.getTrailDetails(trailId: trail.id);
 
     showErrorStatus = response.responseStatus == ERROR;
     if (!showErrorStatus && mounted) {
       _duration = response.data.itineraryEstimatedTime;
       currentTrailPreview = response.data;
+      await _getPolylines();
       notifyListeners();
     }
     setState(ViewState.Idle);
   }
 
-  void onTrailMapCreated(GoogleMapController controller) {
-    controller.animateCamera(CameraUpdate.newLatLngBounds(currentTrailPreview.mapBounds, 50));
+  Future<void> _getPolylines() async {
+    _polylines.clear();
+    for (var i = 0; i < currentTrailPreview.experiences.length - 1; i++) {
+      Experience start = currentTrailPreview.experiences[i];
+      Experience end = currentTrailPreview.experiences[i + 1];
+
+      var route = await _googleMapPolyline.getCoordinatesWithLocation(
+          destination: LatLng(end.latitude, end.longitude),
+          origin: LatLng(start.latitude, start.longitude),
+          mode: RouteMode.driving);
+
+      if (route != null) {
+        _polylines.add(Polyline(
+            polylineId: PolylineId('route_$i'),
+            visible: true,
+            points: route,
+            color: tomato,
+            width: 4,
+            startCap: Cap.roundCap,
+            endCap: Cap.roundCap));
+      }
     }
+  }
+
+  void onTrailMapCreated(GoogleMapController controller) {
+    controller.animateCamera(
+        CameraUpdate.newLatLngBounds(currentTrailPreview.mapBounds, 50));
+  }
 
   Future<bool> addCurrentTrailToCollection(BuildContext context) async {
     _addRequested = true;
@@ -125,7 +161,8 @@ class PreviewTrailModel extends BaseModel {
       'name': currentTrailPreview.name,
       'description': currentTrailPreview.description,
       'collaborators': [],
-      'experience_ids': currentTrailPreview.experiences.map((e) => e.experienceId).toList()
+      'experience_ids':
+          currentTrailPreview.experiences.map((e) => e.experienceId).toList()
     };
 
     BaseResponse<Trail> response = await _trailService.createTrail(data);
@@ -161,21 +198,21 @@ class PreviewTrailModel extends BaseModel {
 
   Future<ApplicationApiResponse> deleteCurrentTrailFromCollection() async {
     Trail trail = Trail(
-      id: trailId ?? 0,
-      name: '',
-      description: '',
-      listingDescription: '',
-      author: '',
-      collaborators: [],
-      experiences: [],
-      latitude: 0,
-      longitude: 0,
-      status: TrailStatus.PAUSED,
-      lockVersion: 0,
-      itineraryId: 0,
-      itineraryEstimatedTime: Duration.zero
-    );
-    ApplicationApiResponse responseFromTheApiObject = await _trailService.deleteTrail(trail);
+        id: trailId ?? 0,
+        name: '',
+        description: '',
+        listingDescription: '',
+        author: '',
+        collaborators: [],
+        experiences: [],
+        latitude: 0,
+        longitude: 0,
+        status: TrailStatus.PAUSED,
+        lockVersion: 0,
+        itineraryId: 0,
+        itineraryEstimatedTime: Duration.zero);
+    ApplicationApiResponse responseFromTheApiObject =
+        await _trailService.deleteTrail(trail);
     return responseFromTheApiObject;
   }
 

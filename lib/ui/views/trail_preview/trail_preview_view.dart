@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:onetwotrail/l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:onetwotrail/config/config.dart';
 import 'package:onetwotrail/repositories/enums/view_state.dart';
 import 'package:onetwotrail/repositories/models/base_response.dart';
 import 'package:onetwotrail/repositories/models/trail.dart';
@@ -36,8 +37,12 @@ class TrailPreviewView extends StatelessWidget {
       create: (context) {
         var trail = Provider.of<Trail>(context, listen: false);
         var trailService = Provider.of<TrailService>(context, listen: false);
-        var profileService = Provider.of<ProfileService>(context, listen: false);
-        return PreviewTrailModel(trailService, profileService)..initState(trail);
+        var profileService =
+            Provider.of<ProfileService>(context, listen: false);
+        var config = Provider.of<Config>(context, listen: false);
+        return PreviewTrailModel(
+            trailService, profileService, config.googleMapsApiKey)
+          ..initState(trail);
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F7),
@@ -62,7 +67,8 @@ class TrailPreviewView extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if ((model.currentTrailPreview.description ?? '').isNotEmpty) ...[
+                    if ((model.currentTrailPreview.description ?? '')
+                        .isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
                         model.currentTrailPreview.description ?? '',
@@ -82,7 +88,8 @@ class TrailPreviewView extends StatelessWidget {
             ),
             Container(
                 child: Consumer<PreviewTrailModel>(
-                    builder: (context, model, _) => EstimatedTimeBar(model.duration, false))),
+                    builder: (context, model, _) =>
+                        EstimatedTimeBar(model.duration, false))),
             const TrailPreviewViewBody(),
           ],
         ),
@@ -130,7 +137,8 @@ class AppBarGenerateContainer extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 10, top: MediaQuery.of(context).padding.top),
+                  padding: EdgeInsets.only(
+                      left: 10, top: MediaQuery.of(context).padding.top),
                   child: Row(
                     children: [
                       CupertinoBackButton(
@@ -182,9 +190,11 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
       builder: (context, model, _) {
         final height = MediaQuery.of(context).size.height;
         final heightForOptionalView = height - height * 0.3;
-        final experienceCount = _showAllExperiences 
-          ? model.currentTrailPreview.experiences.length
-          : (model.currentTrailPreview.experiences.length > 6 ? 6 : model.currentTrailPreview.experiences.length);
+        final experienceCount = _showAllExperiences
+            ? model.currentTrailPreview.experiences.length
+            : (model.currentTrailPreview.experiences.length > 6
+                ? 6
+                : model.currentTrailPreview.experiences.length);
         return StreamBuilder<BaseResponse<User>>(
             initialData: model.profileService.userResponse,
             stream: model.profileService.userResponseStream,
@@ -216,17 +226,23 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: experienceCount,
                                   shrinkWrap: true,
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      crossAxisSpacing: 12.0,
-                                      mainAxisSpacing: 12.0,
-                                      mainAxisExtent: 240),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 12.0,
+                                          mainAxisSpacing: 12.0,
+                                          mainAxisExtent: 240),
                                   itemBuilder: (context, index) {
                                     // Get the max size from the context
-                                    var width = MediaQuery.of(context).size.width / 2 - 14;
-                                    var height = MediaQuery.of(context).size.width / 2 - 28;
+                                    var width =
+                                        MediaQuery.of(context).size.width / 2 -
+                                            14;
+                                    var height =
+                                        MediaQuery.of(context).size.width / 2 -
+                                            28;
                                     // Return the experience item
-                                    var experience = model.currentTrailPreview.experiences[index];
+                                    var experience = model
+                                        .currentTrailPreview.experiences[index];
                                     return experienceItem(
                                       context: context,
                                       experience: experience,
@@ -236,13 +252,25 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                       experienceDestinationFontSize: 10,
                                       onLongPress: doNothing,
                                       onTap: () {
-                                        Provider.of<EventClient>(context, listen: false).createEvent(Event(
-                                            EventName.experience_profile_viewed, EventSourceView.trail_experience, {
-                                          EventTag.experience_id: experience.experienceId.toString(),
-                                          EventTag.experience_name: experience.name,
-                                          EventTag.trail_id: model.currentTrailPreview.id.toString(),
-                                          EventTag.trail_name: model.currentTrailPreview.name,
-                                        }));
+                                        Provider.of<EventClient>(context,
+                                                listen: false)
+                                            .createEvent(Event(
+                                                EventName
+                                                    .experience_profile_viewed,
+                                                EventSourceView
+                                                    .trail_experience,
+                                                {
+                                              EventTag.experience_id: experience
+                                                  .experienceId
+                                                  .toString(),
+                                              EventTag.experience_name:
+                                                  experience.name,
+                                              EventTag.trail_id: model
+                                                  .currentTrailPreview.id
+                                                  .toString(),
+                                              EventTag.trail_name: model
+                                                  .currentTrailPreview.name,
+                                            }));
                                       },
                                       showAddToTrailButton: true,
                                       showMoreOptionsButton: false,
@@ -251,16 +279,21 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                   },
                                 ),
                               ),
-                              if (model.currentTrailPreview.experiences.length > 6 && !_showAllExperiences) ...[
+                              if (model.currentTrailPreview.experiences.length >
+                                      6 &&
+                                  !_showAllExperiences) ...[
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 8, bottom: 16),
+                                  padding:
+                                      const EdgeInsets.only(top: 8, bottom: 16),
                                   child: Center(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
                                         backgroundColor: tealish,
-                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24, vertical: 12),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                         ),
                                       ),
                                       onPressed: () {
@@ -280,16 +313,21 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                   ),
                                 ),
                               ],
-                              if (model.currentTrailPreview.experiences.length > 6 && _showAllExperiences) ...[
+                              if (model.currentTrailPreview.experiences.length >
+                                      6 &&
+                                  _showAllExperiences) ...[
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 8, bottom: 16),
+                                  padding:
+                                      const EdgeInsets.only(top: 8, bottom: 16),
                                   child: Center(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
                                         backgroundColor: tealish,
-                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24, vertical: 12),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                         ),
                                       ),
                                       onPressed: () {
@@ -311,7 +349,8 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                               ],
                               const SizedBox(height: 24),
                               Text(
-                                AppLocalizations.of(context)!.experiencesOnTheMap,
+                                AppLocalizations.of(context)!
+                                    .experiencesOnTheMap,
                                 style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
@@ -326,14 +365,20 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                   height: 200,
                                   color: Colors.black26,
                                   child: GoogleMap(
-                                    initialCameraPosition: CameraPosition(
-                                      target: LatLng(
-                                          model.currentTrailPreview.latitude, model.currentTrailPreview.longitude),
-                                    ),
-                                    onMapCreated: model.onTrailMapCreated,
-                                    markers: model.getMarkers(trail: model.currentTrailPreview),
-                                    gestureRecognizers: Set()
-                                      ..add(Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()))),
+                                      initialCameraPosition: CameraPosition(
+                                        target: LatLng(
+                                            model.currentTrailPreview.latitude,
+                                            model
+                                                .currentTrailPreview.longitude),
+                                      ),
+                                      onMapCreated: model.onTrailMapCreated,
+                                      markers: model.getMarkers(
+                                          trail: model.currentTrailPreview),
+                                      polylines: model.polylines,
+                                      gestureRecognizers: Set()
+                                        ..add(Factory<
+                                                OneSequenceGestureRecognizer>(
+                                            () => EagerGestureRecognizer()))),
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -352,12 +397,24 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   padding: EdgeInsets.zero,
-                                  itemCount: model.currentTrailPreview.experiences.length > 5 ? 5 : model.currentTrailPreview.experiences.length,
+                                  itemCount: model.currentTrailPreview
+                                              .experiences.length >
+                                          5
+                                      ? 5
+                                      : model.currentTrailPreview.experiences
+                                          .length,
                                   itemBuilder: (context, index) {
-                                    var experience = model.currentTrailPreview.experiences[index];
-                                    var width = MediaQuery.of(context).size.width / 2.5;
+                                    var experience = model
+                                        .currentTrailPreview.experiences[index];
+                                    var width =
+                                        MediaQuery.of(context).size.width / 2.5;
                                     var height = width;
-                                    var itemCount = model.currentTrailPreview.experiences.length > 5 ? 5 : model.currentTrailPreview.experiences.length;
+                                    var itemCount = model.currentTrailPreview
+                                                .experiences.length >
+                                            5
+                                        ? 5
+                                        : model.currentTrailPreview.experiences
+                                            .length;
                                     return Container(
                                       margin: EdgeInsets.only(
                                         right: index == itemCount - 1 ? 0 : 12,
@@ -369,17 +426,30 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                         width: width,
                                         onLongPress: doNothing,
                                         onTap: () {
-                                          Provider.of<EventClient>(context, listen: false).createEvent(Event(
-                                              EventName.experience_profile_viewed, EventSourceView.trail_experience, {
-                                            EventTag.experience_id: experience.experienceId.toString(),
-                                            EventTag.experience_name: experience.name,
-                                            EventTag.trail_id: model.currentTrailPreview.id.toString(),
-                                            EventTag.trail_name: model.currentTrailPreview.name,
-                                          }));
+                                          Provider.of<EventClient>(context,
+                                                  listen: false)
+                                              .createEvent(Event(
+                                                  EventName
+                                                      .experience_profile_viewed,
+                                                  EventSourceView
+                                                      .trail_experience,
+                                                  {
+                                                EventTag.experience_id:
+                                                    experience.experienceId
+                                                        .toString(),
+                                                EventTag.experience_name:
+                                                    experience.name,
+                                                EventTag.trail_id: model
+                                                    .currentTrailPreview.id
+                                                    .toString(),
+                                                EventTag.trail_name: model
+                                                    .currentTrailPreview.name,
+                                              }));
                                         },
                                         showAddToTrailButton: false,
                                         showMoreOptionsButton: false,
-                                        backgroundColor: const Color(0xFFF5F5F7),
+                                        backgroundColor:
+                                            const Color(0xFFF5F5F7),
                                       ),
                                     );
                                   },
@@ -406,14 +476,21 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black,
                                     ),
-                                    text: AppLocalizations.of(context)!.somethingWentWrongRequestText,
+                                    text: AppLocalizations.of(context)!
+                                        .somethingWentWrongRequestText,
                                     children: [
                                       TextSpan(text: ". "),
                                       TextSpan(
-                                        text: AppLocalizations.of(context)!.tryAgain,
-                                        style: TextStyle(decoration: TextDecoration.underline),
+                                        text: AppLocalizations.of(context)!
+                                            .tryAgain,
+                                        style: TextStyle(
+                                            decoration:
+                                                TextDecoration.underline),
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () => model.showTrailDetails(model.currentTrailPreview, true),
+                                          ..onTap = () =>
+                                              model.showTrailDetails(
+                                                  model.currentTrailPreview,
+                                                  true),
                                       ),
                                     ],
                                   ),
@@ -423,7 +500,8 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                         ? Align(
                             alignment: Alignment.bottomCenter,
                             child: Container(
-                              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                              padding:
+                                  const EdgeInsets.fromLTRB(24, 12, 24, 24),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 boxShadow: [
@@ -441,7 +519,8 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                   child: TextButton(
                                     style: TextButton.styleFrom(
                                       backgroundColor: tealish,
-                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12, horizontal: 24),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
@@ -452,12 +531,15 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                               height: 22,
                                               width: 22,
                                               child: CircularProgressIndicator(
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(Colors.white),
                                               ),
                                             ),
                                           )
                                         : Text(
-                                            AppLocalizations.of(context)!.addToMyTrailsText,
+                                            AppLocalizations.of(context)!
+                                                .addToMyTrailsText,
                                             style: const TextStyle(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w500,
@@ -465,26 +547,31 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                                             ),
                                           ),
                                     onPressed: () async {
-                                      return runBasedOnUser(context, onRegistered: () async {
+                                      return runBasedOnUser(context,
+                                          onRegistered: () async {
                                         if (model.addRequested) {
                                           return;
                                         }
-                                        bool success = await model.addCurrentTrailToCollection(context);
+                                        bool success = await model
+                                            .addCurrentTrailToCollection(
+                                                context);
                                         if (!success && model.error) {
                                           final snackBar = SnackBar(
-                                            content: Text(
-                                                AppLocalizations.of(context)!.somethingWentWrongRequestText),
+                                            content: Text(AppLocalizations.of(
+                                                    context)!
+                                                .somethingWentWrongRequestText),
                                           );
-                                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(snackBar);
                                           model.error = !model.error;
                                         }
                                       });
                                     },
                                   ),
+                                ),
                               ),
                             ),
-                          ),
-                        )
+                          )
                         : Container(),
                     model.showTrailAdded
                         ? AddedToTrail(

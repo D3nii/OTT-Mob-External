@@ -11,7 +11,8 @@ import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:snapping_sheet/snapping_sheet.dart';
 
 class TrailMapViewModel extends BaseModel {
-  final ControllerPageBoardAndItineraryModel controllerPageBoardAndItineraryModel;
+  final ControllerPageBoardAndItineraryModel
+      controllerPageBoardAndItineraryModel;
   GoogleMapController? _googleMapController;
   late final GoogleMapPolyline _googleMapPolyline;
   LatLng? firstPinned;
@@ -21,18 +22,21 @@ class TrailMapViewModel extends BaseModel {
   final ScrollController scrollController = ScrollController();
   final Set<Marker> markers = {};
   final Set<Polyline> polyline = {};
-  final SnappingPosition snappingSheetPositionCollapsed = SnappingPosition.pixels(
+  final SnappingPosition snappingSheetPositionCollapsed =
+      SnappingPosition.pixels(
     snappingCurve: Curves.fastLinearToSlowEaseIn,
     snappingDuration: const Duration(milliseconds: 500),
     positionPixels: 152,
   );
-  final SnappingPosition snappingSheetPositionExpanded = SnappingPosition.factor(
+  final SnappingPosition snappingSheetPositionExpanded =
+      SnappingPosition.factor(
     positionFactor: 0.8,
     snappingCurve: Curves.easeOutExpo,
     snappingDuration: const Duration(milliseconds: 500),
   );
   TrailItineraryViewModel? trailItineraryViewModel;
-  final SnappingSheetController snappingSheetController = SnappingSheetController();
+  final SnappingSheetController snappingSheetController =
+      SnappingSheetController();
   int _currentExperienceIndex = 0;
   int totalSecond = 0;
   bool _isExpanded = false;
@@ -55,7 +59,8 @@ class TrailMapViewModel extends BaseModel {
 
   List<LatLng> get geoPoints => _geoPoints;
 
-  TrailMapViewModel(this.dayActivities, this.controllerPageBoardAndItineraryModel, String googleMapsApiKey) {
+  TrailMapViewModel(this.dayActivities,
+      this.controllerPageBoardAndItineraryModel, String googleMapsApiKey) {
     _googleMapPolyline = GoogleMapPolyline(apiKey: googleMapsApiKey);
   }
 
@@ -66,7 +71,8 @@ class TrailMapViewModel extends BaseModel {
       if (element is VisitItineraryEvent) {
         element.experience.visitStartTime = element.startTime;
         _experiences.add(element.experience);
-        LatLng position = new LatLng(element.experience.latitude, element.experience.longitude);
+        LatLng position = new LatLng(
+            element.experience.latitude, element.experience.longitude);
         _geoPoints.add(position);
         createMarker(position, "${element.experience.experienceId}");
       }
@@ -106,10 +112,10 @@ class TrailMapViewModel extends BaseModel {
               polylineId: PolylineId(start.experienceId.toString()),
               visible: true,
               points: route,
-              color: pigPinkTwo,
-              width: 3,
+              color: tomato,
+              width: 4,
               startCap: Cap.roundCap,
-              endCap: Cap.buttCap));
+              endCap: Cap.roundCap));
         }
       }
     }
@@ -122,7 +128,10 @@ class TrailMapViewModel extends BaseModel {
   void moveCameraToExperience(int index) {
     if (_googleMapController != null && index < _experiences.length) {
       _googleMapController!.animateCamera(CameraUpdate.newCameraPosition(
-          CameraPosition(target: LatLng(_experiences[index].latitude, _experiences[index].longitude), zoom: 15)));
+          CameraPosition(
+              target: LatLng(
+                  _experiences[index].latitude, _experiences[index].longitude),
+              zoom: 15)));
     }
   }
 

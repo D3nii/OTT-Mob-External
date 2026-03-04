@@ -289,7 +289,11 @@ class TitleThreeSquares extends ThreeSquares {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           GestureDetector(
-            onTap: () => mainAction(context),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => mainAction(context)),
+              );
+            },
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -348,7 +352,11 @@ class TitleThreeSquares extends ThreeSquares {
           super.build(context),
           UIHelper.verticalSpace(8),
           GestureDetector(
-            onTap: () => mainAction(context),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => mainAction(context)),
+              );
+            },
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

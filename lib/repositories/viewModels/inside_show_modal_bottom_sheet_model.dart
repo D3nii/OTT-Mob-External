@@ -156,20 +156,14 @@ class InsideShowModalBottomSheetModel extends BaseModel {
   ScrollController get trailScrollController => _trailScrollController;
 
   bool get hasPaginationError {
-    try {
-      return _trailService.trailsResponse.result == false;
-    } catch (e) {
-      return false;
-    }
+    final response = _trailService.trailsResponse;
+    return response != null && response.result == false;
   }
 
   String? get paginationError {
-    if (!hasPaginationError) return null;
-    try {
-      return _trailService.trailsResponse.responseBody;
-    } catch (e) {
-      return null;
-    }
+    final response = _trailService.trailsResponse;
+    if (response == null || response.result != false) return null;
+    return response.responseBody;
   }
 
   void retryPagination() {

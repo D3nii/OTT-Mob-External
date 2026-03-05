@@ -137,11 +137,16 @@ class ProfileViewModel extends BaseModel {
 
   bool get hasMoreTrails => trailService.hasMoreTrails;
 
-  bool get hasPaginationError => 
-      trailService.trailsResponse.result == false;
+  bool get hasPaginationError {
+    final response = trailService.trailsResponse;
+    return response != null && response.result == false;
+  }
 
-  String? get paginationError => 
-      hasPaginationError ? trailService.trailsResponse.responseBody : null;
+  String? get paginationError {
+    final response = trailService.trailsResponse;
+    if (response == null || response.result != false) return null;
+    return response.responseBody;
+  }
 
   void retryPagination() {
     trailService.loadTrailPage().catchError((e) {

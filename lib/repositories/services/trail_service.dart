@@ -14,7 +14,7 @@ class TrailService {
   StreamController<ApplicationApiResponse<Itinerary>>
       itineraryStreamController =
       BehaviorSubject<ApplicationApiResponse<Itinerary>>();
-  late ApplicationApiResponse<List<Trail>> trailsResponse;
+  ApplicationApiResponse<List<Trail>>? trailsResponse;
   StreamController<ApplicationApiResponse<List<Trail>>> trailsStreamController =
       BehaviorSubject<ApplicationApiResponse<List<Trail>>>();
   StreamController<bool> _loadingStateController = BehaviorSubject<bool>.seeded(false);
@@ -149,10 +149,11 @@ class TrailService {
   }
 
   void _updateTrailsStream() {
+    final currentResponse = trailsResponse;
     var updatedResponse = ApplicationApiResponse<List<Trail>>(
-      statusCode: 200,
-      result: true,
-      responseBody: trailsResponse.responseBody,
+      statusCode: currentResponse?.statusCode ?? 200,
+      result: currentResponse?.result ?? true,
+      responseBody: currentResponse?.responseBody ?? '',
       responseObject: List.from(_trails),
       nextPageToken: _nextPageToken,
     );
@@ -229,12 +230,14 @@ class TrailService {
   }
 
   void _emitEmptyTrailsState() {
-    trailsStreamController.add(ApplicationApiResponse<List<Trail>>(
+    final emptyResponse = ApplicationApiResponse<List<Trail>>(
       statusCode: 200,
       result: true,
       responseBody: '',
       responseObject: [],
-    ));
+    );
+    trailsResponse = emptyResponse;
+    trailsStreamController.add(emptyResponse);
   }
 
   Future<void> refreshTrails() async {

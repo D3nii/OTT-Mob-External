@@ -43,22 +43,37 @@ class CrashReporter {
     );
   }
 
+  static bool _isImageLoadError(FlutterErrorDetails details) {
+    final stack = details.stack?.toString() ?? '';
+    return stack.contains('ImageStreamCompleter') ||
+        stack.contains('image_stream.dart') ||
+        stack.contains('MultiFrameImageStreamCompleter');
+  }
+
   static void _setupFlutterErrorHandler() {
     _originalFlutterErrorHandler = FlutterError.onError;
 
     FlutterError.onError = (FlutterErrorDetails details) {
-      _logger.severe('Reporting Flutter error', details.exception, details.stack);
+      final isImageError = _isImageLoadError(details);
 
-      try {
-        DatadogSdk.instance.rum?.addErrorInfo(
-          details.exception.toString(),
-          RumErrorSource.source,
-          stackTrace: details.stack,
-          errorType: details.exception.runtimeType.toString(),
-          attributes: {'flutter_error_reason': details.context?.toString()},
+      if (isImageError) {
+        _logger.fine(
+          'Image load error (not reported as crash): ${details.exception}',
         );
-      } catch (error) {
-        _logger.warning('Failed to report Flutter error to Datadog: $error');
+      } else {
+        _logger.severe('Reporting Flutter error', details.exception, details.stack);
+
+        try {
+          DatadogSdk.instance.rum?.addErrorInfo(
+            details.exception.toString(),
+            RumErrorSource.source,
+            stackTrace: details.stack,
+            errorType: details.exception.runtimeType.toString(),
+            attributes: {'flutter_error_reason': details.context?.toString()},
+          );
+        } catch (error) {
+          _logger.warning('Failed to report Flutter error to Datadog: $error');
+        }
       }
 
       _originalFlutterErrorHandler?.call(details);

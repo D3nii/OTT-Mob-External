@@ -65,14 +65,21 @@ class ExperienceInfo extends BaseWidget {
                                         fontWeight: FontWeight.w400,
                                         color: Colors.black,
                                       ),
-                                      text: AppLocalizations.of(context)?.somethingWentWrongRequestText ?? "Something went wrong",
+                                      text: AppLocalizations.of(context)
+                                              ?.somethingWentWrongRequestText ??
+                                          "Something went wrong",
                                       children: [
                                         TextSpan(text: ". "),
                                         TextSpan(
-                                          text: AppLocalizations.of(context)?.tryAgain ?? "Try again",
-                                          style: TextStyle(decoration: TextDecoration.underline),
+                                          text: AppLocalizations.of(context)
+                                                  ?.tryAgain ??
+                                              "Try again",
+                                          style: TextStyle(
+                                              decoration:
+                                                  TextDecoration.underline),
                                           recognizer: TapGestureRecognizer()
-                                            ..onTap = () => model.init(model.experience),
+                                            ..onTap = () =>
+                                                model.init(model.experience),
                                         )
                                       ]),
                                 ),
@@ -127,10 +134,12 @@ class FirstRow extends StatelessWidget {
             color: Colors.red,
             alignment: Alignment.centerLeft,
             child: AutoSizeText(
-              AppLocalizations.of(context)?.addToMyTrailsText ?? "Add to my trails",
+              AppLocalizations.of(context)?.addToMyTrailsText ??
+                  "Add to my trails",
               maxLines: 1,
               minFontSize: 18,
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: tealish),
+              style: TextStyle(
+                  fontSize: 28, fontWeight: FontWeight.w700, color: tealish),
             ),
           ),
         ),
@@ -140,7 +149,10 @@ class FirstRow extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               AppLocalizations.of(context)?.selectTrailText ?? "Select trail",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300, color: Color(0xff646464)),
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                  color: Color(0xff646464)),
             ),
           ),
         ),
@@ -156,56 +168,64 @@ class FirstRow extends StatelessWidget {
                   child: TextButton(
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.all(0),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0)),
                       backgroundColor: Color.fromRGBO(0, 0, 0, 0.6),
                     ),
                     child: Container(
-                      child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-                        Expanded(
-                          flex: 60,
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: double.infinity,
-                            width: double.infinity,
-                            child: Text(
-                              AppLocalizations.of(context)?.newTrailText ?? "New trail",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 40,
-                          child: Container(
-                            child: Container(
-                              padding: EdgeInsets.only(left: 15),
-                              child: Stack(
-                                children: <Widget>[
-                                  Align(
-                                    child: Container(
-                                      margin: EdgeInsets.all(4),
-                                      height: double.infinity,
-                                      width: double.infinity,
-                                      alignment: Alignment.bottomRight,
-                                      decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.red,
-                                          border: Border.fromBorderSide(BorderSide.none)),
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Icon(
-                                      Icons.add,
+                      child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Expanded(
+                              flex: 60,
+                              child: Container(
+                                alignment: Alignment.center,
+                                height: double.infinity,
+                                width: double.infinity,
+                                child: Text(
+                                  AppLocalizations.of(context)?.newTrailText ??
+                                      "New trail",
+                                  style: TextStyle(
                                       color: Colors.white,
-                                      size: 28,
-                                    ),
-                                  ),
-                                ],
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ]),
+                            Expanded(
+                              flex: 40,
+                              child: Container(
+                                child: Container(
+                                  padding: EdgeInsets.only(left: 15),
+                                  child: Stack(
+                                    children: <Widget>[
+                                      Align(
+                                        child: Container(
+                                          margin: EdgeInsets.all(4),
+                                          height: double.infinity,
+                                          width: double.infinity,
+                                          alignment: Alignment.bottomRight,
+                                          decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.red,
+                                              border: Border.fromBorderSide(
+                                                  BorderSide.none)),
+                                        ),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: 28,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ]),
                     ),
                     onPressed: () {},
                   ),
@@ -262,7 +282,8 @@ class AppBarContainer extends StatelessWidget {
               SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -404,14 +425,19 @@ class ContainerOfListViewBody extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                if (ExperienceDetailsHelper.getExperienceFeatures(model.experience).isNotEmpty)
+                if (ExperienceDetailsHelper.getExperienceFeatures(
+                        model.experience)
+                    .isNotEmpty)
                   _SectionCard(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 24, horizontal: 16),
                       child: ExperienceFacilitiesListView(model.experience),
                     ),
                   ),
-                if (ExperienceDetailsHelper.getExperienceFeatures(model.experience).isNotEmpty)
+                if (ExperienceDetailsHelper.getExperienceFeatures(
+                        model.experience)
+                    .isNotEmpty)
                   const SizedBox(height: 20),
                 _SectionCard(
                   clipBehavior: Clip.antiAlias,
@@ -426,7 +452,9 @@ class ContainerOfListViewBody extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            capitalizeFirstLetter(AppLocalizations.of(context)?.description ?? "Description"),
+                            capitalizeFirstLetter(
+                                AppLocalizations.of(context)?.description ??
+                                    "Description"),
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
@@ -459,15 +487,53 @@ class ContainerOfListViewBody extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (model.experience.description.isNotEmpty) const SizedBox(height: 20),
-                // Contact information and schedule
-                ContactInfo(model.experience),
+                if (model.experience.description.isNotEmpty)
+                  const SizedBox(height: 20),
+
+                // Contact Section
+                if (model.experience.phone.isNotEmpty ||
+                    model.experience.email.isNotEmpty ||
+                    model.experience.website.isNotEmpty ||
+                    model.experience.whatsApp.isNotEmpty ||
+                    model.experience.facebook.isNotEmpty ||
+                    model.experience.instagram.isNotEmpty)
+                  _SectionCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Contact", // Falling back to Contact if not in localizations
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1D1D1F),
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ContactInfo(model.experience),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                if (model.experience.phone.isNotEmpty ||
+                    model.experience.email.isNotEmpty ||
+                    model.experience.website.isNotEmpty ||
+                    model.experience.whatsApp.isNotEmpty ||
+                    model.experience.facebook.isNotEmpty ||
+                    model.experience.instagram.isNotEmpty)
+                  const SizedBox(height: 20),
                 const SizedBox(height: 12),
                 Center(
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                       backgroundColor: tealish,
                     ),
                     child: Row(
@@ -477,14 +543,18 @@ class ContainerOfListViewBody extends StatelessWidget {
                         UIHelper.horizontalSpace(8),
                         Text(
                           'Show Schedule',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white),
                         ),
                       ],
                     ),
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (context) => TimetablesModal(model.experience.visitTime),
+                        builder: (context) =>
+                            TimetablesModal(model.experience.visitTime),
                       );
                     },
                   ),
@@ -498,7 +568,8 @@ class ContainerOfListViewBody extends StatelessWidget {
                   experienceWidthRatio: 0.42,
                   onLongPress: (_context, _experience) => doNothing(),
                   onTap: (_context, _experience) {
-                    Navigator.pushNamed(_context, '/experienceInfo', arguments: _experience);
+                    Navigator.pushNamed(_context, '/experienceInfo',
+                        arguments: _experience);
                   },
                   paddingLeft: 0,
                   paddingRight: 16,
@@ -518,7 +589,8 @@ class ContainerOfListViewBody extends StatelessWidget {
                   experienceWidthRatio: 0.42,
                   onLongPress: (_context, _experience) => doNothing(),
                   onTap: (_context, _experience) {
-                    Navigator.pushNamed(_context, '/experienceInfo', arguments: _experience);
+                    Navigator.pushNamed(_context, '/experienceInfo',
+                        arguments: _experience);
                   },
                   paddingLeft: 0,
                   paddingRight: 16,
@@ -558,7 +630,9 @@ class ContainerOfListViewBody extends StatelessWidget {
                     await showCupertinoModalBottomSheet<String>(
                       shape: RoundedRectangleBorder(
                         side: BorderSide(width: 0, color: Colors.transparent),
-                        borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20)),
                       ),
                       expand: true,
                       context: context,
@@ -571,7 +645,8 @@ class ContainerOfListViewBody extends StatelessWidget {
                             model.user!,
                             model.experience,
                             () {
-                              baseWidgetModel.showOverlayWidget(false, Container());
+                              baseWidgetModel.showOverlayWidget(
+                                  false, Container());
                             },
                           )),
                     );
@@ -609,7 +684,10 @@ class ThumbUpFingerWithCount extends StatelessWidget {
             Container(
               child: Text(
                 "${experience.likes}",
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color: Colors.white),
+                style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    color: Colors.white),
               ),
             )
           ],
@@ -622,13 +700,15 @@ class ThumbUpFingerWithCount extends StatelessWidget {
 class ExperienceFacilitiesListView extends StatelessWidget {
   final Experience experience;
 
-  const ExperienceFacilitiesListView(this.experience, {Key? key}) : super(key: key);
+  const ExperienceFacilitiesListView(this.experience, {Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext _context) {
     return Consumer<ExperienceInfoModel>(
       builder: (context, model, _) {
-        List<ExperienceFeature> features = ExperienceDetailsHelper.getExperienceFeatures(experience);
+        List<ExperienceFeature> features =
+            ExperienceDetailsHelper.getExperienceFeatures(experience);
         return SizedBox(
           height: 72,
           child: ListView.separated(
@@ -677,9 +757,9 @@ class ContactInfo extends StatelessWidget {
 
   const ContactInfo(this.experience, {Key? key}) : super(key: key);
 
-  String _truncate(String value, [int limit = 20]) {
-    if (value.length <= limit) return value;
-    return value.substring(0, limit) + '...';
+  String _truncate(String value) {
+    // Show the whole email and phone number as requested
+    return value;
   }
 
   Widget _buildRow(IconData icon, String text) {
@@ -705,19 +785,28 @@ class ContactInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<Widget> rows = [];
-    if (experience.phone.isNotEmpty) rows.add(_buildRow(Icons.phone, experience.phone));
-    if (experience.email.isNotEmpty) rows.add(_buildRow(Icons.email, experience.email));
-    if (experience.website.isNotEmpty) rows.add(_buildRow(Icons.language, experience.website));
-    if (experience.whatsApp.isNotEmpty) rows.add(_buildRow(Icons.message, experience.whatsApp));
-    if (experience.facebook.isNotEmpty) rows.add(_buildRow(Icons.facebook, experience.facebook));
-    if (experience.instagram.isNotEmpty) rows.add(_buildRow(Icons.camera_alt, experience.instagram));
+    if (experience.phone.isNotEmpty)
+      rows.add(_buildRow(Icons.phone, experience.phone));
+    if (experience.email.isNotEmpty)
+      rows.add(_buildRow(Icons.email, experience.email));
+    if (experience.website.isNotEmpty)
+      rows.add(_buildRow(Icons.language, experience.website));
+    if (experience.whatsApp.isNotEmpty)
+      rows.add(_buildRow(Icons.message, experience.whatsApp));
+    if (experience.facebook.isNotEmpty)
+      rows.add(_buildRow(Icons.facebook, experience.facebook));
+    if (experience.instagram.isNotEmpty)
+      rows.add(_buildRow(Icons.camera_alt, experience.instagram));
 
     if (rows.isEmpty) return Container();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.only(
+          top: 8,
+          bottom: 8), // Removed side padding so it aligns with "Contact"
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: rows,
@@ -736,7 +825,8 @@ class TimetablesModal extends StatelessWidget {
     try {
       final decoded = json.decode(raw);
       if (decoded is Map<String, dynamic>) {
-        return decoded.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
+        return decoded
+            .map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
       }
     } catch (_) {}
     return {};
@@ -745,7 +835,15 @@ class TimetablesModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final schedule = _parseVisitTime(visitTimeRaw);
-    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -763,15 +861,18 @@ class TimetablesModal extends StatelessWidget {
               const SizedBox(height: 12),
               Column(
                 children: days.map((day) {
-                  final hours = schedule[day.toLowerCase()] ?? schedule[day] ?? '';
+                  final hours =
+                      schedule[day.toLowerCase()] ?? schedule[day] ?? '';
                   final display = hours.isNotEmpty ? hours : 'Closed';
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(day, style: TextStyle(fontWeight: FontWeight.w600)),
-                        Text(display, style: TextStyle(color: Color(0xFF6E6E73))),
+                        Text(day,
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text(display,
+                            style: TextStyle(color: Color(0xFF6E6E73))),
                       ],
                     ),
                   );
@@ -784,7 +885,8 @@ class TimetablesModal extends StatelessWidget {
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFF5F5F7),
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

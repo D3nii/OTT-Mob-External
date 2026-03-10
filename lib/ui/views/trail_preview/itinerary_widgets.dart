@@ -258,17 +258,19 @@ class ItineraryMealSleepBlock extends StatelessWidget {
 
 class ItineraryTransitBlock extends StatelessWidget {
   final String transportType; // 'car' or 'walking'
+  final String? duration;
 
   const ItineraryTransitBlock({
     Key? key,
     this.transportType = 'car',
+    this.duration,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: Colors.transparent, // Removed background
+      color: Colors.transparent,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Center(
         child: Column(
@@ -303,6 +305,23 @@ class ItineraryTransitBlock extends StatelessWidget {
                       color: Color(0xFF5F6368),
                     ),
                   ),
+                  if (duration != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 1,
+                      height: 12,
+                      color: const Color(0xFFDADCE0),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      duration!,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF5F6368),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

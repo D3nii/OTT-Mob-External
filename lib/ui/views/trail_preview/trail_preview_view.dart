@@ -1,5 +1,7 @@
 // ui/views/trail_preview/trail_preview_view.dart
 import 'package:flutter/foundation.dart';
+import 'package:onetwotrail/ui/widgets/tab_board_item.dart';
+import 'package:onetwotrail/ui/widgets/tab_itinerary_item.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:onetwotrail/l10n/app_localizations.dart';
@@ -109,70 +111,77 @@ class AppBarGenerateContainer extends StatelessWidget {
     return Consumer<PreviewTrailModel>(
       builder: (context, model, _) {
         return Container(
-          height: mediaQuery.height * 0.13,
+          height: mediaQuery.height * 0.16,
           width: mediaQuery.width,
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              Container(
-                height: mediaQuery.height * 0.13,
-                width: mediaQuery.width,
-                child: Image.asset(
-                  'assets/main_filter/appbar_background_image.png',
-                  fit: BoxFit.fill,
+          color: tealish,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    CupertinoBackButton(
+                      label: AppLocalizations.of(context)?.backText ?? "Back",
+                      color: Colors.white,
+                      onPressed: () => Navigator.pop(context, true),
+                    ),
+                  ],
                 ),
-              ),
-              Container(
-                height: mediaQuery.height * 0.13,
-                width: mediaQuery.width,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.3),
-                    ],
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                      left: 10, top: MediaQuery.of(context).padding.top),
-                  child: Row(
-                    children: [
-                      CupertinoBackButton(
-                        label: AppLocalizations.of(context)?.backText ?? "Back",
-                        color: Colors.white,
-                        onPressed: () => Navigator.pop(context, true),
-                      ),
-                      // Removed trail name label per design request
-                      // Expanded(
-                      //   child: Container(
-                      //     child: Text(
-                      //       model.currentTrailPreview.name.toUpperCase(),
-                      //       overflow: TextOverflow.ellipsis,
-                      //       maxLines: 2,
-                      //       style: TextStyle(
-                      //         fontFamily: "Poppins",
-                      //         fontSize: 18,
-                      //         fontWeight: FontWeight.w700,
-                      //         color: Colors.white,
-                      //       ),
-                      //     ),
-                      //   ),
-                      // )
-                    ],
-                  ),
-                ),
-              )
-            ],
+                const Spacer(),
+                const _ParentTabs(),
+              ],
+            ),
           ),
         );
       },
     );
+  }
+}
+
+class _ParentTabs extends StatelessWidget {
+  const _ParentTabs({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PreviewTrailModel>(builder: (context, model, _) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            flex: 20,
+            child: Container(),
+          ),
+          Expanded(
+            flex: 30,
+            child: TabBoardItem(
+              !model.isItineraryView,
+              () {
+                model.isItineraryView = false;
+              },
+            ),
+          ),
+          Expanded(
+            flex: 30,
+            child: TabItineraryItem(
+              model.isItineraryView,
+              () {
+                showDialog(
+                  context: context,
+                  builder: (_) => TrailItineraryModal(model: model),
+                ).then((_) {
+                  // Reset state if needed or maintain UI consistency
+                  model.isItineraryView = false;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            flex: 20,
+            child: Container(),
+          )
+        ],
+      );
+    });
   }
 }
 
@@ -185,509 +194,315 @@ class TrailPreviewViewBody extends StatefulWidget {
 
 class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
   bool _showAllExperiences = false;
-  // Removed _buildItineraryList and state properties to use TrailItineraryModal instead
 
   @override
   Widget build(BuildContext parentContext) {
     return Consumer<PreviewTrailModel>(
       builder: (context, model, _) {
-        final height = MediaQuery.of(context).size.height;
-        final heightForOptionalView = height - height * 0.3;
-        final experienceCount = _showAllExperiences
-            ? model.currentTrailPreview.experiences.length
-            : (model.currentTrailPreview.experiences.length > 6
-                ? 6
-                : model.currentTrailPreview.experiences.length);
         return StreamBuilder<BaseResponse<User>>(
-            initialData: model.profileService.userResponse,
-            stream: model.profileService.userResponseStream,
-            builder: (context, snapshot) {
+          initialData: model.profileService.userResponse,
+          stream: model.profileService.userResponseStream,
+          builder: (context, snapshot) {
+            if (model.state == ViewState.Busy) {
+              return const Expanded(
+                child: Center(child: CircularProgressBar()),
+              );
+            }
+
+            if (model.showErrorStatus) {
               return Expanded(
-                child: Stack(
-                  children: <Widget>[
-                    model.state != ViewState.Busy && !model.showErrorStatus
-                        ? ListView(
-                            key: const PageStorageKey('overview_list'),
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                            children: <Widget>[
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Experiences',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1D1D1F),
-                                  letterSpacing: -0.4,
-                                ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                        text: AppLocalizations.of(context)!
+                            .somethingWentWrongRequestText,
+                        children: [
+                          const TextSpan(text: ". "),
+                          TextSpan(
+                            text: AppLocalizations.of(context)!.tryAgain,
+                            style: const TextStyle(
+                                decoration: TextDecoration.underline),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => model.showTrailDetails(
+                                  model.currentTrailPreview, true),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return Expanded(
+              child: Stack(
+                children: [
+                  _buildBoardView(model),
+                  // "Add to my trails" button - visible in both tabs as a footer
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: SafeArea(
+                        top: false,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: tealish,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 24),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: EdgeInsets.zero,
-                                margin: EdgeInsets.zero,
-                                width: double.maxFinite,
-                                child: GridView.builder(
-                                  padding: EdgeInsets.zero,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: experienceCount,
-                                  shrinkWrap: true,
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          crossAxisSpacing: 12.0,
-                                          mainAxisSpacing: 12.0,
-                                          mainAxisExtent: 240),
-                                  itemBuilder: (context, index) {
-                                    // Get the max size from the context
-                                    var width =
-                                        MediaQuery.of(context).size.width / 2 -
-                                            14;
-                                    var height =
-                                        MediaQuery.of(context).size.width / 2 -
-                                            28;
-                                    // Return the experience item
-                                    var experience = model
-                                        .currentTrailPreview.experiences[index];
-                                    return experienceItem(
-                                      context: context,
-                                      experience: experience,
-                                      height: height,
-                                      width: width,
-                                      experienceNameFontSize: 12,
-                                      experienceDestinationFontSize: 10,
-                                      onLongPress: doNothing,
-                                      onTap: () {
-                                        Provider.of<EventClient>(context,
-                                                listen: false)
-                                            .createEvent(Event(
-                                                EventName
-                                                    .experience_profile_viewed,
-                                                EventSourceView
-                                                    .trail_experience,
-                                                {
-                                              EventTag.experience_id: experience
-                                                  .experienceId
-                                                  .toString(),
-                                              EventTag.experience_name:
-                                                  experience.name,
-                                              EventTag.trail_id: model
-                                                  .currentTrailPreview.id
-                                                  .toString(),
-                                              EventTag.trail_name: model
-                                                  .currentTrailPreview.name,
-                                            }));
-                                      },
-                                      showAddToTrailButton: true,
-                                      showMoreOptionsButton: false,
-                                      backgroundColor: const Color(0xFFF5F5F7),
-                                    );
-                                  },
-                                ),
-                              ),
-                              if (model.currentTrailPreview.experiences.length >
-                                      6 &&
-                                  !_showAllExperiences) ...[
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 8, bottom: 16),
-                                  child: Center(
-                                    child: TextButton(
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: tealish,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _showAllExperiences = true;
-                                        });
-                                      },
-                                      child: const Text(
-                                        'Show More',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white,
-                                        ),
+                            ),
+                            child: model.addRequested
+                                ? const Center(
+                                    child: SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ],
-                              if (model.currentTrailPreview.experiences.length >
-                                      6 &&
-                                  _showAllExperiences) ...[
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 8, bottom: 16),
-                                  child: Center(
-                                    child: TextButton(
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: tealish,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _showAllExperiences = false;
-                                        });
-                                      },
-                                      child: const Text(
-                                        'Show Less',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              Text(
-                                AppLocalizations.of(context)!
-                                    .experiencesOnTheMap,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1D1D1F),
-                                  letterSpacing: -0.4,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  height: 200,
-                                  color: Colors.black26,
-                                  child: GoogleMap(
-                                      initialCameraPosition: CameraPosition(
-                                        target: LatLng(
-                                            model.currentTrailPreview.latitude,
-                                            model
-                                                .currentTrailPreview.longitude),
-                                      ),
-                                      onMapCreated: model.onTrailMapCreated,
-                                      markers: model.getMarkers(
-                                          trail: model.currentTrailPreview),
-                                      polylines: model.polylines,
-                                      gestureRecognizers: Set()
-                                        ..add(Factory<
-                                                OneSequenceGestureRecognizer>(
-                                            () => EagerGestureRecognizer()))),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Center(
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: tealish,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 24, vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) =>
-                                          TrailItineraryModal(model: model),
-                                    );
-                                  },
-                                  child: const Text(
-                                    'Show Itinerary',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
+                                  )
+                                : Text(
+                                    AppLocalizations.of(context)!
+                                        .addToMyTrailsText,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
                                       color: Colors.white,
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                'Related Experiences',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1D1D1F),
-                                  letterSpacing: -0.4,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                height: 260,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: EdgeInsets.zero,
-                                  itemCount: model.currentTrailPreview
-                                              .experiences.length >
-                                          5
-                                      ? 5
-                                      : model.currentTrailPreview.experiences
-                                          .length,
-                                  itemBuilder: (context, index) {
-                                    var experience = model
-                                        .currentTrailPreview.experiences[index];
-                                    var width =
-                                        MediaQuery.of(context).size.width / 2.5;
-                                    var height = width;
-                                    var itemCount = model.currentTrailPreview
-                                                .experiences.length >
-                                            5
-                                        ? 5
-                                        : model.currentTrailPreview.experiences
-                                            .length;
-                                    return Container(
-                                      margin: EdgeInsets.only(
-                                        right: index == itemCount - 1 ? 0 : 12,
-                                      ),
-                                      child: experienceItem(
-                                        context: context,
-                                        experience: experience,
-                                        height: height,
-                                        width: width,
-                                        onLongPress: doNothing,
-                                        onTap: () {
-                                          Provider.of<EventClient>(context,
-                                                  listen: false)
-                                              .createEvent(Event(
-                                                  EventName
-                                                      .experience_profile_viewed,
-                                                  EventSourceView
-                                                      .trail_experience,
-                                                  {
-                                                EventTag.experience_id:
-                                                    experience.experienceId
-                                                        .toString(),
-                                                EventTag.experience_name:
-                                                    experience.name,
-                                                EventTag.trail_id: model
-                                                    .currentTrailPreview.id
-                                                    .toString(),
-                                                EventTag.trail_name: model
-                                                    .currentTrailPreview.name,
-                                              }));
-                                        },
-                                        showAddToTrailButton: false,
-                                        showMoreOptionsButton: false,
-                                        backgroundColor:
-                                            const Color(0xFFF5F5F7),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                            ],
-                          )
-                        : model.state == ViewState.Busy
-                            ? Container(
-                                height: heightForOptionalView,
-                                child: Center(child: CircularProgressBar()),
-                              )
-                            : Container(
-                                height: 200,
-                                padding: EdgeInsets.all(16),
-                                alignment: Alignment.bottomLeft,
-                                child: RichText(
-                                  text: TextSpan(
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w400,
-                                      color: Colors.black,
-                                    ),
-                                    text: AppLocalizations.of(context)!
-                                        .somethingWentWrongRequestText,
-                                    children: [
-                                      TextSpan(text: ". "),
-                                      TextSpan(
-                                        text: AppLocalizations.of(context)!
-                                            .tryAgain,
-                                        style: TextStyle(
-                                            decoration:
-                                                TextDecoration.underline),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () =>
-                                              model.showTrailDetails(
-                                                  model.currentTrailPreview,
-                                                  true),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                    model.state != ViewState.Busy && !model.showErrorStatus
-                        ? Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              padding:
-                                  const EdgeInsets.fromLTRB(24, 12, 24, 24),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.06),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, -2),
-                                  ),
-                                ],
-                              ),
-                              child: SafeArea(
-                                top: false,
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: TextButton(
-                                    style: TextButton.styleFrom(
-                                      backgroundColor: tealish,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12, horizontal: 24),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    child: model.addRequested
-                                        ? const Center(
-                                            child: SizedBox(
-                                              height: 22,
-                                              width: 22,
-                                              child: CircularProgressIndicator(
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                        Color>(Colors.white),
-                                              ),
-                                            ),
-                                          )
-                                        : Text(
-                                            AppLocalizations.of(context)!
-                                                .addToMyTrailsText,
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                    onPressed: () async {
-                                      return runBasedOnUser(context,
-                                          onRegistered: () async {
-                                        if (model.addRequested) {
-                                          return;
-                                        }
-                                        bool success = await model
-                                            .addCurrentTrailToCollection(
-                                                context);
-                                        if (!success && model.error) {
-                                          final snackBar = SnackBar(
-                                            content: Text(AppLocalizations.of(
-                                                    context)!
-                                                .somethingWentWrongRequestText),
-                                          );
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(snackBar);
-                                          model.error = !model.error;
-                                        }
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        : Container(),
-                    model.showTrailAdded
-                        ? AddedToTrail(
-                            model.isAdded
-                                ? AppLocalizations.of(context)!.trailAddedText
-                                : AppLocalizations.of(context)!.deleteText,
-                          )
-                        : Container()
-                  ],
-                ),
-              );
-            });
+                            onPressed: () =>
+                                model.addCurrentTrailToCollection(context),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (model.showTrailAdded)
+                    AddedToTrail(
+                      model.isAdded
+                          ? AppLocalizations.of(context)!.trailAddedText
+                          : AppLocalizations.of(context)!.deleteText,
+                    ),
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
-}
 
-class ItineraryTransitBlock extends StatelessWidget {
-  final String transportType; // 'car' or 'walking'
-  final String? duration;
+  Widget _buildBoardView(PreviewTrailModel model) {
+    var experienceCount = _showAllExperiences
+        ? model.currentTrailPreview.experiences.length
+        : (model.currentTrailPreview.experiences.length > 6
+            ? 6
+            : model.currentTrailPreview.experiences.length);
+    if (experienceCount > model.currentTrailPreview.experiences.length) {
+      experienceCount = model.currentTrailPreview.experiences.length;
+    }
 
-  const ItineraryTransitBlock({
-    Key? key,
-    this.transportType = 'car',
-    this.duration,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(height: 12, width: 1, color: const Color(0xFFDADCE0)),
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFDADCE0)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    transportType == 'car' ? '🚗' : '🚶',
-                    style: const TextStyle(fontSize: 14),
+    return ListView(
+      key: const PageStorageKey('board_list'),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+      children: <Widget>[
+        const SizedBox(height: 8),
+        const Text(
+          'Experiences',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1D1D1F),
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: EdgeInsets.zero,
+          margin: EdgeInsets.zero,
+          width: double.maxFinite,
+          child: GridView.builder(
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: experienceCount,
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12.0,
+              mainAxisSpacing: 12.0,
+              mainAxisExtent: 240,
+            ),
+            itemBuilder: (context, index) {
+              var width = MediaQuery.of(context).size.width / 2 - 14;
+              var height = MediaQuery.of(context).size.width / 2 - 28;
+              var experience = model.currentTrailPreview.experiences[index];
+              return experienceItem(
+                context: context,
+                experience: experience,
+                height: height,
+                width: width,
+                experienceNameFontSize: 12,
+                experienceDestinationFontSize: 10,
+                onLongPress: doNothing,
+                onTap: () {
+                  Provider.of<EventClient>(context, listen: false).createEvent(
+                      Event(EventName.experience_profile_viewed,
+                          EventSourceView.trail_experience, {
+                    EventTag.experience_id: experience.experienceId.toString(),
+                    EventTag.experience_name: experience.name,
+                    EventTag.trail_id: model.currentTrailPreview.id.toString(),
+                    EventTag.trail_name: model.currentTrailPreview.name,
+                  }));
+                },
+                showAddToTrailButton: true,
+                showMoreOptionsButton: false,
+                backgroundColor: const Color(0xFFF5F5F7),
+              );
+            },
+          ),
+        ),
+        if (model.currentTrailPreview.experiences.length > 6) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 16),
+            child: Center(
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: tealish,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Transit',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF5F6368),
-                    ),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showAllExperiences = !_showAllExperiences;
+                  });
+                },
+                child: Text(
+                  _showAllExperiences ? 'Show Less' : 'Show More',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
                   ),
-                  if (duration != null) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 1,
-                      height: 12,
-                      color: const Color(0xFFDADCE0),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      duration!,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF5F6368),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
-            Container(height: 12, width: 1, color: const Color(0xFFDADCE0)),
-          ],
+          ),
+        ],
+        const SizedBox(height: 24),
+        Text(
+          AppLocalizations.of(context)!.experiencesOnTheMap,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1D1D1F),
+            letterSpacing: -0.4,
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 200,
+            color: Colors.black26,
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(model.currentTrailPreview.latitude,
+                    model.currentTrailPreview.longitude),
+              ),
+              onMapCreated: model.onTrailMapCreated,
+              markers: model.getMarkers(trail: model.currentTrailPreview),
+              polylines: model.polylines,
+              gestureRecognizers: Set()
+                ..add(Factory<OneSequenceGestureRecognizer>(
+                    () => EagerGestureRecognizer())),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Related Experiences',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1D1D1F),
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.zero,
+            itemCount: model.currentTrailPreview.experiences.length > 5
+                ? 5
+                : model.currentTrailPreview.experiences.length,
+            itemBuilder: (context, index) {
+              var experience = model.currentTrailPreview.experiences[index];
+              var width = MediaQuery.of(context).size.width / 2.5;
+              var height = width;
+              var itemCount = model.currentTrailPreview.experiences.length > 5
+                  ? 5
+                  : model.currentTrailPreview.experiences.length;
+              return Container(
+                margin: EdgeInsets.only(
+                  right: index == itemCount - 1 ? 0 : 12,
+                ),
+                child: experienceItem(
+                  context: context,
+                  experience: experience,
+                  height: height,
+                  width: width,
+                  onLongPress: doNothing,
+                  onTap: () {
+                    Provider.of<EventClient>(context, listen: false)
+                        .createEvent(Event(EventName.experience_profile_viewed,
+                            EventSourceView.trail_experience, {
+                      EventTag.experience_id:
+                          experience.experienceId.toString(),
+                      EventTag.experience_name: experience.name,
+                      EventTag.trail_id:
+                          model.currentTrailPreview.id.toString(),
+                      EventTag.trail_name: model.currentTrailPreview.name,
+                    }));
+                  },
+                  showAddToTrailButton: false,
+                  showMoreOptionsButton: false,
+                  backgroundColor: const Color(0xFFF5F5F7),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }
@@ -709,15 +524,12 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
     List<Widget> itineraryList = [];
     if (model.currentTrailPreview.experiences.isEmpty) return itineraryList;
 
-    // Sort experiences first so they are in timeline order
     List<Experience> sortedExperiences =
         List.from(model.currentTrailPreview.experiences);
     sortedExperiences
         .sort((a, b) => a.visitStartTime.compareTo(b.visitStartTime));
 
     Map<int, List<Experience>> daysMap = {};
-
-    // Grouping logic
     int estimatedDays =
         (model.currentTrailPreview.itineraryEstimatedTime.inHours /
                 Duration.hoursPerDay)
@@ -735,7 +547,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
       daysMap.putIfAbsent(dayKey, () => []).add(exp);
     }
 
-    // Safety check for current day index
     int safeDayIndex = _currentDayIndex;
     if (!daysMap.containsKey(safeDayIndex)) {
       if (daysMap.isNotEmpty) {
@@ -748,7 +559,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
     List<Experience> dayEvents = daysMap[safeDayIndex]!;
     dayEvents.sort((a, b) => a.visitStartTime.compareTo(b.visitStartTime));
 
-    // Criteria for Injection Logic
     bool needsBreakfast = dayEvents
         .any((e) => e.visitStartTime.hour >= 5 && e.visitStartTime.hour < 12);
     bool needsLunch = dayEvents
@@ -763,7 +573,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
       var exp = dayEvents[j];
       int startHour = exp.visitStartTime.hour;
 
-      // 🍳 Breakfast Injection: If morning starts, add breakfast before the first morning activity
       if (needsBreakfast && !breakfastAdded && startHour < 12) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
@@ -773,7 +582,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
         breakfastAdded = true;
       }
 
-      // 🥪 Lunch Injection: Insert before the first afternoon activity (12pm-6pm)
       if (needsLunch && !lunchAdded && startHour >= 12 && startHour < 18) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
@@ -783,7 +591,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
         lunchAdded = true;
       }
 
-      // 🍽️ Dinner Injection: Insert before the first evening activity (>= 6pm)
       if (needsDinner && !dinnerAdded && startHour >= 18) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
@@ -793,14 +600,12 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
         dinnerAdded = true;
       }
 
-      // If experience IS explicitly a meal or accommodation, use the special block
       if (exp.foodDrinks || exp.accommodation) {
         itineraryList.add(ItineraryMealSleepBlock(
           experience: exp,
           isMeal: exp.foodDrinks,
         ));
       } else {
-        // Standard Experience Card
         itineraryList.add(ItineraryExperienceCard(
           experience: exp,
           isSelected: _selectedExperienceId == exp.experienceId,
@@ -819,7 +624,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
         ));
       }
 
-      // Transit: Between experiences
       if (j < dayEvents.length - 1) {
         var nextExp = dayEvents[j + 1];
         var transitDuration =
@@ -837,7 +641,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
       }
     }
 
-    // Fallback: If day has activities but lunch/dinner weren't injected because of gaps, append them
     if (needsLunch && !lunchAdded) {
       itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
@@ -851,7 +654,6 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
           customDescription: '8:00 PM - 8:30 PM'));
     }
 
-    // 😴 Sleep: End of every day
     itineraryList.add(const ItineraryMealSleepBlock(
       isMeal: false,
       customName: 'Sleep',

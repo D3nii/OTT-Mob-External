@@ -94,7 +94,7 @@ class _OverlappingImageStackState extends State<_OverlappingImageStack> {
       // Defaults similar to original behaviour
       const double defaultCardWidth = 280.0;
       const double desiredOverlap = 80.0;
-      const int maxAllowed = 9;
+      const int maxAllowed = 4;
 
       final int visible = math.min(count, maxAllowed);
 
@@ -115,7 +115,7 @@ class _OverlappingImageStackState extends State<_OverlappingImageStack> {
       }
 
       List<Widget> children = [];
-      for (int i = 0; i < count; i++) {
+      for (int i = 0; i < visible; i++) {
         final double w = cardWidth;
         Widget card = _HoverableImageCard(
           image: _images[i],

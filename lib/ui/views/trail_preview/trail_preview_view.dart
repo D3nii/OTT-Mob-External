@@ -619,6 +619,79 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
   }
 }
 
+class ItineraryTransitBlock extends StatelessWidget {
+  final String transportType; // 'car' or 'walking'
+  final String? duration;
+
+  const ItineraryTransitBlock({
+    Key? key,
+    this.transportType = 'car',
+    this.duration,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(height: 12, width: 1, color: const Color(0xFFDADCE0)),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFDADCE0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    transportType == 'car' ? '🚗' : '🚶',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Transit',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF5F6368),
+                    ),
+                  ),
+                  if (duration != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 1,
+                      height: 12,
+                      color: const Color(0xFFDADCE0),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      duration!,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF5F6368),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Container(height: 12, width: 1, color: const Color(0xFFDADCE0)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class TrailItineraryModal extends StatefulWidget {
   final PreviewTrailModel model;
 
@@ -644,180 +717,153 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
 
     Map<int, List<Experience>> daysMap = {};
 
-    // Determine number of days from total estimated time, or default to 1
+    // Grouping logic
     int estimatedDays =
         (model.currentTrailPreview.itineraryEstimatedTime.inHours /
                 Duration.hoursPerDay)
             .ceil();
-    if (estimatedDays < 1) {
-      estimatedDays = 1;
-    }
+    if (estimatedDays < 1) estimatedDays = 1;
 
     int totalExperiences = sortedExperiences.length;
-    // How many experiences per day roughly?
     double experiencesPerDay = totalExperiences / estimatedDays;
     if (experiencesPerDay < 1) experiencesPerDay = 1.0;
 
     for (int i = 0; i < totalExperiences; i++) {
       var exp = sortedExperiences[i];
-
-      // Group them sequentially according to the estimated duration of the whole trail
       int dayKey = (i / experiencesPerDay).floor();
-
-      // Safety cap so we don't exceed the estimated days (0-indexed)
-      if (dayKey >= estimatedDays) {
-        dayKey = estimatedDays - 1;
-      }
-
+      if (dayKey >= estimatedDays) dayKey = estimatedDays - 1;
       daysMap.putIfAbsent(dayKey, () => []).add(exp);
     }
 
-    var sortedKeys = daysMap.keys.toList()..sort();
-    if (sortedKeys.isEmpty) return itineraryList;
-
-    // Ensure _currentDayIndex is within bounds
-    if (_currentDayIndex >= sortedKeys.length) {
-      _currentDayIndex = sortedKeys.length - 1;
-    }
-    if (_currentDayIndex < 0) {
-      _currentDayIndex = 0;
-    }
-
-    int currentDayKey = sortedKeys[_currentDayIndex];
-    int dayNumber = currentDayKey + 1;
-    List<Experience> dayEvents = daysMap[currentDayKey]!;
-
-    itineraryList.add(
-      Padding(
-        padding: const EdgeInsets.only(top: 0, bottom: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              iconSize: 32,
-              color: _currentDayIndex > 0 ? tealish : Colors.grey[400],
-              icon: const Icon(Icons.chevron_left),
-              onPressed: _currentDayIndex > 0
-                  ? () {
-                      setState(() {
-                        _currentDayIndex--;
-                      });
-                    }
-                  : null,
-            ),
-            Text(
-              'Day $dayNumber',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1D1D1F),
-              ),
-            ),
-            IconButton(
-              iconSize: 32,
-              color: _currentDayIndex < sortedKeys.length - 1
-                  ? tealish
-                  : Colors.grey[400],
-              icon: const Icon(Icons.chevron_right),
-              onPressed: _currentDayIndex < sortedKeys.length - 1
-                  ? () {
-                      setState(() {
-                        _currentDayIndex++;
-                      });
-                    }
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
-
-    dayEvents.sort((Experience a, Experience b) =>
-        a.visitStartTime.compareTo(b.visitStartTime));
-
-    List<dynamic> itemsToRender = List.from(dayEvents);
-
-    for (int j = 0; j < itemsToRender.length; j++) {
-      var item = itemsToRender[j];
-      bool isNextMealOrSleep = false;
-      if (j < itemsToRender.length - 1) {
-        var nextItem = itemsToRender[j + 1];
-        if ((nextItem is Map && nextItem['type'] == 'meal') ||
-            (nextItem is Map && nextItem['type'] == 'sleep')) {
-          isNextMealOrSleep = true;
-        } else if (nextItem is Experience &&
-            (nextItem.accommodation || nextItem.foodDrinks)) {
-          isNextMealOrSleep = true;
-        }
-      }
-
-      if (item is Experience) {
-        if (item.accommodation || item.foodDrinks) {
-          itineraryList.add(ItineraryMealSleepBlock(
-            experience: item,
-            isMeal: item.foodDrinks,
-          ));
-        } else {
-          itineraryList.add(ItineraryExperienceCard(
-            experience: item,
-            isSelected: _selectedExperienceId == item.experienceId,
-            onTap: () {
-              setState(() {
-                _selectedExperienceId = item.experienceId;
-              });
-            },
-            onViewExperienceTap: () {
-              Navigator.pushNamed(
-                context,
-                '/experience',
-                arguments: item,
-              );
-            },
-          ));
-        }
-      } else if (item is Map) {
-        if (item['type'] == 'meal') {
-          itineraryList.add(ItineraryMealSleepBlock(
-            isMeal: true,
-            customName: item['name'],
-            customTitle: item['name'],
-            customDescription: '${item['duration']} duration',
-          ));
-        } else if (item['type'] == 'sleep') {
-          itineraryList.add(ItineraryMealSleepBlock(
-            isMeal: false,
-            customName: item['name'],
-            customTitle: item['name'],
-            customDescription: '${item['duration']} duration',
-          ));
-        }
-      }
-
-      bool isCurrentMealOrSleep = false;
-      if ((item is Map && item['type'] == 'meal') ||
-          (item is Map && item['type'] == 'sleep')) {
-        isCurrentMealOrSleep = true;
-      } else if (item is Experience &&
-          (item.accommodation || item.foodDrinks)) {
-        isCurrentMealOrSleep = true;
-      }
-
-      if (j < itemsToRender.length - 1 &&
-          !isCurrentMealOrSleep &&
-          !isNextMealOrSleep) {
-        itineraryList.add(const ItineraryTransitBlock());
+    // Safety check for current day index
+    int safeDayIndex = _currentDayIndex;
+    if (!daysMap.containsKey(safeDayIndex)) {
+      if (daysMap.isNotEmpty) {
+        safeDayIndex = daysMap.keys.first;
+      } else {
+        return itineraryList;
       }
     }
+
+    List<Experience> dayEvents = daysMap[safeDayIndex]!;
+    dayEvents.sort((a, b) => a.visitStartTime.compareTo(b.visitStartTime));
+
+    // Criteria for Injection Logic
+    bool needsBreakfast = dayEvents
+        .any((e) => e.visitStartTime.hour >= 5 && e.visitStartTime.hour < 12);
+    bool needsLunch = dayEvents
+        .any((e) => e.visitStartTime.hour >= 12 && e.visitStartTime.hour < 18);
+    bool needsDinner = dayEvents.any((e) => e.visitStartTime.hour >= 18);
+
+    bool breakfastAdded = false;
+    bool lunchAdded = false;
+    bool dinnerAdded = false;
+
+    for (int j = 0; j < dayEvents.length; j++) {
+      var exp = dayEvents[j];
+      int startHour = exp.visitStartTime.hour;
+
+      // 🍳 Breakfast Injection: If morning starts, add breakfast before the first morning activity
+      if (needsBreakfast && !breakfastAdded && startHour < 12) {
+        itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true,
+          customName: 'Breakfast',
+          customDescription: '9:00 AM - 9:30 AM',
+        ));
+        breakfastAdded = true;
+      }
+
+      // 🥪 Lunch Injection: Insert before the first afternoon activity (12pm-6pm)
+      if (needsLunch && !lunchAdded && startHour >= 12 && startHour < 18) {
+        itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true,
+          customName: 'Lunch',
+          customDescription: '1:00 PM - 1:30 PM',
+        ));
+        lunchAdded = true;
+      }
+
+      // 🍽️ Dinner Injection: Insert before the first evening activity (>= 6pm)
+      if (needsDinner && !dinnerAdded && startHour >= 18) {
+        itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true,
+          customName: 'Dinner',
+          customDescription: '8:00 PM - 8:30 PM',
+        ));
+        dinnerAdded = true;
+      }
+
+      // If experience IS explicitly a meal or accommodation, use the special block
+      if (exp.foodDrinks || exp.accommodation) {
+        itineraryList.add(ItineraryMealSleepBlock(
+          experience: exp,
+          isMeal: exp.foodDrinks,
+        ));
+      } else {
+        // Standard Experience Card
+        itineraryList.add(ItineraryExperienceCard(
+          experience: exp,
+          isSelected: _selectedExperienceId == exp.experienceId,
+          onTap: () {
+            setState(() {
+              _selectedExperienceId = exp.experienceId;
+            });
+          },
+          onViewExperienceTap: () {
+            Navigator.pushNamed(
+              context,
+              '/experience',
+              arguments: exp,
+            );
+          },
+        ));
+      }
+
+      // Transit: Between experiences
+      if (j < dayEvents.length - 1) {
+        var nextExp = dayEvents[j + 1];
+        var transitDuration =
+            nextExp.visitStartTime.difference(exp.visitEndTime);
+        String durationStr = '${transitDuration.inMinutes}m';
+        if (transitDuration.inHours > 0) {
+          durationStr =
+              '${transitDuration.inHours}h ${transitDuration.inMinutes % 60}m';
+        }
+
+        itineraryList.add(ItineraryTransitBlock(
+          transportType: 'car',
+          duration: durationStr,
+        ));
+      }
+    }
+
+    // Fallback: If day has activities but lunch/dinner weren't injected because of gaps, append them
+    if (needsLunch && !lunchAdded) {
+      itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true,
+          customName: 'Lunch',
+          customDescription: '1:00 PM - 1:30 PM'));
+    }
+    if (needsDinner && !dinnerAdded) {
+      itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true,
+          customName: 'Dinner',
+          customDescription: '8:00 PM - 8:30 PM'));
+    }
+
+    // 😴 Sleep: End of every day
+    itineraryList.add(const ItineraryMealSleepBlock(
+      isMeal: false,
+      customName: 'Sleep',
+      customDescription: '8 hours',
+    ));
+
     return itineraryList;
   }
 
   @override
   Widget build(BuildContext context) {
     List<Widget> itineraryItems = _buildItineraryList(widget.model);
-    // Remove the first item from _buildItineraryList since it's the old day navigation
-    if (itineraryItems.isNotEmpty) {
-      itineraryItems.removeAt(0);
-    }
 
     int totalDays =
         (widget.model.currentTrailPreview.itineraryEstimatedTime.inHours /

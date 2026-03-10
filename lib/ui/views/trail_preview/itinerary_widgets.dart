@@ -147,11 +147,65 @@ class ItineraryMealSleepBlock extends StatelessWidget {
     final name = experience?.name ?? customName ?? '';
     final description = experience?.description ?? customDescription ?? '';
 
-    final emoji = isMeal
-        ? (title.toLowerCase().contains('breakfast')
-            ? '🍳'
-            : (title.toLowerCase().contains('lunch') ? '🥪' : '🍽️'))
-        : '😴';
+    // Determine emoji based on name/title
+    String emoji = isMeal ? '🍽️' : '😴';
+    if (isMeal) {
+      if (name.toLowerCase().contains('breakfast') ||
+          title.toLowerCase().contains('breakfast'))
+        emoji = '🍳';
+      else if (name.toLowerCase().contains('lunch') ||
+          title.toLowerCase().contains('lunch')) emoji = '🥪';
+    }
+
+    // Check if it's a simple status item (Sleep, Breakfast, Lunch, Dinner)
+    final compactNames = ['sleep', 'breakfast', 'lunch', 'dinner'];
+    if (compactNames.contains(name.trim().toLowerCase())) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 12,
+                width: 1,
+                color: const Color(0xFFF5E6C8),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBF0),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFF5E6C8)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 14)),
+                    const SizedBox(width: 6),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF7D5A2B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                height: 12,
+                width: 1,
+                color: const Color(0xFFF5E6C8),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -173,22 +227,25 @@ class ItineraryMealSleepBlock extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isMeal ? 'Meal: $name' : 'Sleep: $name',
+                  isMeal ? 'Meal: $name' : name,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF7D5A2B),
                   ),
                 ),
                 if (description.isNotEmpty)
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF7D5A2B),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2.0),
+                    child: Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF7D5A2B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
               ],
             ),
@@ -209,59 +266,50 @@ class ItineraryTransitBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 4), // Reduced padding so vertical line looks continuous
+    return Container(
+      width: double.infinity,
+      color: Colors.transparent, // Removed background
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              height: 16,
-              width: 1.5,
-              color: Colors.grey[300],
+              height: 12,
+              width: 1,
+              color: const Color(0xFFDADCE0),
             ),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey[200]!),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFDADCE0)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    transportType == 'car'
-                        ? Icons.directions_car_rounded
-                        : Icons.directions_walk_rounded,
-                    size: 16,
-                    color: Colors.grey[600],
+                  Text(
+                    transportType == 'car' ? '🚗' : '🚶',
+                    style: const TextStyle(fontSize: 14),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Text(
                     'Transit',
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: const TextStyle(
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
+                      color: Color(0xFF5F6368),
                     ),
                   ),
                 ],
               ),
             ),
             Container(
-              height: 16,
-              width: 1.5,
-              color: Colors.grey[300],
+              height: 12,
+              width: 1,
+              color: const Color(0xFFDADCE0),
             ),
           ],
         ),

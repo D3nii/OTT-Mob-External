@@ -49,6 +49,7 @@ To fix this:
 }
 
 android {
+    ndkVersion = "28.2.13676358"
     namespace "com.onetwotrail"
     compileSdkVersion flutter.compileSdkVersion
 

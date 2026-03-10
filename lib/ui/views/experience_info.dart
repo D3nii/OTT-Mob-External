@@ -25,6 +25,7 @@ import 'package:onetwotrail/utils/expandable_text.dart';
 import 'package:onetwotrail/utils/experience_details_helper.dart';
 import 'package:onetwotrail/v2/util/string.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ExperienceInfo extends BaseWidget {
   @override
@@ -562,27 +563,6 @@ class ContainerOfListViewBody extends StatelessWidget {
                 const SizedBox(height: 20),
                 experienceHorizontalList(
                   context: context,
-                  experiences: model.experience.related,
-                  experienceNameFontSize: 15,
-                  experienceDestinationFontSize: 13,
-                  experienceWidthRatio: 0.42,
-                  onLongPress: (_context, _experience) => doNothing(),
-                  onTap: (_context, _experience) {
-                    Navigator.pushNamed(_context, '/experienceInfo',
-                        arguments: _experience);
-                  },
-                  paddingLeft: 0,
-                  paddingRight: 16,
-                  showAddToTrailButton: false,
-                  showMoreOptionsButton: false,
-                  spaceBetweenExperiences: 12,
-                  title: AppLocalizations.of(context)?.relatedText ?? "Related",
-                  titleFontSize: 17,
-                  itemBackgroundColor: const Color(0xFFF5F5F7),
-                ),
-                const SizedBox(height: 32),
-                experienceHorizontalList(
-                  context: context,
                   experiences: model.experience.nearBy,
                   experienceNameFontSize: 15,
                   experienceDestinationFontSize: 13,
@@ -598,6 +578,27 @@ class ContainerOfListViewBody extends StatelessWidget {
                   showMoreOptionsButton: false,
                   spaceBetweenExperiences: 12,
                   title: AppLocalizations.of(context)?.nearbyText ?? "Nearby",
+                  titleFontSize: 17,
+                  itemBackgroundColor: const Color(0xFFF5F5F7),
+                ),
+                const SizedBox(height: 32),
+                experienceHorizontalList(
+                  context: context,
+                  experiences: model.experience.related,
+                  experienceNameFontSize: 15,
+                  experienceDestinationFontSize: 13,
+                  experienceWidthRatio: 0.42,
+                  onLongPress: (_context, _experience) => doNothing(),
+                  onTap: (_context, _experience) {
+                    Navigator.pushNamed(_context, '/experienceInfo',
+                        arguments: _experience);
+                  },
+                  paddingLeft: 0,
+                  paddingRight: 16,
+                  showAddToTrailButton: false,
+                  showMoreOptionsButton: false,
+                  spaceBetweenExperiences: 12,
+                  title: AppLocalizations.of(context)?.relatedText ?? "Related",
                   titleFontSize: 17,
                   itemBackgroundColor: const Color(0xFFF5F5F7),
                 ),
@@ -757,59 +758,59 @@ class ContactInfo extends StatelessWidget {
 
   const ContactInfo(this.experience, {Key? key}) : super(key: key);
 
-  String _truncate(String value) {
-    // Show the whole email and phone number as requested
-    return value;
+  void _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch $url';
+    }
   }
 
-  Widget _buildRow(IconData icon, String text) {
+  Widget _buildIcon(IconData icon, String url) {
+    if (url.isEmpty) return SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, size: 20),
-          SizedBox(width: 15),
-          Expanded(
-            child: Text(
-              _truncate(text),
-              style: TextStyle(fontSize: 12, color: Color(0xFF1D1D1F)),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(right: 25.0),
+      child: GestureDetector(
+        onTap: () => _launchUrl(url),
+        child: Icon(icon, color: const Color(0xFFE46F4B), size: 28),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> rows = [];
+    List<Widget> icons = [];
     if (experience.phone.isNotEmpty)
-      rows.add(_buildRow(Icons.phone, experience.phone));
+      icons.add(_buildIcon(Icons.phone, 'tel:${experience.phone}'));
     if (experience.email.isNotEmpty)
-      rows.add(_buildRow(Icons.email, experience.email));
-    if (experience.website.isNotEmpty)
-      rows.add(_buildRow(Icons.language, experience.website));
-    if (experience.whatsApp.isNotEmpty)
-      rows.add(_buildRow(Icons.message, experience.whatsApp));
-    if (experience.facebook.isNotEmpty)
-      rows.add(_buildRow(Icons.facebook, experience.facebook));
-    if (experience.instagram.isNotEmpty)
-      rows.add(_buildRow(Icons.camera_alt, experience.instagram));
+      icons.add(_buildIcon(Icons.email, 'mailto:${experience.email}'));
+    if (experience.website.isNotEmpty) {
+      String url = experience.website;
+      if (!url.startsWith('http')) url = 'https://$url';
+      icons.add(_buildIcon(Icons.language, url));
+    }
+    if (experience.whatsApp.isNotEmpty) {
+      String phone = experience.whatsApp.replaceAll(RegExp(r'\D'), '');
+      icons.add(_buildIcon(Icons.message, 'https://wa.me/$phone'));
+    }
+    if (experience.facebook.isNotEmpty) {
+      String url = experience.facebook;
+      if (!url.startsWith('http')) url = 'https://$url';
+      icons.add(_buildIcon(Icons.facebook, url));
+    }
+    if (experience.instagram.isNotEmpty) {
+      String url = experience.instagram;
+      if (!url.startsWith('http')) url = 'https://$url';
+      icons.add(_buildIcon(Icons.camera_alt, url));
+    }
 
-    if (rows.isEmpty) return Container();
+    if (icons.isEmpty) return Container();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(
-          top: 8,
-          bottom: 8), // Removed side padding so it aligns with "Contact"
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: rows,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: icons,
       ),
     );
   }

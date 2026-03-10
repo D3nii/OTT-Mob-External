@@ -100,14 +100,16 @@ class PreviewTrailModel extends BaseModel {
     showTrailDetails(trail, false);
   }
 
-  Set<Marker> getMarkers({required Trail trail}) {
+  Set<Marker> getMarkers({required Trail trail, int? selectedExperienceId}) {
     Set<Marker> trailMarkers = Set();
     for (Experience exp in trail.experiences) {
+      bool isSelected = exp.experienceId == selectedExperienceId;
       Marker newMarker = Marker(
           markerId: MarkerId(exp.experienceId.toString()),
           alpha: 1.0,
           position: LatLng(exp.latitude, exp.longitude),
-          icon: BitmapDescriptor.defaultMarker);
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+              isSelected ? 128.0 : BitmapDescriptor.hueRed));
       trailMarkers.add(newMarker);
     }
     return trailMarkers;

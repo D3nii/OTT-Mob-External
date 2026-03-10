@@ -813,39 +813,131 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> itineraryItems = _buildItineraryList(widget.model);
+    // Remove the first item from _buildItineraryList since it's the old day navigation
+    if (itineraryItems.isNotEmpty) {
+      itineraryItems.removeAt(0);
+    }
+
+    int totalDays =
+        (widget.model.currentTrailPreview.itineraryEstimatedTime.inHours /
+                Duration.hoursPerDay)
+            .ceil();
+    if (totalDays < 1) totalDays = 1;
+
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      clipBehavior: Clip.antiAlias,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
+        constraints: const BoxConstraints(maxWidth: 500),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Text(
-                  'Itinerary',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1D1D1F),
-                    letterSpacing: -0.5,
-                  ),
+            // Map at the top
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(widget.model.currentTrailPreview.latitude,
+                      widget.model.currentTrailPreview.longitude),
                 ),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.close, size: 24),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+                onMapCreated: widget.model.onTrailMapCreated,
+                markers: widget.model.getMarkers(
+                    trail: widget.model.currentTrailPreview,
+                    selectedExperienceId: _selectedExperienceId),
+                polylines: widget.model.polylines,
+                zoomControlsEnabled: false,
+                mapToolbarEnabled: false,
+                myLocationButtonEnabled: false,
+                gestureRecognizers: Set()
+                  ..add(Factory<OneSequenceGestureRecognizer>(
+                      () => EagerGestureRecognizer())),
+              ),
             ),
+            // Expanded content
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.only(bottom: 24),
-                children: _buildItineraryList(widget.model),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                children: itineraryItems,
+              ),
+            ),
+            // Footer with navigation and close
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          iconSize: 28,
+                          color:
+                              _currentDayIndex > 0 ? tealish : Colors.grey[400],
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: _currentDayIndex > 0
+                              ? () {
+                                  setState(() {
+                                    _currentDayIndex--;
+                                  });
+                                }
+                              : null,
+                        ),
+                        const SizedBox(width: 32),
+                        Text(
+                          'Day ${_currentDayIndex + 1}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1D1D1F),
+                          ),
+                        ),
+                        const SizedBox(width: 32),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          iconSize: 28,
+                          color: _currentDayIndex < totalDays - 1
+                              ? tealish
+                              : Colors.grey[400],
+                          icon: const Icon(Icons.chevron_right),
+                          onPressed: _currentDayIndex < totalDays - 1
+                              ? () {
+                                  setState(() {
+                                    _currentDayIndex++;
+                                  });
+                                }
+                              : null,
+                        ),
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(Icons.close,
+                            color: Colors.grey, size: 28),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

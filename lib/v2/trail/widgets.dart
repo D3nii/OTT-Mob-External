@@ -8,15 +8,9 @@ import 'package:onetwotrail/v2/widget/three_squares.dart';
 import 'package:provider/provider.dart';
 
 class TrailWidgetFactory {
-  static Widget createWidgetFromDisplay(BuildContext context, String display, Trail trail) {
-    switch (display) {
-      case 'banner':
-        return createPageBanner(trail);
-      case 'three-squares':
-        return createTitleThreeSquares(context, trail);
-      default:
-        throw Exception('Unknown display type: $display');
-    }
+  static Widget createWidgetFromDisplay(
+      BuildContext context, String display, Trail trail) {
+    return createTitleThreeSquares(context, trail);
   }
 
   static PageBanner createPageBanner(Trail trail) {
@@ -38,23 +32,21 @@ class TrailWidgetFactory {
     return PageBanner(pages: pages);
   }
 
-  static TitleThreeSquares createTitleThreeSquares(BuildContext context, Trail trail) {
+  static TitleThreeSquares createTitleThreeSquares(
+      BuildContext context, Trail trail) {
     // Convert the duration to a human-readable text for the badge.
-    var durationText = fromDurationToText(context, trail.itineraryEstimatedTime);
-
-    // The footer will repeat the trail name as the title and show
-    // the listing description in the body.
-    var footerTitle = trail.name;
-    var footerBody = trail.listingDescription;
+    var durationText =
+        fromDurationToText(context, trail.itineraryEstimatedTime);
 
     return TitleThreeSquares(
       titleText: trail.name,
       durationText: durationText,
       headerDescription: trail.description,
-      summaryTitleText: footerTitle,
-      summaryBodyText: footerBody,
+      summaryTitleText: "",
+      summaryBodyText: "",
       images: trail.imageProviders,
-      mainAction: (BuildContext context) => Provider.value(value: trail, child: TrailPreviewView()),
+      mainAction: (BuildContext context) =>
+          Provider.value(value: trail, child: TrailPreviewView()),
       padding: EdgeInsets.only(left: 16, right: 16),
     );
   }

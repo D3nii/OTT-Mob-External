@@ -41,11 +41,12 @@ class ThreeSquares extends StatelessWidget {
               onTap: () => openContainer(),
               child: LayoutBuilder(
                 builder: (context, constraints) => _OverlappingImageStack(
-                  images: images ?? [
-                    mainImage ?? empty,
-                    secondaryTopImage ?? empty,
-                    secondaryBottomImage ?? empty,
-                  ],
+                  images: images ??
+                      [
+                        mainImage ?? empty,
+                        secondaryTopImage ?? empty,
+                        secondaryBottomImage ?? empty,
+                      ],
                   cardHeight: height ?? 200,
                   maxWidth: constraints.maxWidth,
                 ),
@@ -82,7 +83,11 @@ class _OverlappingImageStackState extends State<_OverlappingImageStack> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final double availableWidth = widget.maxWidth.isFinite ? widget.maxWidth : constraints.maxWidth.isFinite ? constraints.maxWidth : 360.0;
+      final double availableWidth = widget.maxWidth.isFinite
+          ? widget.maxWidth
+          : constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : 360.0;
       final int count = _images.length;
       if (count == 0) return SizedBox.shrink();
 
@@ -98,7 +103,8 @@ class _OverlappingImageStackState extends State<_OverlappingImageStack> {
 
       if (defaultCardWidth + desiredOverlap * (visible - 1) > availableWidth) {
         final double minOverlap = 20.0;
-        final double computedOverlap = (availableWidth - defaultCardWidth) / (visible - 1);
+        final double computedOverlap =
+            (availableWidth - defaultCardWidth) / (visible - 1);
         if (computedOverlap >= minOverlap) {
           overlap = computedOverlap;
         } else {
@@ -168,7 +174,8 @@ class _HoverableImageCard extends StatelessWidget {
       onExit: (_) => onHoverChanged(false),
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
-        transform: hovered ? (Matrix4.identity()..scale(1.02)) : Matrix4.identity(),
+        transform:
+            hovered ? (Matrix4.identity()..scale(1.02)) : Matrix4.identity(),
         child: Container(
           width: width,
           height: height,
@@ -272,12 +279,20 @@ class TitleThreeSquares extends ThreeSquares {
     required this.padding,
     this.textBackgroundColor = Colors.transparent,
     List<ImageProvider>? images,
+    double? height,
     required Function(BuildContext context) mainAction,
   }) : super(
-          mainImage: images != null && images.isNotEmpty ? images[0] : AssetImage('assets/help/empty_image.png'),
-          secondaryTopImage: images != null && images.length > 1 ? images[1] : AssetImage('assets/help/empty_image.png'),
-          secondaryBottomImage: images != null && images.length > 2 ? images[2] : AssetImage('assets/help/empty_image.png'),
+          mainImage: images != null && images.isNotEmpty
+              ? images[0]
+              : AssetImage('assets/help/empty_image.png'),
+          secondaryTopImage: images != null && images.length > 1
+              ? images[1]
+              : AssetImage('assets/help/empty_image.png'),
+          secondaryBottomImage: images != null && images.length > 2
+              ? images[2]
+              : AssetImage('assets/help/empty_image.png'),
           images: images,
+          height: height,
           mainAction: mainAction,
         );
 
@@ -313,7 +328,8 @@ class TitleThreeSquares extends ThreeSquares {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (headerDescription != null && headerDescription!.trim().isNotEmpty) ...[
+                      if (headerDescription != null &&
+                          headerDescription!.trim().isNotEmpty) ...[
                         SizedBox(height: 4),
                         Text(
                           headerDescription!,
@@ -360,7 +376,8 @@ class TitleThreeSquares extends ThreeSquares {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (summaryTitleText.trim().isNotEmpty && summaryTitleText.trim() != titleText.trim())
+                if (summaryTitleText.trim().isNotEmpty &&
+                    summaryTitleText.trim() != titleText.trim())
                   Text(
                     summaryTitleText,
                     textAlign: TextAlign.left,

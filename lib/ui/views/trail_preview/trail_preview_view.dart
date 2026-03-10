@@ -645,7 +645,10 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
     Map<int, List<Experience>> daysMap = {};
 
     // Determine number of days from total estimated time, or default to 1
-    int estimatedDays = model.currentTrailPreview.itineraryEstimatedTime.inDays;
+    int estimatedDays =
+        (model.currentTrailPreview.itineraryEstimatedTime.inHours /
+                Duration.hoursPerDay)
+            .ceil();
     if (estimatedDays < 1) {
       estimatedDays = 1;
     }
@@ -686,7 +689,7 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
 
     itineraryList.add(
       Padding(
-        padding: const EdgeInsets.only(top: 16, bottom: 16),
+        padding: const EdgeInsets.only(top: 0, bottom: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -763,6 +766,13 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
                 _selectedExperienceId = item.experienceId;
               });
             },
+            onViewExperienceTap: () {
+              Navigator.pushNamed(
+                context,
+                '/experience',
+                arguments: item,
+              );
+            },
           ));
         }
       } else if (item is Map) {
@@ -813,6 +823,7 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text(
                   'Itinerary',
@@ -824,12 +835,13 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.close, size: 24),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 24),

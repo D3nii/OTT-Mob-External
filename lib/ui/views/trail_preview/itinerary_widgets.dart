@@ -6,12 +6,14 @@ class ItineraryExperienceCard extends StatelessWidget {
   final Experience experience;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback? onViewExperienceTap;
 
   const ItineraryExperienceCard({
     Key? key,
     required this.experience,
     this.isSelected = false,
     required this.onTap,
+    this.onViewExperienceTap,
   }) : super(key: key);
 
   @override
@@ -24,10 +26,8 @@ class ItineraryExperienceCard extends StatelessWidget {
           color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: isSelected
-              ? Border(
-                  left: BorderSide(color: const Color(0xFF34A853), width: 6),
-                )
-              : null,
+              ? Border.all(color: const Color(0xFF34A853), width: 2)
+              : Border.all(color: Colors.grey[300]!, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -92,7 +92,7 @@ class ItineraryExperienceCard extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: onTap,
+                          onPressed: onViewExperienceTap,
                           style: TextButton.styleFrom(
                             backgroundColor: const Color(0xFF34A853),
                             foregroundColor: Colors.white,

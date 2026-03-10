@@ -84,13 +84,16 @@ class _BodyContainer extends StatelessWidget {
                       onRefresh: model.refresh,
                       child: CustomScrollView(
                         slivers: [
-                          if ((snapshot.data?.isEmpty ?? true) && (model.isLoadingMoreTrails || model.trailService.isLoadingTrails))
+                          if ((snapshot.data?.isEmpty ?? true) &&
+                              (model.isLoadingMoreTrails ||
+                                  model.trailService.isLoadingTrails))
                             SliverToBoxAdapter(
                               child: TrailsGridShimmer(),
                             )
                           else
                             _buildTrailsGrid(context, snapshot, model),
-                          if ((snapshot.data?.isNotEmpty ?? false) && model.isLoadingMoreTrails)
+                          if ((snapshot.data?.isNotEmpty ?? false) &&
+                              model.isLoadingMoreTrails)
                             SliverToBoxAdapter(
                               child: TrailsGridShimmer(),
                             ),
@@ -143,13 +146,23 @@ class _ContainerOfTitle extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: AppLocalizations.of(context)?.profileText.toUpperCase() ?? "PROFILE",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white),
+                      text: AppLocalizations.of(context)
+                              ?.profileText
+                              .toUpperCase() ??
+                          "PROFILE",
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white),
                     ),
                     TextSpan(text: "\n"),
                     TextSpan(
-                      text: AppLocalizations.of(context)?.profileHeadline ?? "Your profile information",
-                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.white),
+                      text: AppLocalizations.of(context)?.profileHeadline ??
+                          "Your profile information",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -167,7 +180,8 @@ class _ContainerOfUserData extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<HomeModel, ProfileViewModel>(builder: (context, homeModel, model, _) {
+    return Consumer2<HomeModel, ProfileViewModel>(
+        builder: (context, homeModel, model, _) {
       return StreamBuilder<BaseResponse<User>>(
           stream: model.profile,
           builder: (context, snapshot) {
@@ -193,7 +207,10 @@ class _ContainerOfUserData extends StatelessWidget {
                               child: AutoSizeText(
                                 _getUserFullName(snapshot),
                                 maxLines: 1,
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black),
                               ),
                             ),
                           ),
@@ -206,7 +223,10 @@ class _ContainerOfUserData extends StatelessWidget {
                                 _getCountryName(snapshot),
                                 maxLines: 1,
                                 textAlign: TextAlign.left,
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black),
                               ),
                             ),
                           ),
@@ -228,9 +248,11 @@ class _ContainerOfUserData extends StatelessWidget {
                                 color: Colors.white,
                               ),
                               color: Colors.white,
-                              onPressed: snapshot.data != null && snapshot.data!.responseStatus == SUCCESS
+                              onPressed: snapshot.data != null &&
+                                      snapshot.data!.responseStatus == SUCCESS
                                   ? () {
-                                      Navigator.pushNamed(context, '/profile-user-information-view');
+                                      Navigator.pushNamed(context,
+                                          '/profile-user-information-view');
                                     }
                                   : null),
                         );
@@ -279,11 +301,12 @@ Widget _myTrailsHeader(BuildContext context) {
   );
 }
 
-Widget _buildTrailsGrid(BuildContext context, AsyncSnapshot<List<Trail>> snapshot, ProfileViewModel model) {
+Widget _buildTrailsGrid(BuildContext context,
+    AsyncSnapshot<List<Trail>> snapshot, ProfileViewModel model) {
   if (!snapshot.hasData || snapshot.data?.length == 0) {
     return SliverToBoxAdapter(child: Container(height: 0));
   }
-  
+
   return SliverPadding(
     padding: const EdgeInsets.only(left: 16, right: 16),
     sliver: SliverGrid(
@@ -304,15 +327,18 @@ Widget _buildTrailsGrid(BuildContext context, AsyncSnapshot<List<Trail>> snapsho
 }
 
 Widget _createTrailWidget(BuildContext context, Trail trail) {
-  return LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
+  return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
     var experiencesText = _getExperiencesText(context, trail);
     return GestureDetector(
       onLongPress: () {
         MyTrailSubMenuMoreHelper().deployShowDialog(trail, context, delete: () {
-          var hideBottomTabBar = Provider.of<HideBottomTabBar>(context, listen: false);
+          var hideBottomTabBar =
+              Provider.of<HideBottomTabBar>(context, listen: false);
           hideBottomTabBar.changeVisibility(false);
           var trailService = Provider.of<TrailService>(context, listen: false);
-          var baseWidgetModel = Provider.of<BaseWidgetModel>(context, listen: false);
+          var baseWidgetModel =
+              Provider.of<BaseWidgetModel>(context, listen: false);
           baseWidgetModel.showOverlayWidget(
               true,
               Provider.value(
@@ -322,21 +348,26 @@ Widget _createTrailWidget(BuildContext context, Trail trail) {
                     baseWidgetModel.showOverlayWidget(false, Container());
                   },
                   showCircularProgresIndicator: () {
-                    baseWidgetModel.showOverlayWidget(true, CircularProgressBar());
+                    baseWidgetModel.showOverlayWidget(
+                        true, CircularProgressBar());
                   },
                   closeCircularProgressIndicator: () {
                     baseWidgetModel.showOverlayWidget(false, Container());
                   },
                   showErrorDialog: () async {
                     baseWidgetModel.showOverlayWidget(false, Container());
-                    baseWidgetModel.showOverlayWidget(true, CircularProgressBar());
-                    ApplicationApiResponse result = await trailService.deleteTrail(trail);
+                    baseWidgetModel.showOverlayWidget(
+                        true, CircularProgressBar());
+                    ApplicationApiResponse result =
+                        await trailService.deleteTrail(trail);
                     if (result.result) {
                       baseWidgetModel.showOverlayWidget(false, Container());
                       result.statusCode = 702;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(AppLocalizations.of(context)?.trailRemovedText ?? "Trail removed"),
+                          content: Text(
+                              AppLocalizations.of(context)?.trailRemovedText ??
+                                  "Trail removed"),
                           backgroundColor: tomato,
                           behavior: SnackBarBehavior.fixed,
                         ),
@@ -364,9 +395,10 @@ Widget _createTrailWidget(BuildContext context, Trail trail) {
           child: Column(
             children: [
               ThreeSquares(
-                // supply all available images; new constructor handles arbitrary count
-                images: trail.imageProviders,
-                mainAction: (BuildContext context) => Provider.value(value: trail, child: TrailView()),
+                // supply up to 4 images; new constructor handles arbitrary count
+                images: trail.imageProviders.take(4).toList(),
+                mainAction: (BuildContext context) =>
+                    Provider.value(value: trail, child: TrailView()),
                 height: constraints.maxHeight - 48 - 8,
               ),
               // Add a vertical space between the images and the text.
@@ -483,4 +515,3 @@ String _getExperiencesText(BuildContext context, Trail trail) {
 
   return fromCountToText(count, singularText, pluralText);
 }
-

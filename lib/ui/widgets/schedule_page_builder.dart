@@ -19,6 +19,7 @@ import 'package:onetwotrail/ui/widgets/show_dialog_mark_experience_as_done.dart'
 import 'package:onetwotrail/utils/show_dialog_maps.dart';
 import 'package:onetwotrail/v2/util/string.dart';
 import 'package:provider/provider.dart';
+import 'package:onetwotrail/ui/share/geo_helpers.dart';
 
 // This file has been converted from functional widgets to class-based widgets
 // for Flutter 3 compatibility
@@ -36,14 +37,17 @@ class SchedulePageBuilder extends StatelessWidget {
 
     return ChangeNotifierProxyProvider<Itinerary, SchedulePageViewModel>(
       create: (context) {
-        var boardAndItineraryModel = Provider.of<ControllerPageBoardAndItineraryModel>(context, listen: false);
+        var boardAndItineraryModel =
+            Provider.of<ControllerPageBoardAndItineraryModel>(context,
+                listen: false);
         var itinerary = Provider.of<Itinerary>(context, listen: false);
         var trailService = Provider.of<TrailService>(context, listen: false);
 
         // Log the itinerary that's being used to create the model
         _logger.info('Creating model with itinerary ID: ${itinerary.id}');
 
-        var model = SchedulePageViewModel(boardAndItineraryModel, itinerary, trailService);
+        var model = SchedulePageViewModel(
+            boardAndItineraryModel, itinerary, trailService);
         model.init(context);
         return model;
       },
@@ -55,10 +59,10 @@ class SchedulePageBuilder extends StatelessWidget {
         // This ensures the model has the latest itinerary data
         _logger.info('Creating new model with updated data');
         var newModel = SchedulePageViewModel(
-          Provider.of<ControllerPageBoardAndItineraryModel>(context, listen: false),
-          itinerary,
-          Provider.of<TrailService>(context, listen: false)
-        );
+            Provider.of<ControllerPageBoardAndItineraryModel>(context,
+                listen: false),
+            itinerary,
+            Provider.of<TrailService>(context, listen: false));
         newModel.init(context);
         return newModel;
       },
@@ -74,8 +78,10 @@ class SchedulePageBuilder extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   controller: model.listViewItineraryController,
                   itemCount: model.scheduleDays.length,
-                  itemBuilder: (BuildContext context, int indexOfDayInSchedule) {
-                    List? dayList = model.scheduleDays[model.scheduleDays.keys.elementAt(indexOfDayInSchedule)];
+                  itemBuilder:
+                      (BuildContext context, int indexOfDayInSchedule) {
+                    List? dayList = model.scheduleDays[model.scheduleDays.keys
+                        .elementAt(indexOfDayInSchedule)];
                     if (dayList == null) {
                       return Container();
                     }
@@ -83,30 +89,61 @@ class SchedulePageBuilder extends StatelessWidget {
                       mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        ScrollContainer(indexOfDayInSchedule, model.scheduleDays.length),
+                        ScrollContainer(
+                            indexOfDayInSchedule, model.scheduleDays.length),
                         Expanded(
                           child: Stack(
                             children: [
                               ListView.builder(
                                 shrinkWrap: true,
-                                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 16, 20, 16),
                                 itemCount: dayList.length + 1,
-                                itemBuilder: (BuildContext context, int indexOfItem) {
+                                itemBuilder:
+                                    (BuildContext context, int indexOfItem) {
                                   if (indexOfItem == dayList.length) {
                                     return const SizedBox(height: 100);
                                   }
-                                  if (dayList[indexOfItem] is VisitItineraryEvent) {
+                                  if (dayList[indexOfItem]
+                                      is VisitItineraryEvent) {
                                     return Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
-                                      child: ItineraryExperienceContainer(dayList[indexOfItem] as VisitItineraryEvent),
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: ItineraryExperienceContainer(
+                                          dayList[indexOfItem]
+                                              as VisitItineraryEvent),
                                     );
                                   }
-                                  if (dayList[indexOfItem] is TransitItineraryEvent) {
-                                    TransitItineraryEvent item = dayList[indexOfItem] as TransitItineraryEvent;
+                                  if (dayList[indexOfItem]
+                                      is TransitItineraryEvent) {
+                                    TransitItineraryEvent item =
+                                        dayList[indexOfItem]
+                                            as TransitItineraryEvent;
+
+                                    double? distanceEstimation;
+                                    if (indexOfItem > 0 &&
+                                        indexOfItem < dayList.length - 1) {
+                                      var prev = dayList[indexOfItem - 1];
+                                      var next = dayList[indexOfItem + 1];
+                                      if (prev is VisitItineraryEvent &&
+                                          next is VisitItineraryEvent) {
+                                        distanceEstimation =
+                                            GeoHelpers.calculateDistance(
+                                                prev.experience.latitude,
+                                                prev.experience.longitude,
+                                                next.experience.latitude,
+                                                next.experience.longitude);
+                                      }
+                                    }
+
                                     return Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
                                       child: TimeToTheOtherExperienceContainer(
-                                          item.duration, indexOfItem == (dayList.length - 1)),
+                                        item.duration,
+                                        indexOfItem == (dayList.length - 1),
+                                        distanceEstimation: distanceEstimation,
+                                      ),
                                     );
                                   }
                                   return Container();
@@ -116,7 +153,8 @@ class SchedulePageBuilder extends StatelessWidget {
                                 alignment: Alignment.bottomRight,
                                 child: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       UIHelper.verticalSpace(32),
                                       MapButton(dayList, indexOfDayInSchedule),
@@ -165,7 +203,10 @@ class ItineraryExperienceContainer extends StatelessWidget {
                     padding: EdgeInsets.only(left: 5),
                     child: Text(
                       DateFormat('hh:mmaaa').format(event.startTime),
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black),
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black),
                     ),
                   ),
                 ),
@@ -188,7 +229,8 @@ class ItineraryExperienceContainer extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Container(child: Text(_formatEventDuration(event.duration)))
+                        Container(
+                            child: Text(_formatEventDuration(event.duration)))
                       ],
                     ),
                   ),
@@ -218,9 +260,11 @@ class ItineraryExperienceContainer extends StatelessWidget {
                             Icon(Icons.close, color: Colors.white),
                             SizedBox(height: 4),
                             Text(
-                              AppLocalizations.of(context)?.markAsNotVisited ?? "Mark as not visited",
+                              AppLocalizations.of(context)?.markAsNotVisited ??
+                                  "Mark as not visited",
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white, fontSize: 13),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 13),
                               maxLines: 4,
                             ),
                           ],
@@ -231,7 +275,8 @@ class ItineraryExperienceContainer extends StatelessWidget {
                   child: _slidableChildContainer(event, padding, () {
                     final controller = Slidable.of(context);
                     if (controller != null) {
-                      if (controller.actionPaneType.value != ActionPaneType.none) {
+                      if (controller.actionPaneType.value !=
+                          ActionPaneType.none) {
                         controller.close();
                       } else {
                         controller.openEndActionPane();
@@ -251,7 +296,8 @@ class ItineraryExperienceContainer extends StatelessWidget {
                             barrierDismissible: true,
                             context: context,
                             useSafeArea: false,
-                            builder: (BuildContext context) => ShowDialogExperienceMarkAsDone(
+                            builder: (BuildContext context) =>
+                                ShowDialogExperienceMarkAsDone(
                               event.experience.experienceInTrailId,
                               model.itinerary.id,
                               event.experience,
@@ -267,9 +313,11 @@ class ItineraryExperienceContainer extends StatelessWidget {
                             Icon(Icons.check, color: Colors.white),
                             SizedBox(height: 4),
                             Text(
-                              AppLocalizations.of(context)?.markAsVisited ?? "Mark as visited",
+                              AppLocalizations.of(context)?.markAsVisited ??
+                                  "Mark as visited",
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white, fontSize: 13),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 13),
                               maxLines: 4,
                             ),
                           ],
@@ -280,7 +328,8 @@ class ItineraryExperienceContainer extends StatelessWidget {
                   child: _slidableChildContainer(event, padding, () {
                     final controller = Slidable.of(context);
                     if (controller != null) {
-                      if (controller.actionPaneType.value != ActionPaneType.none) {
+                      if (controller.actionPaneType.value !=
+                          ActionPaneType.none) {
                         controller.close();
                       } else {
                         controller.openEndActionPane();
@@ -316,12 +365,14 @@ Widget _slidableChildContainer(
                 openColor: const Color(0xFFF5F5F7),
                 closedShape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(12)),
-                    side: BorderSide(color: Colors.transparent, style: BorderStyle.none)),
+                    side: BorderSide(
+                        color: Colors.transparent, style: BorderStyle.none)),
                 openBuilder: (context, _) => Provider.value(
                   value: scheduleExperienceItem.experience,
                   child: ExperienceInfo(),
                 ),
-                closedBuilder: (context, openContainer) => Provider<Experience>.value(
+                closedBuilder: (context, openContainer) =>
+                    Provider<Experience>.value(
                   value: scheduleExperienceItem.experience,
                   child: scheduleExperienceItem.experience.visited
                       ? ItineraryExperienceItem(
@@ -329,7 +380,8 @@ Widget _slidableChildContainer(
                           onMoreTap: () {
                             final slidable = Slidable.of(capturedContext);
                             if (slidable != null) {
-                              if (slidable.actionPaneType.value != ActionPaneType.none) {
+                              if (slidable.actionPaneType.value !=
+                                  ActionPaneType.none) {
                                 slidable.close();
                               } else {
                                 slidable.openEndActionPane();
@@ -341,14 +393,16 @@ Widget _slidableChildContainer(
                       : ItineraryExperienceItem(
                           height: MediaQuery.of(context).size.height * 0.20,
                           onGoNowTap: () {
-                            ShowDialogMaps().showDialogMapsTrails(context, scheduleExperienceItem.experience, () {
+                            ShowDialogMaps().showDialogMapsTrails(
+                                context, scheduleExperienceItem.experience, () {
                               Navigator.pop(context);
                             });
                           },
                           onMoreTap: () {
                             final slidable = Slidable.of(capturedContext);
                             if (slidable != null) {
-                              if (slidable.actionPaneType.value != ActionPaneType.none) {
+                              if (slidable.actionPaneType.value !=
+                                  ActionPaneType.none) {
                                 slidable.close();
                               } else {
                                 slidable.openEndActionPane();
@@ -412,8 +466,11 @@ class MiniThreeDots extends StatelessWidget {
 class TimeToTheOtherExperienceContainer extends StatelessWidget {
   final Duration duration;
   final bool lastTime;
+  final double? distanceEstimation;
 
-  const TimeToTheOtherExperienceContainer(this.duration, this.lastTime, {Key? key}) : super(key: key);
+  const TimeToTheOtherExperienceContainer(this.duration, this.lastTime,
+      {this.distanceEstimation, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -431,14 +488,22 @@ class TimeToTheOtherExperienceContainer extends StatelessWidget {
             MiniThreeDots(),
             UIHelper.verticalSpace(10),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              CartWithTime(duration),
+              CartWithTime(
+                duration,
+                distanceEstimation: distanceEstimation,
+              ),
               UIHelper.horizontalSpace(5),
             ]),
             Text(
               lastTime
-                  ? AppLocalizations.of(context)?.untilTomorrowTimeText ?? "Until tomorrow"
-                  : AppLocalizations.of(context)?.travelTimeText ?? "Travel time",
-              style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
+                  ? AppLocalizations.of(context)?.untilTomorrowTimeText ??
+                      "Until tomorrow"
+                  : AppLocalizations.of(context)?.travelTimeText ??
+                      "Travel time",
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500),
             ),
             UIHelper.verticalSpace(10),
             MiniThreeDots()
@@ -451,11 +516,42 @@ class TimeToTheOtherExperienceContainer extends StatelessWidget {
 
 class CartWithTime extends StatelessWidget {
   final Duration duration;
+  final double? distanceEstimation;
 
-  const CartWithTime(this.duration, {Key? key}) : super(key: key);
+  const CartWithTime(this.duration, {this.distanceEstimation, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Round up to nearest 10 minutes
+    double totalMinutes = duration.inMilliseconds / (1000 * 60);
+
+    // If duration is 0, use distance estimation if available
+    if (totalMinutes <= 0 && distanceEstimation != null) {
+      // Estimate 2.5 minutes per km
+      totalMinutes = distanceEstimation! * 2.5;
+    }
+
+    int roundedMinutes = (totalMinutes / 10).ceil() * 10;
+
+    // Ensure at least 10 minutes if there is distance but rounded to 0
+    if (roundedMinutes == 0 &&
+        distanceEstimation != null &&
+        distanceEstimation! > 0) {
+      roundedMinutes = 10;
+    }
+
+    String durationStr;
+    int hours = roundedMinutes ~/ 60;
+    int mins = roundedMinutes % 60;
+
+    if (hours > 0) {
+      durationStr =
+          '$hours ${hours == 1 ? 'hour' : 'hours'} $mins ${mins == 1 ? 'minute' : 'minutes'}';
+    } else {
+      durationStr = '$mins ${mins == 1 ? 'minute' : 'minutes'}';
+    }
+
     Size mediaQuery = MediaQuery.of(context).size;
     return Container(
       height: mediaQuery.height * (0.118 / 3),
@@ -475,8 +571,11 @@ class CartWithTime extends StatelessWidget {
           UIHelper.horizontalSpace(3),
           Container(
             child: Text(
-              "${DateFormat.Hm().format(DateTime(1970).add(duration))}",
-              style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
+              durationStr,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500),
             ),
           )
         ],
@@ -499,7 +598,8 @@ class ScrollContainer extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border(bottom: BorderSide(color: tealish.withOpacity(0.3), width: 1)),
+            border: Border(
+                bottom: BorderSide(color: tealish.withOpacity(0.3), width: 1)),
           ),
           height: mediaQuery.height * 0.062,
           width: mediaQuery.width,
@@ -529,7 +629,10 @@ class ScrollContainer extends StatelessWidget {
                   // Number of the day in the schedule
                   child: Text(
                     "${capitalizeFirstLetter(AppLocalizations.of(context)?.day ?? "Day")}: ${index + 1}",
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF1D1D1F)),
+                    style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1D1D1F)),
                   ),
                 ),
               ),
@@ -550,7 +653,8 @@ class ScrollContainer extends StatelessWidget {
                       ),
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 2),
-                        child: Text("${model.scheduleDays.keys.elementAt(index)}"),
+                        child:
+                            Text("${model.scheduleDays.keys.elementAt(index)}"),
                       )
                     ],
                   ),
@@ -582,11 +686,13 @@ class MapButton extends StatelessWidget {
   final List dayActivities;
   final int selectedDayIndex;
 
-  const MapButton(this.dayActivities, this.selectedDayIndex, {Key? key}) : super(key: key);
+  const MapButton(this.dayActivities, this.selectedDayIndex, {Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<SchedulePageViewModel, ControllerPageBoardAndItineraryModel>(
+    return Consumer2<SchedulePageViewModel,
+        ControllerPageBoardAndItineraryModel>(
       builder: (context, model, controllerPageBoardAndItineraryModel, _) {
         return Container(
           height: 44,
@@ -603,8 +709,10 @@ class MapButton extends StatelessWidget {
                   child: TextButton(
                     style: TextButton.styleFrom(
                       backgroundColor: viridian,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -625,15 +733,20 @@ class MapButton extends StatelessWidget {
                             alignment: Alignment.center,
                             child: Text(
                               AppLocalizations.of(context)?.mapText ?? "Map",
-                              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500),
                             ),
                           ),
                         ),
                       ],
                     ),
                     onPressed: () {
-                      controllerPageBoardAndItineraryModel.loadMapActivities(model.scheduleDays, selectedDayIndex);
-                      controllerPageBoardAndItineraryModel.showItineraryMap = true;
+                      controllerPageBoardAndItineraryModel.loadMapActivities(
+                          model.scheduleDays, selectedDayIndex);
+                      controllerPageBoardAndItineraryModel.showItineraryMap =
+                          true;
                     },
                   ),
                 ),
@@ -675,7 +788,10 @@ class ExperienceImage extends StatelessWidget {
                   padding: EdgeInsets.only(left: 10, top: 10),
                   child: Text(
                     experience.name,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
                   ),
                 )
               ])

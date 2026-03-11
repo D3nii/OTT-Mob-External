@@ -28,7 +28,7 @@ import 'package:onetwotrail/v2/event/event_tag.dart';
 import 'package:provider/provider.dart';
 import 'package:onetwotrail/repositories/models/experience.dart';
 import 'package:onetwotrail/ui/views/trail_preview/itinerary_widgets.dart';
-
+import 'package:onetwotrail/ui/share/geo_helpers.dart';
 import '../../widgets/circular_progress_bar.dart';
 import '../../widgets/estimated_time_bar.dart';
 
@@ -559,11 +559,15 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
     List<Experience> dayEvents = daysMap[safeDayIndex]!;
     dayEvents.sort((a, b) => a.visitStartTime.compareTo(b.visitStartTime));
 
-    bool needsBreakfast = dayEvents
-        .any((e) => e.visitStartTime.hour >= 5 && e.visitStartTime.hour < 12);
-    bool needsLunch = dayEvents
-        .any((e) => e.visitStartTime.hour >= 12 && e.visitStartTime.hour < 18);
-    bool needsDinner = dayEvents.any((e) => e.visitStartTime.hour >= 18);
+    // List of actual visits (excluding existing meal/sleep blocks in the data)
+    List<Experience> visits =
+        dayEvents.where((e) => !e.foodDrinks && !e.accommodation).toList();
+
+    bool needsBreakfast = visits
+        .any((e) => e.visitStartTime.hour >= 9 && e.visitStartTime.hour < 12);
+    bool needsLunch = visits
+        .any((e) => e.visitStartTime.hour >= 12 && e.visitStartTime.hour < 20);
+    bool needsDinner = visits.any((e) => e.visitStartTime.hour >= 20);
 
     bool breakfastAdded = false;
     bool lunchAdded = false;
@@ -573,29 +577,32 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
       var exp = dayEvents[j];
       int startHour = exp.visitStartTime.hour;
 
-      if (needsBreakfast && !breakfastAdded && startHour < 12) {
+      // Breakfast: show before the first experience that is at or after 9 AM, if a 9-12 visit exists
+      if (needsBreakfast && !breakfastAdded && startHour >= 9) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Breakfast',
-          customDescription: '9:00 AM - 9:30 AM',
+          customDescription: '30 minutes',
         ));
         breakfastAdded = true;
       }
 
-      if (needsLunch && !lunchAdded && startHour >= 12 && startHour < 18) {
+      // Lunch: show before the first experience that is at or after 12 PM, if a 12-20 visit exists
+      if (needsLunch && !lunchAdded && startHour >= 12) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Lunch',
-          customDescription: '1:00 PM - 1:30 PM',
+          customDescription: '30 minutes',
         ));
         lunchAdded = true;
       }
 
-      if (needsDinner && !dinnerAdded && startHour >= 18) {
+      // Dinner: show before the first experience that is at or after 8 PM (20:00), if a 20+ visit exists
+      if (needsDinner && !dinnerAdded && startHour >= 20) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Dinner',
-          customDescription: '8:00 PM - 8:30 PM',
+          customDescription: '30 minutes',
         ));
         dinnerAdded = true;
       }
@@ -626,12 +633,47 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
 
       if (j < dayEvents.length - 1) {
         var nextExp = dayEvents[j + 1];
-        var transitDuration =
-            nextExp.visitStartTime.difference(exp.visitEndTime);
-        String durationStr = '${transitDuration.inMinutes}m';
-        if (transitDuration.inHours > 0) {
+
+        // 1. Convert start_time and end_time to Costa Rica local time (UTC-6)
+        DateTime startCR =
+            exp.visitEndTime.toUtc().subtract(const Duration(hours: 6));
+        DateTime endCR =
+            nextExp.visitStartTime.toUtc().subtract(const Duration(hours: 6));
+
+        // 2. Calculate difference in milliseconds
+        int durationMs = endCR.difference(startCR).inMilliseconds;
+
+        // 3. Convert to total minutes
+        double totalMinutes = durationMs / (1000 * 60);
+
+        // FALLBACK: If time gap is 0 or less, calculate based on distance
+        if (totalMinutes <= 0) {
+          double distanceKm = GeoHelpers.calculateDistance(
+              exp.latitude, exp.longitude, nextExp.latitude, nextExp.longitude);
+          // Estimate 2.5 minutes per km for Costa Rica (approx 24 km/h avg)
+          totalMinutes = distanceKm * 2.5;
+        }
+
+        // 4. Round up to nearest 10 minutes
+        int roundedMinutes = (totalMinutes / 10).ceil() * 10;
+
+        // Ensure at least 10 minutes if they are not at the same location
+        if (roundedMinutes == 0 &&
+            (exp.latitude != nextExp.latitude ||
+                exp.longitude != nextExp.longitude)) {
+          roundedMinutes = 10;
+        }
+
+        // 5. Human-readable display format
+        String durationStr;
+        int hours = roundedMinutes ~/ 60;
+        int mins = roundedMinutes % 60;
+
+        if (hours > 0) {
           durationStr =
-              '${transitDuration.inHours}h ${transitDuration.inMinutes % 60}m';
+              '$hours ${hours == 1 ? 'hour' : 'hours'} $mins ${mins == 1 ? 'minute' : 'minutes'}';
+        } else {
+          durationStr = '$mins ${mins == 1 ? 'minute' : 'minutes'}';
         }
 
         itineraryList.add(ItineraryTransitBlock(
@@ -641,23 +683,19 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
       }
     }
 
+    // Fallback if windows passed without triggers (e.g. dinner is at the very end)
     if (needsLunch && !lunchAdded) {
       itineraryList.add(const ItineraryMealSleepBlock(
-          isMeal: true,
-          customName: 'Lunch',
-          customDescription: '1:00 PM - 1:30 PM'));
+          isMeal: true, customName: 'Lunch', customDescription: '30 minutes'));
     }
     if (needsDinner && !dinnerAdded) {
       itineraryList.add(const ItineraryMealSleepBlock(
-          isMeal: true,
-          customName: 'Dinner',
-          customDescription: '8:00 PM - 8:30 PM'));
+          isMeal: true, customName: 'Dinner', customDescription: '30 minutes'));
     }
 
     itineraryList.add(const ItineraryMealSleepBlock(
       isMeal: false,
       customName: 'Sleep',
-      customDescription: '8 hours',
     ));
 
     return itineraryList;

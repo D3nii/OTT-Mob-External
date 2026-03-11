@@ -185,13 +185,27 @@ class ItineraryMealSleepBlock extends StatelessWidget {
                   children: [
                     Text(emoji, style: const TextStyle(fontSize: 14)),
                     const SizedBox(width: 6),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF7D5A2B),
-                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF7D5A2B),
+                          ),
+                        ),
+                        if (description.isNotEmpty)
+                          Text(
+                            description,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: const Color(0xFF7D5A2B).withOpacity(0.7),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),

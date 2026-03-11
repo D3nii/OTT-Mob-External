@@ -563,11 +563,25 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
     List<Experience> visits =
         dayEvents.where((e) => !e.foodDrinks && !e.accommodation).toList();
 
-    bool needsBreakfast = visits
-        .any((e) => e.visitStartTime.hour >= 9 && e.visitStartTime.hour < 12);
-    bool needsLunch = visits
-        .any((e) => e.visitStartTime.hour >= 12 && e.visitStartTime.hour < 20);
-    bool needsDinner = visits.any((e) => e.visitStartTime.hour >= 20);
+    bool needsBreakfast = visits.any((e) {
+      int start =
+          e.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      // Overlaps 9 AM - 12 PM
+      return start < 12 && end >= 9;
+    });
+    bool needsLunch = visits.any((e) {
+      int start =
+          e.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      // Overlaps 12 PM - 8 PM
+      return start < 20 && end >= 12;
+    });
+    bool needsDinner = visits.any((e) {
+      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      // Active at or after 8 PM
+      return end >= 20;
+    });
 
     bool breakfastAdded = false;
     bool lunchAdded = false;
@@ -575,10 +589,15 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
 
     for (int j = 0; j < dayEvents.length; j++) {
       var exp = dayEvents[j];
-      int startHour = exp.visitStartTime.hour;
+      int startHour =
+          exp.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      int endHour =
+          exp.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
 
-      // Breakfast: show before the first experience that is at or after 9 AM, if a 9-12 visit exists
-      if (needsBreakfast && !breakfastAdded && startHour >= 9) {
+      // Breakfast: before first visit starting at/after 9, or visit covering 9 AM
+      if (needsBreakfast &&
+          !breakfastAdded &&
+          (startHour >= 9 || endHour >= 9)) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Breakfast',
@@ -587,8 +606,8 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
         breakfastAdded = true;
       }
 
-      // Lunch: show before the first experience that is at or after 12 PM, if a 12-20 visit exists
-      if (needsLunch && !lunchAdded && startHour >= 12) {
+      // Lunch: before first visit starting at/after 12, or visit covering 12 PM
+      if (needsLunch && !lunchAdded && (startHour >= 12 || endHour >= 12)) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Lunch',
@@ -597,8 +616,8 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
         lunchAdded = true;
       }
 
-      // Dinner: show before the first experience that is at or after 8 PM (20:00), if a 20+ visit exists
-      if (needsDinner && !dinnerAdded && startHour >= 20) {
+      // Dinner: before first visit starting at/after 20 (8 PM), or visit covering 8 PM
+      if (needsDinner && !dinnerAdded && (startHour >= 20 || endHour >= 20)) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Dinner',
@@ -696,6 +715,7 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
     itineraryList.add(const ItineraryMealSleepBlock(
       isMeal: false,
       customName: 'Sleep',
+      customDescription: '8 hours',
     ));
 
     return itineraryList;

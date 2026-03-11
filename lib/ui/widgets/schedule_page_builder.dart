@@ -20,6 +20,7 @@ import 'package:onetwotrail/utils/show_dialog_maps.dart';
 import 'package:onetwotrail/v2/util/string.dart';
 import 'package:provider/provider.dart';
 import 'package:onetwotrail/ui/share/geo_helpers.dart';
+import 'package:onetwotrail/ui/views/trail_preview/itinerary_widgets.dart';
 
 // This file has been converted from functional widgets to class-based widgets
 // for Flutter 3 compatibility
@@ -106,12 +107,26 @@ class SchedulePageBuilder extends StatelessWidget {
                                   }
                                   if (dayList[indexOfItem]
                                       is VisitItineraryEvent) {
+                                    VisitItineraryEvent event =
+                                        dayList[indexOfItem]
+                                            as VisitItineraryEvent;
+
+                                    if (event.experience.experienceId == -1) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                        child: ItineraryMealSleepBlock(
+                                          experience: event.experience,
+                                          isMeal: event.experience.foodDrinks,
+                                        ),
+                                      );
+                                    }
+
                                     return Padding(
                                       padding:
                                           const EdgeInsets.only(bottom: 12),
-                                      child: ItineraryExperienceContainer(
-                                          dayList[indexOfItem]
-                                              as VisitItineraryEvent),
+                                      child:
+                                          ItineraryExperienceContainer(event),
                                     );
                                   }
                                   if (dayList[indexOfItem]

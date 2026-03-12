@@ -85,7 +85,7 @@ class _ShimmerContent extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
               child: Text(
-                'Mountain',
+                '',
                 textAlign: TextAlign.left,
                 style: TextStyle(
                     fontFamily: "Poppins",
@@ -102,7 +102,7 @@ class _ShimmerContent extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
               child: Text(
-                'Get to know the most peaceful places in this country.',
+                '',
                 textAlign: TextAlign.left,
                 style: TextStyle(
                     fontFamily: "Poppins",
@@ -185,7 +185,7 @@ class _ShimmerContent extends StatelessWidget {
                         width: double.infinity,
                         child: Container(
                           child: AutoSizeText(
-                            'Jaulares Viewport',
+                            '',
                             textAlign: TextAlign.left,
                             maxLines: 2,
                             minFontSize: 10,

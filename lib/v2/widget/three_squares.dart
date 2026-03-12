@@ -4,7 +4,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
-import 'package:onetwotrail/v2/util/string.dart';
+
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -421,10 +421,10 @@ class TitleThreeSquares extends ThreeSquares {
         child: IgnorePointer(
           child: TitleThreeSquares(
             textBackgroundColor: Colors.black,
-            titleText: createRandomText(8),
-            durationText: createRandomText(4),
-            summaryTitleText: createRandomText(8),
-            summaryBodyText: createRandomText(80),
+            titleText: '',
+            durationText: '',
+            summaryTitleText: '',
+            summaryBodyText: '',
             images: [emptyImage, emptyImage, emptyImage],
             mainAction: (context) => Container(),
             padding: padding,

@@ -55,45 +55,48 @@ class TrailPreviewView extends StatelessWidget {
             AppBarGenerateContainer(),
             // Trail name and description section
             Consumer<PreviewTrailModel>(
-              builder: (context, model, _) => Container(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      model.currentTrailPreview.name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1D1D1F),
-                        letterSpacing: -0.4,
+              builder: (context, model, _) => !model.isItineraryView
+                  ? Container(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            model.currentTrailPreview.name,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1D1D1F),
+                              letterSpacing: -0.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if ((model.currentTrailPreview.description ?? '')
+                              .isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              model.currentTrailPreview.description ?? '',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF6E6E73),
+                                height: 1.4,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if ((model.currentTrailPreview.description ?? '')
-                        .isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        model.currentTrailPreview.description ?? '',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF6E6E73),
-                          height: 1.4,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                    )
+                  : const SizedBox.shrink(),
             ),
             Container(
                 child: Consumer<PreviewTrailModel>(
-                    builder: (context, model, _) =>
-                        EstimatedTimeBar(model.duration, false))),
+                    builder: (context, model, _) => !model.isItineraryView
+                        ? EstimatedTimeBar(model.duration, false)
+                        : const SizedBox.shrink())),
             const TrailPreviewViewBody(),
           ],
         ),
@@ -111,7 +114,7 @@ class AppBarGenerateContainer extends StatelessWidget {
     return Consumer<PreviewTrailModel>(
       builder: (context, model, _) {
         return Container(
-          height: mediaQuery.height * 0.16,
+          height: mediaQuery.height * 0.13,
           width: mediaQuery.width,
           color: tealish,
           child: SafeArea(
@@ -165,13 +168,7 @@ class _ParentTabs extends StatelessWidget {
             child: TabItineraryItem(
               model.isItineraryView,
               () {
-                showDialog(
-                  context: context,
-                  builder: (_) => TrailItineraryModal(model: model),
-                ).then((_) {
-                  // Reset state if needed or maintain UI consistency
-                  model.isItineraryView = false;
-                });
+                model.isItineraryView = true;
               },
             ),
           ),
@@ -244,7 +241,9 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
             return Expanded(
               child: Stack(
                 children: [
-                  _buildBoardView(model),
+                  model.isItineraryView
+                      ? TrailItineraryPage(model: model)
+                      : _buildBoardView(model),
                   // "Add to my trails" button - visible in both tabs as a footer
                   Align(
                     alignment: Alignment.bottomCenter,
@@ -507,16 +506,16 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
   }
 }
 
-class TrailItineraryModal extends StatefulWidget {
+class TrailItineraryPage extends StatefulWidget {
   final PreviewTrailModel model;
 
-  const TrailItineraryModal({Key? key, required this.model}) : super(key: key);
+  const TrailItineraryPage({Key? key, required this.model}) : super(key: key);
 
   @override
-  State<TrailItineraryModal> createState() => _TrailItineraryModalState();
+  State<TrailItineraryPage> createState() => _TrailItineraryPageState();
 }
 
-class _TrailItineraryModalState extends State<TrailItineraryModal> {
+class _TrailItineraryPageState extends State<TrailItineraryPage> {
   int? _selectedExperienceId;
   int _currentDayIndex = 0;
 
@@ -731,123 +730,102 @@ class _TrailItineraryModalState extends State<TrailItineraryModal> {
             .ceil();
     if (totalDays < 1) totalDays = 1;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      clipBehavior: Clip.antiAlias,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: Column(
-          children: [
-            // Map at the top
-            SizedBox(
-              height: 200,
-              width: double.infinity,
-              child: GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(widget.model.currentTrailPreview.latitude,
-                      widget.model.currentTrailPreview.longitude),
+    return Container(
+      color: const Color(0xFFF5F5F7),
+      child: Column(
+        children: [
+          // Map at the top
+          SizedBox(
+            height: 200,
+            width: double.infinity,
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(widget.model.currentTrailPreview.latitude,
+                    widget.model.currentTrailPreview.longitude),
+              ),
+              onMapCreated: widget.model.onTrailMapCreated,
+              markers: widget.model.getMarkers(
+                  trail: widget.model.currentTrailPreview,
+                  selectedExperienceId: _selectedExperienceId),
+              polylines: widget.model.polylines,
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
+              myLocationButtonEnabled: false,
+              gestureRecognizers: Set()
+                ..add(Factory<OneSequenceGestureRecognizer>(
+                    () => EagerGestureRecognizer())),
+            ),
+          ),
+          // Expanded content
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              children: itineraryItems,
+            ),
+          ),
+          // Footer with navigation and close
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
                 ),
-                onMapCreated: widget.model.onTrailMapCreated,
-                markers: widget.model.getMarkers(
-                    trail: widget.model.currentTrailPreview,
-                    selectedExperienceId: _selectedExperienceId),
-                polylines: widget.model.polylines,
-                zoomControlsEnabled: false,
-                mapToolbarEnabled: false,
-                myLocationButtonEnabled: false,
-                gestureRecognizers: Set()
-                  ..add(Factory<OneSequenceGestureRecognizer>(
-                      () => EagerGestureRecognizer())),
-              ),
+              ],
             ),
-            // Expanded content
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                children: itineraryItems,
-              ),
-            ),
-            // Footer with navigation and close
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 44,
+                    color: _currentDayIndex > 0 ? tealish : Colors.grey[400],
+                    icon: const Icon(Icons.chevron_left),
+                    onPressed: _currentDayIndex > 0
+                        ? () {
+                            setState(() {
+                              _currentDayIndex--;
+                            });
+                          }
+                        : null,
+                  ),
+                  const SizedBox(width: 64),
+                  Text(
+                    'Day ${_currentDayIndex + 1}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1D1D1F),
+                    ),
+                  ),
+                  const SizedBox(width: 64),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 44,
+                    color: _currentDayIndex < totalDays - 1
+                        ? tealish
+                        : Colors.grey[400],
+                    icon: const Icon(Icons.chevron_right),
+                    onPressed: _currentDayIndex < totalDays - 1
+                        ? () {
+                            setState(() {
+                              _currentDayIndex++;
+                            });
+                          }
+                        : null,
                   ),
                 ],
               ),
-              child: SafeArea(
-                top: false,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          iconSize: 28,
-                          color:
-                              _currentDayIndex > 0 ? tealish : Colors.grey[400],
-                          icon: const Icon(Icons.chevron_left),
-                          onPressed: _currentDayIndex > 0
-                              ? () {
-                                  setState(() {
-                                    _currentDayIndex--;
-                                  });
-                                }
-                              : null,
-                        ),
-                        const SizedBox(width: 32),
-                        Text(
-                          'Day ${_currentDayIndex + 1}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1D1D1F),
-                          ),
-                        ),
-                        const SizedBox(width: 32),
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          iconSize: 28,
-                          color: _currentDayIndex < totalDays - 1
-                              ? tealish
-                              : Colors.grey[400],
-                          icon: const Icon(Icons.chevron_right),
-                          onPressed: _currentDayIndex < totalDays - 1
-                              ? () {
-                                  setState(() {
-                                    _currentDayIndex++;
-                                  });
-                                }
-                              : null,
-                        ),
-                      ],
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.close,
-                            color: Colors.grey, size: 28),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

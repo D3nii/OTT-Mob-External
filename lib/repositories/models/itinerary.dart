@@ -17,6 +17,9 @@ class Itinerary {
   int teenParticipantsCount;
   int trailId;
 
+  Map<String, dynamic> mealLocations;
+  Map<String, dynamic> sleepLocations;
+
   Itinerary({
     required this.id,
     required this.trailId,
@@ -28,7 +31,10 @@ class Itinerary {
     required this.startingExperienceId,
     required this.endingExperienceId,
     required this.events,
-  });
+    Map<String, dynamic>? mealLocations,
+    Map<String, dynamic>? sleepLocations,
+  }) : this.mealLocations = mealLocations ?? {},
+       this.sleepLocations = sleepLocations ?? {};
 
   factory Itinerary.fromJson(Map<String, dynamic> json) {
     return Itinerary(
@@ -42,6 +48,8 @@ class Itinerary {
       startingExperienceId: json['starting_experience_id'] ?? 0,
       endingExperienceId: json['ending_experience_id'] ?? 0,
       events: _fromDynamicListToItineraryEventList(json['events']),
+      mealLocations: json['meal_locations'] != null ? Map<String, dynamic>.from(json['meal_locations']) : {},
+      sleepLocations: json['sleep_locations'] != null ? Map<String, dynamic>.from(json['sleep_locations']) : {},
     );
   }
 }

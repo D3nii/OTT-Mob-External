@@ -97,7 +97,31 @@ class SchedulePageViewModel extends BaseModel {
     });
 
     // Process each day for meal/sleep injection
-    tempDays.forEach((day, events) {
+    tempDays.forEach((dayKey, events) {
+      // TODO: Remove hardcoded test data once backend is ready
+      itinerary.mealLocations[dayKey] = {
+        'breakfast': {
+          'name': 'Sunrise Bistro & Cafe',
+          'url': 'https://www.google.com/maps',
+          'image': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&q=80&w=200',
+        },
+        'lunch': {
+          'name': 'Green Garden Grill',
+          'url': 'https://www.google.com/maps',
+          'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200',
+        },
+        'dinner': {
+          'name': 'Starlight Gourmet Dining',
+          'url': 'https://www.google.com/maps',
+          'image': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=200',
+        }
+      };
+      itinerary.sleepLocations[dayKey] = {
+        'name': 'Grand Heritage Resort & Spa',
+        'url': 'https://www.google.com/maps',
+        'image': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=200',
+      };
+
       List processedEvents = [];
 
       // Identify actual visits for condition checking
@@ -106,19 +130,11 @@ class SchedulePageViewModel extends BaseModel {
           .where((e) => !e.experience.foodDrinks && !e.experience.accommodation)
           .toList();
 
-      bool needsBreakfast = visits.any((e) {
-        int start = e.startTime.toUtc().subtract(const Duration(hours: 6)).hour;
-        int end = e.endTime.toUtc().subtract(const Duration(hours: 6)).hour;
-        return start < 12 && end >= 9;
+      bool hasActivity9to12 = visits.any((e) {
+        return e.startTime.hour < 12 && e.endTime.hour >= 9;
       });
-      bool needsLunch = visits.any((e) {
-        int start = e.startTime.toUtc().subtract(const Duration(hours: 6)).hour;
-        int end = e.endTime.toUtc().subtract(const Duration(hours: 6)).hour;
-        return start < 20 && end >= 12;
-      });
-      bool needsDinner = visits.any((e) {
-        int end = e.endTime.toUtc().subtract(const Duration(hours: 6)).hour;
-        return end >= 20;
+      bool hasActivity12to20 = visits.any((e) {
+        return e.startTime.hour < 20 && e.endTime.hour >= 12;
       });
 
       bool breakfastAdded = false;
@@ -129,56 +145,71 @@ class SchedulePageViewModel extends BaseModel {
         if (event is VisitItineraryEvent &&
             !event.experience.foodDrinks &&
             !event.experience.accommodation) {
-          int startHour =
-              event.startTime.toUtc().subtract(const Duration(hours: 6)).hour;
-          int endHour =
-              event.endTime.toUtc().subtract(const Duration(hours: 6)).hour;
+          int startHour = event.startTime.hour;
 
-          if (needsBreakfast &&
-              !breakfastAdded &&
-              (startHour >= 9 || endHour >= 9)) {
+          // Breakfast: Injected before first visit at/after 9:00 AM, 
+          // if activity between 9:00 AM and 12:00 PM
+          if (!breakfastAdded && startHour >= 9 && hasActivity9to12) {
             processedEvents.add(_createInjectedMeal('Breakfast', '30 minutes',
-                true, event.startTime.subtract(const Duration(minutes: 5))));
+                true, event.startTime.subtract(const Duration(minutes: 5)), dayKey, 'breakfast'));
             breakfastAdded = true;
           }
-          if (needsLunch && !lunchAdded && (startHour >= 12 || endHour >= 12)) {
+          
+          // Lunch: Injected before first visit at/after 12:00 PM, 
+          // if activity between 12:00 PM and 8:00 PM
+          if (!lunchAdded && startHour >= 12 && hasActivity12to20) {
             processedEvents.add(_createInjectedMeal('Lunch', '30 minutes', true,
-                event.startTime.subtract(const Duration(minutes: 5))));
+                event.startTime.subtract(const Duration(minutes: 5)), dayKey, 'lunch'));
             lunchAdded = true;
           }
-          if (needsDinner &&
-              !dinnerAdded &&
-              (startHour >= 20 || endHour >= 20)) {
+          
+          // Dinner: Injected before first visit at/after 8:00 PM
+          if (!dinnerAdded && startHour >= 20) {
             processedEvents.add(_createInjectedMeal('Dinner', '30 minutes',
-                true, event.startTime.subtract(const Duration(minutes: 5))));
+                true, event.startTime.subtract(const Duration(minutes: 5)), dayKey, 'dinner'));
             dinnerAdded = true;
           }
         }
         processedEvents.add(event);
       }
 
-      // Fallbacks
-      if (needsLunch && !lunchAdded) {
-        processedEvents.add(_createInjectedMeal('Lunch', '30 minutes', true,
-            DateTime.now())); // Time not critical for fallback display
-      }
-      if (needsDinner && !dinnerAdded) {
-        processedEvents.add(
-            _createInjectedMeal('Dinner', '30 minutes', true, DateTime.now()));
-      }
-
       // Always add Sleep at the end
-      processedEvents
-          .add(_createInjectedMeal('Sleep', '8 hours', false, DateTime.now()));
+      processedEvents.add(_createInjectedMeal('Sleep', '8 hours', false, DateTime.now(), dayKey, 'sleep'));
 
-      scheduleDays[day] = processedEvents;
+      scheduleDays[dayKey] = processedEvents;
     });
 
     notifyListeners();
   }
 
   VisitItineraryEvent _createInjectedMeal(
-      String name, String description, bool isMeal, DateTime time) {
+      String name, String description, bool isMeal, DateTime time, String dayKey, String mealType) {
+    
+    String? adName;
+    String? adUrl;
+    String? adImageUrl;
+
+    // Use the dayKey format from itinerary data if available, 
+    // but fall back to searching for a matching date string
+    String lookupKey = dayKey;
+    
+    if (isMeal) {
+      final dayMeals = itinerary.mealLocations[lookupKey];
+      if (dayMeals != null && dayMeals[mealType] != null) {
+        final adData = dayMeals[mealType];
+        adName = adData['name'];
+        adUrl = adData['url'];
+        adImageUrl = adData['image'];
+      }
+    } else if (mealType == 'sleep') {
+      final adData = itinerary.sleepLocations[lookupKey];
+      if (adData != null) {
+        adName = adData['name'];
+        adUrl = adData['url'];
+        adImageUrl = adData['image'];
+      }
+    }
+
     return VisitItineraryEvent(
       position: -1,
       startTime: time,
@@ -188,6 +219,9 @@ class SchedulePageViewModel extends BaseModel {
         name: name,
         description: description,
         isMeal: isMeal,
+        adName: adName,
+        adUrl: adUrl,
+        adImageUrl: adImageUrl,
       ),
     );
   }

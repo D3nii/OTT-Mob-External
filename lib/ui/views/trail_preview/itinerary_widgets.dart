@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:onetwotrail/repositories/models/experience.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ItineraryExperienceCard extends StatelessWidget {
   final Experience experience;
@@ -157,6 +158,166 @@ class ItineraryMealSleepBlock extends StatelessWidget {
           title.toLowerCase().contains('lunch')) emoji = '🥪';
     }
 
+    // Check if it's an advertisement (dummy experience with a website URL)
+    final hasAd = experience != null &&
+        experience!.experienceId == -1 &&
+        experience!.website.isNotEmpty;
+
+    if (hasAd) {
+      final bgColor = const Color(0xFFFFFBF0);
+      final brColor = const Color(0xFFF5E6C8);
+      return Column(
+        children: [
+          Container(
+            height: 12,
+            width: 1,
+            color: brColor,
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: brColor, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (experience!.imageUrls.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: experience!.imageUrls.first,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            Container(color: Colors.grey[200]),
+                        errorWidget: (context, url, error) =>
+                            Container(color: Colors.grey[200]),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: 100,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE8E8E8),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          bottomLeft: Radius.circular(12),
+                        ),
+                      ),
+                      child: Center(
+                        child:
+                            Text(emoji, style: const TextStyle(fontSize: 30)),
+                      ),
+                    ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    isMeal
+                                        ? (title.contains('Breakfast')
+                                            ? 'Breakfast'
+                                            : (title.contains('Lunch')
+                                                ? 'Lunch'
+                                                : 'Dinner'))
+                                        : 'Sleep',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.grey[600],
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1D1D1F),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () async {
+                                final uri = Uri.parse(experience!.website);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri,
+                                      mode: LaunchMode.externalApplication);
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color(0xFF34A853),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'View Location',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            height: 12,
+            width: 1,
+            color: brColor,
+          ),
+        ],
+      );
+    }
+
+    // Colors for non-ad cards
+    final baseBgColor = const Color(0xFFFFFBF0);
+    final baseBorderColor = const Color(0xFFF5E6C8);
+    final baseTextColor = const Color(0xFF7D5A2B);
+
     // Check if it's a simple status item (Sleep, Breakfast, Lunch, Dinner)
     final compactNames = ['sleep', 'breakfast', 'lunch', 'dinner'];
     if (compactNames.contains(name.trim().toLowerCase())) {
@@ -169,16 +330,16 @@ class ItineraryMealSleepBlock extends StatelessWidget {
               Container(
                 height: 12,
                 width: 1,
-                color: const Color(0xFFF5E6C8),
+                color: baseBorderColor,
               ),
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBF0),
+                  color: baseBgColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF5E6C8)),
+                  border: Border.all(color: baseBorderColor),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -191,10 +352,10 @@ class ItineraryMealSleepBlock extends StatelessWidget {
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF7D5A2B),
+                            color: baseTextColor,
                           ),
                         ),
                         if (description.isNotEmpty)
@@ -202,7 +363,7 @@ class ItineraryMealSleepBlock extends StatelessWidget {
                             description,
                             style: TextStyle(
                               fontSize: 10,
-                              color: const Color(0xFF7D5A2B).withOpacity(0.7),
+                              color: baseTextColor.withOpacity(0.7),
                             ),
                           ),
                       ],
@@ -213,7 +374,7 @@ class ItineraryMealSleepBlock extends StatelessWidget {
               Container(
                 height: 12,
                 width: 1,
-                color: const Color(0xFFF5E6C8),
+                color: baseBorderColor,
               ),
             ],
           ),
@@ -221,52 +382,67 @@ class ItineraryMealSleepBlock extends StatelessWidget {
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF0),
-        border: Border.all(color: const Color(0xFFF5E6C8)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 20),
+    return Column(
+      children: [
+        Container(
+          height: 12,
+          width: 1,
+          color: baseBorderColor,
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: baseBgColor,
+            border: Border.all(color: baseBorderColor),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isMeal ? 'Meal: $name' : name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF7D5A2B),
-                  ),
-                ),
-                if (description.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2.0),
-                    child: Text(
-                      description,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF7D5A2B),
+          child: Row(
+            children: [
+              Text(
+                emoji,
+                style: const TextStyle(fontSize: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isMeal ? 'Meal: $name' : name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: baseTextColor,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-              ],
-            ),
+                    if (description.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2.0),
+                        child: Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: baseTextColor.withOpacity(0.8),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Container(
+          height: 12,
+          width: 1,
+          color: baseBorderColor,
+        ),
+      ],
     );
+
   }
 }
 

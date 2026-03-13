@@ -244,8 +244,9 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
                   model.isItineraryView
                       ? TrailItineraryPage(model: model)
                       : _buildBoardView(model),
-                  // "Add to my trails" button - visible in both tabs as a footer
-                  Align(
+                  // "Add to my trails" button - visible only in board tab
+                  if (!model.isItineraryView)
+                    Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
@@ -765,7 +766,7 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
           ),
           // Footer with navigation and close
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -778,6 +779,7 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
             ),
             child: SafeArea(
               top: false,
+              bottom: true,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

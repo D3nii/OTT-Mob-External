@@ -26,15 +26,23 @@ class TabItineraryItem extends StatelessWidget {
                   right: BorderSide.none,
                   top: BorderSide.none,
                 )
-              : Border(top: BorderSide.none, bottom: BorderSide.none, left: BorderSide.none, right: BorderSide.none)),
+              : Border(
+                  top: BorderSide.none,
+                  bottom: BorderSide.none,
+                  left: BorderSide.none,
+                  right: BorderSide.none)),
       child: TextButton(
         onPressed: onTap,
-        style: ButtonStyle(
-          overlayColor: WidgetStateColor.resolveWith((states) => Colors.transparent),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.only(bottom: 8, top: 0),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          overlayColor: Colors.transparent,
         ),
         child: Text(
           AppLocalizations.of(context)?.itineraryText ?? 'Itinerary',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white),
+          style: const TextStyle(
+              fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white),
         ),
       ),
     );

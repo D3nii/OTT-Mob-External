@@ -21,20 +21,23 @@ class TabBoardItem extends StatelessWidget {
           color: tealish,
           border: show
               ? Border(
-                  bottom: BorderSide(color: tomato, width: 3),
+                  bottom: BorderSide(color: tomato, width: 3.5),
                   left: BorderSide.none,
                   right: BorderSide.none,
                   top: BorderSide.none,
                 )
               : Border(top: BorderSide.none, bottom: BorderSide.none, left: BorderSide.none, right: BorderSide.none)),
       child: TextButton(
-        style: ButtonStyle(
-          overlayColor: WidgetStateColor.resolveWith((states) => Colors.transparent),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.only(bottom: 8, top: 0),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          overlayColor: Colors.transparent,
         ),
         onPressed: onTap,
         child: Text(
           AppLocalizations.of(context)?.boardText ?? 'Board',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white),
         ),
       ),
     );

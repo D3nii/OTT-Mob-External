@@ -114,23 +114,25 @@ class AppBarGenerateContainer extends StatelessWidget {
     return Consumer<PreviewTrailModel>(
       builder: (context, model, _) {
         return Container(
-          height: mediaQuery.height * 0.13,
           width: mediaQuery.width,
           color: tealish,
           child: SafeArea(
             bottom: false,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    CupertinoBackButton(
-                      label: AppLocalizations.of(context)?.backText ?? "Back",
-                      color: Colors.white,
-                      onPressed: () => Navigator.pop(context, true),
-                    ),
-                  ],
+                SizedBox(
+                  height: 32,
+                  child: Row(
+                    children: [
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: Colors.white,
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 const _ParentTabs(),
               ],
             ),

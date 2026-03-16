@@ -225,18 +225,7 @@ class SchedulePageBuilder extends StatelessWidget {
                                   return Container();
                                 },
                               ),
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      UIHelper.verticalSpace(32),
-                                      MapButton(dayList, indexOfDayInSchedule),
-                                      UIHelper.verticalSpace(32)
-                                    ]),
-                              )
+                              // Map button hidden on itinerary view (e.g. from profile page)
                             ],
                           ),
                         ),

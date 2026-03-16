@@ -99,7 +99,7 @@ class ItineraryExperienceCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      _buildStayTimeBadge(experience.visitStartTime, experience.visitEndTime),
+                      _buildStayTimeBadge(experience),
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
@@ -538,8 +538,19 @@ class ItineraryTransitBlock extends StatelessWidget {
   }
 }
 
-Widget _buildStayTimeBadge(DateTime start, DateTime end, {bool compact = false}) {
-  final duration = end.difference(start);
+Widget _buildStayTimeBadge(Experience experience, {bool compact = false}) {
+  Duration duration;
+
+  if (experience.stayTime > Duration.zero) {
+    duration = experience.stayTime;
+  } else {
+    duration = experience.visitEndTime.difference(experience.visitStartTime);
+    // If there is no valid duration, default to 30 minutes
+    if (duration.isNegative || duration == Duration.zero) {
+      duration = const Duration(minutes: 30);
+    }
+  }
+
   final durationStr = DateTimeUtils.formatDuration(duration);
 
   return Container(

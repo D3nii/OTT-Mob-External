@@ -10,10 +10,13 @@ class ItineraryExperienceCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onViewExperienceTap;
 
+  final bool isVisited;
+
   const ItineraryExperienceCard({
     Key? key,
     required this.experience,
     this.isSelected = false,
+    this.isVisited = false,
     required this.onTap,
     this.onViewExperienceTap,
   }) : super(key: key);
@@ -49,17 +52,22 @@ class ItineraryExperienceCard extends StatelessWidget {
                 ),
                 child: Hero(
                   tag: 'experience-img-${experience.experienceId}',
-                  child: CachedNetworkImage(
-                    imageUrl: experience.imageUrls.isNotEmpty
-                        ? experience.imageUrls.first
-                        : '',
-                    width: 100,
-                    height: 100, // Minimal height to ensure consistency
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                        Container(color: Colors.grey[200]),
-                    errorWidget: (context, url, error) =>
-                        Container(color: Colors.grey[200]),
+                  child: ColorFiltered(
+                    colorFilter: isVisited
+                        ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
+                        : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                    child: CachedNetworkImage(
+                      imageUrl: experience.imageUrls.isNotEmpty
+                          ? experience.imageUrls.first
+                          : '',
+                      width: 100,
+                      height: 100, // Minimal height to ensure consistency
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          Container(color: Colors.grey[200]),
+                      errorWidget: (context, url, error) =>
+                          Container(color: Colors.grey[200]),
+                    ),
                   ),
                 ),
               ),
@@ -72,10 +80,10 @@ class ItineraryExperienceCard extends StatelessWidget {
                     children: [
                       Text(
                         experience.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1D1D1F),
+                          color: isVisited ? Colors.grey : const Color(0xFF1D1D1F),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

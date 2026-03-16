@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:onetwotrail/l10n/app_localizations.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intl/intl.dart';
-import 'package:animations/animations.dart';
-import 'package:onetwotrail/repositories/models/experience.dart';
 import 'package:onetwotrail/repositories/models/itinerary.dart';
 import 'package:onetwotrail/repositories/models/transit_itinerary_event.dart';
 import 'package:onetwotrail/repositories/models/visit_itinerary_event.dart';
@@ -14,12 +11,9 @@ import 'package:onetwotrail/repositories/viewModels/schedule_page_view_model.dar
 import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
 import 'package:onetwotrail/ui/views/experience_info.dart';
-import 'package:onetwotrail/ui/widgets/itinerary_experience_item.dart';
 import 'package:onetwotrail/ui/widgets/show_dialog_mark_experience_as_done.dart';
-import 'package:onetwotrail/utils/show_dialog_maps.dart';
 import 'package:onetwotrail/v2/util/string.dart';
 import 'package:provider/provider.dart';
-import 'package:onetwotrail/ui/share/geo_helpers.dart';
 import 'package:onetwotrail/ui/views/trail_preview/itinerary_widgets.dart';
 
 // This file has been converted from functional widgets to class-based widgets
@@ -123,10 +117,92 @@ class SchedulePageBuilder extends StatelessWidget {
                                     }
 
                                     return Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 12),
-                                      child:
-                                          ItineraryExperienceContainer(event),
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: Slidable(
+                                        key: ValueKey(event.experience.experienceInTrailId),
+                                        endActionPane: ActionPane(
+                                          motion: const DrawerMotion(),
+                                          extentRatio: 0.35,
+                                          children: [
+                                            if (event.experience.visited)
+                                              CustomSlidableAction(
+                                                onPressed: (context) async {
+                                                  var success = await model.markExperienceAsNotVisited(
+                                                      context, event.experience.experienceInTrailId);
+                                                  if (success) await model.init(context);
+                                                },
+                                                backgroundColor: Colors.grey,
+                                                foregroundColor: Colors.white,
+                                                padding: EdgeInsets.all(8),
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(Icons.close, color: Colors.white),
+                                                    SizedBox(height: 4),
+                                                    Text(
+                                                      AppLocalizations.of(context)?.markAsNotVisited ??
+                                                          "Mark as not visited",
+                                                      textAlign: TextAlign.center,
+                                                      style:
+                                                          TextStyle(color: Colors.white, fontSize: 13),
+                                                      maxLines: 4,
+                                                    ),
+                                                  ],
+                                                ),
+                                              )
+                                            else
+                                              CustomSlidableAction(
+                                                onPressed: (context) {
+                                                  showDialog(
+                                                    barrierDismissible: true,
+                                                    context: context,
+                                                    useSafeArea: false,
+                                                    builder: (BuildContext context) =>
+                                                        ShowDialogExperienceMarkAsDone(
+                                                      event.experience.experienceInTrailId,
+                                                      model.itinerary.id,
+                                                      event.experience,
+                                                    ),
+                                                  ).then((value) => model.init(context));
+                                                },
+                                                backgroundColor: tealish,
+                                                foregroundColor: Colors.white,
+                                                padding: EdgeInsets.all(8),
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(Icons.check, color: Colors.white),
+                                                    SizedBox(height: 4),
+                                                    Text(
+                                                      AppLocalizations.of(context)?.markAsVisited ??
+                                                          "Mark as visited",
+                                                      textAlign: TextAlign.center,
+                                                      style:
+                                                          TextStyle(color: Colors.white, fontSize: 13),
+                                                      maxLines: 4,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                        child: ItineraryExperienceCard(
+                                          experience: event.experience,
+                                          isVisited: event.experience.visited,
+                                          onTap: () {},
+                                          onViewExperienceTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => Provider.value(
+                                                  value: event.experience,
+                                                  child: ExperienceInfo(),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
                                     );
                                   }
                                   if (dayList[indexOfItem]
@@ -135,29 +211,14 @@ class SchedulePageBuilder extends StatelessWidget {
                                         dayList[indexOfItem]
                                             as TransitItineraryEvent;
 
-                                    double? distanceEstimation;
-                                    if (indexOfItem > 0 &&
-                                        indexOfItem < dayList.length - 1) {
-                                      var prev = dayList[indexOfItem - 1];
-                                      var next = dayList[indexOfItem + 1];
-                                      if (prev is VisitItineraryEvent &&
-                                          next is VisitItineraryEvent) {
-                                        distanceEstimation =
-                                            GeoHelpers.calculateDistance(
-                                                prev.experience.latitude,
-                                                prev.experience.longitude,
-                                                next.experience.latitude,
-                                                next.experience.longitude);
-                                      }
-                                    }
 
                                     return Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 12),
-                                      child: TimeToTheOtherExperienceContainer(
-                                        item.duration,
-                                        indexOfItem == (dayList.length - 1),
-                                        distanceEstimation: distanceEstimation,
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: ItineraryTransitBlock(
+                                        transportType: 'car',
+                                        duration: item.duration.inMinutes > 0
+                                            ? '${item.duration.inMinutes} mins'
+                                            : null,
                                       ),
                                     );
                                   }
@@ -183,417 +244,6 @@ class SchedulePageBuilder extends StatelessWidget {
                     );
                   }));
         },
-      ),
-    );
-  }
-}
-
-class ItineraryExperienceContainer extends StatelessWidget {
-  final VisitItineraryEvent event;
-
-  // Use a GlobalKey for the Slidable widget to ensure we can access it from anywhere
-  const ItineraryExperienceContainer(this.event, {Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    Size mediaQuery = MediaQuery.of(context).size;
-    // Create a GlobalKey that will be accessible throughout the widget tree
-    final slidableKey = GlobalKey();
-    var padding = mediaQuery.width * 0.055;
-    return Consumer<SchedulePageViewModel>(builder: (context, model, _) {
-      return Column(
-        children: [
-          Container(
-            height: mediaQuery.height * 0.04,
-            width: mediaQuery.width,
-            padding: EdgeInsets.symmetric(horizontal: mediaQuery.width * 0.055),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Flexible(
-                  flex: 50,
-                  child: Container(
-                    alignment: Alignment.centerLeft,
-                    padding: EdgeInsets.only(left: 5),
-                    child: Text(
-                      DateFormat('hh:mmaaa').format(event.startTime),
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black),
-                    ),
-                  ),
-                ),
-                Flexible(
-                  flex: 50,
-                  child: Container(
-                    padding: EdgeInsets.only(right: 5),
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(right: 5),
-                          child: Container(
-                            width: 15,
-                            height: 15,
-                            child: Image.asset(
-                              'assets/icons/clock.png',
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        Container(
-                            child: Text(_formatEventDuration(event.duration)))
-                      ],
-                    ),
-                  ),
-                )
-              ],
-            ),
-          ),
-          event.experience.visited
-              ? Slidable(
-                  key: slidableKey,
-                  endActionPane: ActionPane(
-                    motion: const DrawerMotion(),
-                    extentRatio: 0.35,
-                    children: [
-                      CustomSlidableAction(
-                        onPressed: (context) async {
-                          var success = await model.markExperienceAsNotVisited(
-                              context, event.experience.experienceInTrailId);
-                          if (success) await model.init(context);
-                        },
-                        backgroundColor: Colors.grey,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.all(8),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.close, color: Colors.white),
-                            SizedBox(height: 4),
-                            Text(
-                              AppLocalizations.of(context)?.markAsNotVisited ??
-                                  "Mark as not visited",
-                              textAlign: TextAlign.center,
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 13),
-                              maxLines: 4,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  child: _slidableChildContainer(event, padding, () {
-                    final controller = Slidable.of(context);
-                    if (controller != null) {
-                      if (controller.actionPaneType.value !=
-                          ActionPaneType.none) {
-                        controller.close();
-                      } else {
-                        controller.openEndActionPane();
-                      }
-                    }
-                  }),
-                )
-              : Slidable(
-                  key: slidableKey,
-                  endActionPane: ActionPane(
-                    motion: const DrawerMotion(),
-                    extentRatio: 0.35,
-                    children: [
-                      CustomSlidableAction(
-                        onPressed: (context) {
-                          showDialog(
-                            barrierDismissible: true,
-                            context: context,
-                            useSafeArea: false,
-                            builder: (BuildContext context) =>
-                                ShowDialogExperienceMarkAsDone(
-                              event.experience.experienceInTrailId,
-                              model.itinerary.id,
-                              event.experience,
-                            ),
-                          ).then((value) => model.init(context));
-                        },
-                        backgroundColor: tealish,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.all(8),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.check, color: Colors.white),
-                            SizedBox(height: 4),
-                            Text(
-                              AppLocalizations.of(context)?.markAsVisited ??
-                                  "Mark as visited",
-                              textAlign: TextAlign.center,
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 13),
-                              maxLines: 4,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  child: _slidableChildContainer(event, padding, () {
-                    final controller = Slidable.of(context);
-                    if (controller != null) {
-                      if (controller.actionPaneType.value !=
-                          ActionPaneType.none) {
-                        controller.close();
-                      } else {
-                        controller.openEndActionPane();
-                      }
-                    }
-                  }),
-                )
-        ],
-      );
-    });
-  }
-}
-
-Widget _slidableChildContainer(
-  VisitItineraryEvent scheduleExperienceItem,
-  double padding,
-  VoidCallback onMoreTap,
-) {
-  return Consumer<SchedulePageViewModel>(
-    builder: (context, model, _) {
-      final BuildContext capturedContext = context;
-
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-              padding: EdgeInsets.symmetric(horizontal: padding),
-              child: OpenContainer(
-                transitionDuration: const Duration(milliseconds: 500),
-                transitionType: ContainerTransitionType.fade,
-                closedElevation: 0,
-                closedColor: Colors.white,
-                openColor: const Color(0xFFF5F5F7),
-                closedShape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                    side: BorderSide(
-                        color: Colors.transparent, style: BorderStyle.none)),
-                openBuilder: (context, _) => Provider.value(
-                  value: scheduleExperienceItem.experience,
-                  child: ExperienceInfo(),
-                ),
-                closedBuilder: (context, openContainer) =>
-                    Provider<Experience>.value(
-                  value: scheduleExperienceItem.experience,
-                  child: scheduleExperienceItem.experience.visited
-                      ? ItineraryExperienceItem(
-                          height: MediaQuery.of(context).size.height * 0.20,
-                          onMoreTap: () {
-                            final slidable = Slidable.of(capturedContext);
-                            if (slidable != null) {
-                              if (slidable.actionPaneType.value !=
-                                  ActionPaneType.none) {
-                                slidable.close();
-                              } else {
-                                slidable.openEndActionPane();
-                              }
-                            }
-                          },
-                          onGoNowTap: () {}, // Adding required parameter
-                        )
-                      : ItineraryExperienceItem(
-                          height: MediaQuery.of(context).size.height * 0.20,
-                          onGoNowTap: () {
-                            ShowDialogMaps().showDialogMapsTrails(
-                                context, scheduleExperienceItem.experience, () {
-                              Navigator.pop(context);
-                            });
-                          },
-                          onMoreTap: () {
-                            final slidable = Slidable.of(capturedContext);
-                            if (slidable != null) {
-                              if (slidable.actionPaneType.value !=
-                                  ActionPaneType.none) {
-                                slidable.close();
-                              } else {
-                                slidable.openEndActionPane();
-                              }
-                            }
-                          },
-                        ),
-                ),
-              ))
-        ],
-      );
-    },
-  );
-}
-
-String _formatEventDuration(Duration duration) {
-  if (duration.inHours > 0) {
-    return "${duration.inHours}h ";
-  }
-  return "${duration.inMinutes}m ";
-}
-
-class MiniThreeDots extends StatelessWidget {
-  const MiniThreeDots({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 65 / 2,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Container(
-              width: 4,
-              height: 4,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: tealish),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              width: 4,
-              height: 4,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: tealish),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              width: 4,
-              height: 4,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: tealish),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TimeToTheOtherExperienceContainer extends StatelessWidget {
-  final Duration duration;
-  final bool lastTime;
-  final double? distanceEstimation;
-
-  const TimeToTheOtherExperienceContainer(this.duration, this.lastTime,
-      {this.distanceEstimation, Key? key})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    Size mediaQuery = MediaQuery.of(context).size;
-    return Container(
-      padding: EdgeInsets.only(
-        top: mediaQuery.height * 0.02,
-      ),
-      child: Container(
-        alignment: Alignment.bottomCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            MiniThreeDots(),
-            UIHelper.verticalSpace(10),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              CartWithTime(
-                duration,
-                distanceEstimation: distanceEstimation,
-              ),
-              UIHelper.horizontalSpace(5),
-            ]),
-            Text(
-              lastTime
-                  ? AppLocalizations.of(context)?.untilTomorrowTimeText ??
-                      "Until tomorrow"
-                  : AppLocalizations.of(context)?.travelTimeText ??
-                      "Travel time",
-              style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500),
-            ),
-            UIHelper.verticalSpace(10),
-            MiniThreeDots()
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CartWithTime extends StatelessWidget {
-  final Duration duration;
-  final double? distanceEstimation;
-
-  const CartWithTime(this.duration, {this.distanceEstimation, Key? key})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    // Round up to nearest 10 minutes
-    double totalMinutes = duration.inMilliseconds / (1000 * 60);
-
-    // If duration is 0, use distance estimation if available
-    if (totalMinutes <= 0 && distanceEstimation != null) {
-      // Estimate 2.5 minutes per km
-      totalMinutes = distanceEstimation! * 2.5;
-    }
-
-    int roundedMinutes = (totalMinutes / 10).ceil() * 10;
-
-    // Ensure at least 10 minutes if there is distance but rounded to 0
-    if (roundedMinutes == 0 &&
-        distanceEstimation != null &&
-        distanceEstimation! > 0) {
-      roundedMinutes = 10;
-    }
-
-    String durationStr;
-    int hours = roundedMinutes ~/ 60;
-    int mins = roundedMinutes % 60;
-
-    if (hours > 0) {
-      durationStr =
-          '$hours ${hours == 1 ? 'hour' : 'hours'} $mins ${mins == 1 ? 'minute' : 'minutes'}';
-    } else {
-      durationStr = '$mins ${mins == 1 ? 'minute' : 'minutes'}';
-    }
-
-    Size mediaQuery = MediaQuery.of(context).size;
-    return Container(
-      height: mediaQuery.height * (0.118 / 3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            height: 25,
-            width: 25,
-            child: Image.asset(
-              'assets/icons/car.png',
-              color: tealish,
-            ),
-          ),
-          UIHelper.horizontalSpace(3),
-          Container(
-            child: Text(
-              durationStr,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500),
-            ),
-          )
-        ],
       ),
     );
   }
@@ -772,55 +422,4 @@ class MapButton extends StatelessWidget {
       },
     );
   }
-}
-
-class ExperienceImage extends StatelessWidget {
-  final Experience experience;
-
-  const ExperienceImage(this.experience, {Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    Size mediaQuery = MediaQuery.of(context).size;
-    return Container(
-        height: mediaQuery.height * 0.13,
-        width: mediaQuery.width * 0.285,
-        decoration: BoxDecoration(
-          color: grey125Color,
-          borderRadius: BorderRadius.all(Radius.circular(11)),
-        ),
-        child: _checkImageLength(experience.imageUrls)
-            ? Stack(children: [
-                ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(11)),
-                    child: Image.network(
-                      experience.imageUrls[0],
-                      fit: BoxFit.fill,
-                      width: mediaQuery.width * 0.285,
-                    )),
-                Container(
-                  alignment: Alignment.topLeft,
-                  padding: EdgeInsets.only(left: 10, top: 10),
-                  child: Text(
-                    experience.name,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white),
-                  ),
-                )
-              ])
-            : Container(
-                height: mediaQuery.height * 0.13,
-                width: mediaQuery.width * 0.285,
-                decoration: BoxDecoration(
-                  color: grey125Color,
-                  borderRadius: BorderRadius.all(Radius.circular(11)),
-                ),
-              ));
-  }
-}
-
-bool _checkImageLength(List<String> images) {
-  return images.isNotEmpty;
 }

@@ -1,12 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:onetwotrail/config/config.dart';
 import 'package:onetwotrail/l10n/app_localizations.dart';
+import 'package:onetwotrail/repositories/models/itinerary.dart';
 import 'package:onetwotrail/repositories/models/trail.dart';
 import 'package:onetwotrail/repositories/services/trail_service.dart';
 import 'package:onetwotrail/repositories/viewModels/controller_page_board_controller_model.dart';
 import 'package:onetwotrail/repositories/viewModels/trail_itinerary_view_model.dart';
 import 'package:onetwotrail/ui/share/ui_helpers.dart';
-import 'package:onetwotrail/ui/trail_map_view.dart';
 import 'package:onetwotrail/ui/widgets/circular_progress_bar.dart';
 import 'package:onetwotrail/ui/widgets/schedule_page_builder.dart';
 import 'package:provider/provider.dart';
@@ -20,8 +23,9 @@ class TrailItineraryView extends StatelessWidget {
     final trailService = Provider.of<TrailService>(context, listen: false);
 
     return ChangeNotifierProxyProvider<ControllerPageBoardAndItineraryModel, TrailItineraryViewModel>(
-      create: (_) {
-        final viewModel = TrailItineraryViewModel(trailService);
+      create: (context) {
+        final config = Provider.of<Config>(context, listen: false);
+        final viewModel = TrailItineraryViewModel(trailService, config.googleMapsApiKey);
         viewModel.listenToItineraryChanges();
         return viewModel;
       },
@@ -63,12 +67,22 @@ class TrailItineraryView extends StatelessWidget {
                         SizedBox(
                           height: 200,
                           width: double.infinity,
-                          child: ChangeNotifierProvider.value(
-                            value: model,
-                            child: Provider.value(
-                              value: model.controllerPageBoardAndItineraryModel!.dayActivities, 
-                              child: TrailMapView()
+                          child: GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(trail!.latitude, trail.longitude),
+                              zoom: 12,
                             ),
+                            onMapCreated: model.onMapCreated,
+                            markers: model.markers,
+                            polylines: model.polylines,
+                            zoomControlsEnabled: false,
+                            mapToolbarEnabled: false,
+                            myLocationButtonEnabled: false,
+                            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                              Factory<OneSequenceGestureRecognizer>(
+                                () => EagerGestureRecognizer(),
+                              ),
+                            },
                           ),
                         ),
                         // Experiences List

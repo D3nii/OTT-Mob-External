@@ -71,6 +71,79 @@ class TrailView extends BaseWidget {
                                 children: [
                                   AppBarContainer(
                                       () {}, (widgetToShow) => baseWidgetModel.showOverlayWidget(true, widgetToShow)),
+                                  // Trail name and description section - shown only in Board view
+                                  if (tabHandler.showBoard && !model.isTrailNull())
+                                    Container(
+                                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border(
+                                          bottom: BorderSide(color: tealish, width: 2),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  model.trail.name,
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Color(0xFF1D1D1F),
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                if (model.trail.description.isNotEmpty) ...[
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    model.trail.description,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w400,
+                                                      color: Color(0xFF6E6E73),
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.only(left: 12),
+                                            child: InkWell(
+                                              onTap: () async {
+                                                if (tabHandler.showBoard) {
+                                                  _handleTrailEdit(context, model.trail);
+                                                } else {
+                                                  await _handleItineraryStartDateEdit(context, model.trail, model);
+                                                }
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFF2F2F7),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Image.asset(
+                                                  tabHandler.showBoard 
+                                                      ? "assets/icons/edit.png" 
+                                                      : "assets/icons/calendar.png",
+                                                  color: tealish,
+                                                  height: 20,
+                                                  width: 20,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   !model.isTrailNull()
                                       ? Expanded(
                                           child: PageView(
@@ -226,78 +299,29 @@ class AppBarContainer extends StatelessWidget {
     Size mediaQuery = MediaQuery.of(context).size;
     return Consumer2<ControllerPageBoardAndItineraryModel, BaseWidgetModel>(
       builder: (context, model, baseWidgetModel, _) {
-        return /*AppBar*/ Container(
-          padding: EdgeInsets.only(top: 15),
-          color: tealish,
+        return Container(
           width: mediaQuery.width,
-          height: mediaQuery.height * 0.20,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Expanded(
-                flex: 75,
-                child: Row(
-                  children: [
-                    Flexible(
-                      flex: 50,
-                      child: Container(
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          children: <Widget>[
-                            CupertinoBackButton(
-                              label: AppLocalizations.of(context)?.backText ?? "Back",
-                              color: Colors.white,
-                              onPressed: () => Navigator.pop(context, true),
-                            ),
-                            Expanded(
-                              flex: 80,
-                              child: Text(
-                                model.trail.name.toUpperCase(),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
+          color: tealish,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 32,
+                  child: Row(
+                    children: [
+                      CupertinoBackButton(
+                        label: AppLocalizations.of(context)?.backText ?? "Back",
+                        color: Colors.white,
+                        onPressed: () => Navigator.pop(context, true),
                       ),
-                    ),
-                    InkWell(
-                      child: Container(
-                        height: 48,
-                        padding: EdgeInsets.only(right: mediaQuery.width * 0.03),
-                        alignment: Alignment.centerRight,
-                        child: Image.asset(
-                          "assets/icons/edit.png",
-                          color: Colors.white,
-                          height: 30,
-                          width: 30,
-                        ),
-                      ),
-                      onTap: () async {
-                        final currentPage = model.pageController.page?.round() ?? 0;
-                        
-                        if (currentPage == 0) {
-                          _handleTrailEdit(context, model.trail);
-                        } else if (currentPage == 1) {
-                          await _handleItineraryStartDateEdit(context, model.trail, model);
-                        }
-                      },
-                    )
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                flex: 30,
-                child: Container(
-                    decoration: BoxDecoration(color: tealish, border: Border(top: BorderSide.none)),
-                    child: _ParentTabs(model.pageController)),
-              )
-            ],
+                _ParentTabs(model.pageController),
+              ],
+            ),
           ),
         );
       },

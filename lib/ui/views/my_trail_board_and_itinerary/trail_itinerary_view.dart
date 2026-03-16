@@ -32,75 +32,63 @@ class TrailItineraryView extends StatelessWidget {
       },
       child: Consumer<TrailItineraryViewModel>(
         builder: (context, model, _) {
-          Size mediaQuery = MediaQuery.of(context).size;
-
-          return Stack(
+          return Column(
             children: [
-              SizedBox(
-                height: mediaQuery.height,
-                width: mediaQuery.width,
+              Expanded(
                 child: (() {
-                  // Check if we should show the map view
-                  if (model.controllerPageBoardAndItineraryModel?.showItineraryMap == true) {
-                    return ChangeNotifierProvider.value(
-                        value: model,
-                        child: Provider.value(
-                            value: model.controllerPageBoardAndItineraryModel!.dayActivities, child: TrailMapView()));
-                  }
-
                   // Get the trail reference
                   final trail = model.controllerPageBoardAndItineraryModel?.trail;
 
-                  // If trail has no experiences, show no itinerary message
+                  // If trail has no experiences
                   if (trail != null && trail.experiences.isEmpty) {
                     return NoItineraryMessage(trail);
                   }
 
-                  // If there's no itinerary, show appropriate message
+                  // Loading state
                   if (model.itinerary == null) {
-                    // Check if we're loading an itinerary
                     final bool isLoadingItinerary = model.controllerPageBoardAndItineraryModel != null &&
                         model.controllerPageBoardAndItineraryModel!.trail.itineraryId > 0;
-
                     if (isLoadingItinerary) {
-                      return Container(child: Center(child: CircularProgressBar()));
+                      return const Center(child: CircularProgressBar());
                     }
-
-                    // If we have a trail, show the no itinerary message
-                    if (trail != null) {
-                      return NoItineraryMessage(trail);
-                    }
-
-                    // Otherwise show an error
+                    if (trail != null) return NoItineraryMessage(trail);
                     return const ErrorContainerTryAgain();
                   }
 
-                  // If we have a valid itinerary, show the schedule
+                  // Valid Itinerary
                   if (model.itinerary!.id > 0) {
-                    // Provide the itinerary directly to the SchedulePageBuilder
-                    return Provider.value(
-                      value: model.itinerary,
-                      child: SchedulePageBuilder(),
+                    return Column(
+                      children: [
+                        // Map at the top (like TrailPreviewView)
+                        SizedBox(
+                          height: 200,
+                          width: double.infinity,
+                          child: ChangeNotifierProvider.value(
+                            value: model,
+                            child: Provider.value(
+                              value: model.controllerPageBoardAndItineraryModel!.dayActivities, 
+                              child: TrailMapView()
+                            ),
+                          ),
+                        ),
+                        // Experiences List
+                        Expanded(
+                          child: Provider.value(
+                            value: model.itinerary,
+                            child: SchedulePageBuilder(), // For now, we'll still use SchedulePageBuilder but it might need its own UI updates
+                          ),
+                        ),
+                      ],
                     );
                   }
 
-                  // If we have an invalid itinerary but have a trail, show no itinerary message
-                  if (trail != null) {
-                    return NoItineraryMessage(trail);
-                  }
-
-                  // Otherwise show an error
+                  if (trail != null) return NoItineraryMessage(trail);
                   return const ErrorContainerTryAgain();
                 })(),
               ),
               // Show loading overlay when itinerary is updating
               if (model.controllerPageBoardAndItineraryModel?.updatingItinerary == true)
-                Container(
-                  color: Colors.black45,
-                  height: mediaQuery.height,
-                  width: mediaQuery.width,
-                  child: Center(child: CircularProgressBar()),
-                ),
+                const CircularProgressBar(),
             ],
           );
         },

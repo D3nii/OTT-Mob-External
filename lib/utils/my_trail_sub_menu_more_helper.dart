@@ -4,7 +4,6 @@ import 'package:onetwotrail/constants.dart';
 import 'package:onetwotrail/repositories/models/response.dart';
 import 'package:onetwotrail/repositories/models/trail.dart';
 import 'package:onetwotrail/repositories/viewModels/base_widget_model.dart';
-import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/ui/views/my_trail_sub_menu_more.dart';
 import 'package:provider/provider.dart';
 
@@ -62,7 +61,7 @@ class MyTrailSubMenuMoreHelper extends BaseWidgetModel {
         return Container(
           child: Dialog(
             insetPadding: EdgeInsets.all(0),
-            backgroundColor: pinkishGrey,
+            backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
             child: Container(
               height: mediaQuery.height * 0.85,

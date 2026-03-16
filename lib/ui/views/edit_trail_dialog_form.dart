@@ -63,7 +63,7 @@ class EditTrailDialogForm extends StatelessWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 AppLocalizations.of(context)?.editDetailsTrailText ?? "Edit Details Trail",
-                                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: tealish),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: tealish),
                               ),
                             ),
                             UIHelper.verticalSpace(7),
@@ -71,13 +71,17 @@ class EditTrailDialogForm extends StatelessWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 AppLocalizations.of(context)?.editTheDetailsFromYourTrailText ?? "Edit the details from your trail",
-                                style: TextStyle(fontWeight: FontWeight.w300, fontSize: 14, color: Colors.black),
+                                style: TextStyle(fontWeight: FontWeight.w300, fontSize: 13, color: Colors.black),
                               ),
                             ),
                             UIHelper.verticalSpace(20),
-                            NameForTrailTextField(),
-                            UIHelper.verticalSpace(10),
-                            _DialogAddEmail(),
+                            const _SectionLabel("Name of Trail"),
+                            UIHelper.verticalSpace(8),
+                            const NameForTrailTextField(),
+                            UIHelper.verticalSpace(16),
+                            const _SectionLabel("Collaborator"),
+                            UIHelper.verticalSpace(8),
+                            const _DialogAddEmail(),
                             model.errorMessage != ""
                                 ? Padding(
                                     padding: EdgeInsets.symmetric(
@@ -93,10 +97,7 @@ class EditTrailDialogForm extends StatelessWidget {
                                       ),
                                     ),
                                   )
-                                : Container(
-                                    height: 0,
-                                    width: 0,
-                                  ),
+                                : Container(),
                             StreamBuilder(
                               stream: model.streamControllerOfCollaborators.stream,
                               builder: (BuildContext context, snapshot) {
@@ -108,7 +109,7 @@ class EditTrailDialogForm extends StatelessWidget {
                                 return Container(
                                   height: 60,
                                   child: ListView.builder(
-                                      padding: EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
                                       itemCount: length,
                                       controller: model.controller,
                                       scrollDirection: Axis.horizontal,
@@ -123,8 +124,10 @@ class EditTrailDialogForm extends StatelessWidget {
                                 );
                               },
                             ),
-                            TextAreaEditTrail(),
-                             UIHelper.verticalSpace(16),
+                            UIHelper.verticalSpace(8),
+                            const _SectionLabel("Description"),
+                            UIHelper.verticalSpace(8),
+                            const TextAreaEditTrail(),
                              if (isAdminUser(context))
                                Consumer<EditTrailDialogFormModel>(
                                  builder: (context, model, _) {
@@ -141,7 +144,7 @@ class EditTrailDialogForm extends StatelessWidget {
                                           Navigator.pop(context);
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
-                                              content: Text(message, style: const TextStyle(color: Colors.white)),
+                                              content: Text(message, style: const TextStyle(color: Colors.white, fontSize: 12)),
                                               backgroundColor: tealish,
                                               behavior: SnackBarBehavior.fixed,
                                               duration: const Duration(seconds: 2),
@@ -152,7 +155,7 @@ class EditTrailDialogForm extends StatelessWidget {
                                            SnackBar(
                                              content: Text(
                                                AppLocalizations.of(context)?.somethingWentWrongRequestText ?? 'Something went wrong with your request',
-                                               style: const TextStyle(color: Colors.white),
+                                               style: const TextStyle(color: Colors.white, fontSize: 12),
                                              ),
                                              backgroundColor: tomato,
                                              behavior: SnackBarBehavior.fixed,
@@ -174,7 +177,7 @@ class EditTrailDialogForm extends StatelessWidget {
                                 child: Text(
                                   AppLocalizations.of(context)?.cancelText ?? "Cancel",
                                   style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.black,
                                       decoration: TextDecoration.underline),
@@ -191,18 +194,18 @@ class EditTrailDialogForm extends StatelessWidget {
                       ),
                       !profileSnapshot.hasData || !model.trailRefreshed
                           ? Container(
-                              color: pinkishGrey,
-                              child: Center(
+                              color: Colors.white,
+                              child: const Center(
                                 child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                                    valueColor: AlwaysStoppedAnimation<Color>(tealish)),
                               ),
                             )
                           : (profileSnapshot.hasData && profileSnapshot.data?.data == null) || !model.trailRefreshed
                               ? Container(
-                                  color: pinkishGrey,
-                                  child: Center(
+                                  color: Colors.white,
+                                  child: const Center(
                                     child: CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                                        valueColor: AlwaysStoppedAnimation<Color>(tealish)),
                                   ),
                                 )
                               : Container()
@@ -250,7 +253,7 @@ class _SaveButton extends StatelessWidget {
                           flex: 60,
                           child: Container(
                             alignment: Alignment.center,
-                            child: Text(AppLocalizations.of(context)?.saveText ?? "Save", style: TextStyle(color: tomato)),
+                            child: Text(AppLocalizations.of(context)?.saveText ?? "Save", style: TextStyle(color: tomato, fontSize: 13)),
                           ),
                         ),
                       ]),
@@ -271,7 +274,7 @@ class _SaveButton extends StatelessWidget {
                       SnackBar(
                         content: Text(
                           AppLocalizations.of(context)?.changesSavedText ?? "Changes saved",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Colors.white, fontSize: 12),
                         ),
                         backgroundColor: tealish,
                         behavior: SnackBarBehavior.fixed,
@@ -308,7 +311,7 @@ class _SaveButton extends StatelessWidget {
                               flex: 60,
                               child: Container(
                                 alignment: Alignment.center,
-                                child: Text(AppLocalizations.of(context)?.saveText ?? "Save", style: TextStyle(color: Colors.white)),
+                                child: Text(AppLocalizations.of(context)?.saveText ?? "Save", style: TextStyle(color: Colors.white, fontSize: 13)),
                               ),
                             )
                           ]),
@@ -332,6 +335,7 @@ class NameForTrailTextField extends StatelessWidget {
             elevation: 0.0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10.0),
+              side: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
             ),
             color: Colors.white,
             child: Row(
@@ -356,6 +360,7 @@ class NameForTrailTextField extends StatelessWidget {
                     onChanged: (_) {
                       model.validateChanges();
                     },
+                    style: const TextStyle(fontSize: 13),
                     decoration: InputDecoration(
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -363,7 +368,7 @@ class NameForTrailTextField extends StatelessWidget {
                         errorBorder: InputBorder.none,
                         disabledBorder: InputBorder.none,
                         hintText: AppLocalizations.of(context)?.nameForTrailText ?? "Name for trail",
-                        hintStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.normal, color: Colors.grey[400])),
+                        hintStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: Colors.grey[400])),
                   ),
                 ),
               ],
@@ -386,6 +391,7 @@ class TextAreaEditTrail extends StatelessWidget {
           Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10.0),
+                side: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
               ),
               color: Colors.white,
               child: Padding(
@@ -396,9 +402,10 @@ class TextAreaEditTrail extends StatelessWidget {
                   onChanged: (_) {
                     model.validateChanges();
                   },
+                  style: const TextStyle(fontSize: 13),
                   decoration: InputDecoration.collapsed(
                       hintText: AppLocalizations.of(context)?.itsAnSmallDescriptionText ?? "It's a small description",
-                      hintStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14, color: Colors.grey[400])),
+                      hintStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 13, color: Colors.grey[400])),
                 ),
               ))
         ],
@@ -420,6 +427,7 @@ class _DialogAddEmail extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(10)),
             color: Colors.white,
+            border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
           ),
           child: Padding(
               padding: EdgeInsets.only(left: 10, right: 10),
@@ -445,9 +453,10 @@ class _DialogAddEmail extends StatelessWidget {
                         onChanged: (text) {
                           model.errorMessage = "";
                         },
+                        style: const TextStyle(fontSize: 13),
                         decoration: InputDecoration(
                             hintText: AppLocalizations.of(context)?.addCollaboratorEmailText ?? "Add collaborator email",
-                            hintStyle: TextStyle(fontWeight: FontWeight.w300, fontSize: 14),
+                            hintStyle: TextStyle(fontWeight: FontWeight.w300, fontSize: 13),
                             focusedBorder: InputBorder.none,
                             enabledBorder: InputBorder.none),
                       ),
@@ -504,7 +513,7 @@ class _TrailCollaboratorChip extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -524,6 +533,23 @@ class _TrailCollaboratorChip extends StatelessWidget {
         ],
       );
     });
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel(this.label, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+      ),
+    );
   }
 }
 

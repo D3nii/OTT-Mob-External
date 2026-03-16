@@ -40,6 +40,7 @@ class ControllerPageBoardAndItineraryModel extends BaseModel {
   int _indexListViewTrailItinerary = 0;
   int index = 0;
   int showGenerateItineraryAnimDuration = 0;
+  bool _hasUnsavedChanges = false;
 
   ControllerPageBoardAndItineraryModel(this._context, this._trailService, this.trail);
 
@@ -50,6 +51,8 @@ class ControllerPageBoardAndItineraryModel extends BaseModel {
   bool get updatingBoard => _updatingBoard;
 
   bool get updatingItinerary => _updatingItinerary;
+
+  bool get hasUnsavedChanges => _hasUnsavedChanges;
 
 
 
@@ -131,12 +134,16 @@ class ControllerPageBoardAndItineraryModel extends BaseModel {
 
   removeExperienceTrail(baseWidgetModel, Experience experience) async {
     await removeFromTrailExperience(experience);
-    applyBoardUpdate();
   }
 
   addExperienceTrail(baseWidgetModel, Experience experience) async {
     await addToBoardExperiences(experience);
-    applyBoardUpdate();
+  }
+
+  saveBoardChanges() async {
+    await applyBoardUpdate();
+    _hasUnsavedChanges = false;
+    notifyListeners();
   }
 
   BuildContext get context => _context;
@@ -155,6 +162,7 @@ class ControllerPageBoardAndItineraryModel extends BaseModel {
       _listBoardRemovedExperiences.add(experience);
       _recentRemoved.add(_listBoardRemovedExperiences);
     }
+    _hasUnsavedChanges = true;
     _updatingBoard = true;
     notifyListeners();
   }
@@ -170,6 +178,7 @@ class ControllerPageBoardAndItineraryModel extends BaseModel {
       _listBoardRemovedExperiences.removeWhere((element) => element.experienceId == experience.experienceId);
       _recentRemoved.add(_listBoardRemovedExperiences);
     }
+    _hasUnsavedChanges = true;
     _updatingBoard = true;
     notifyListeners();
   }

@@ -535,15 +535,8 @@ Widget _buildStayTimeBadge(DateTime start, DateTime end, {bool compact = false})
   final durationStr = DateTimeUtils.formatDuration(duration);
 
   return Container(
-    padding: EdgeInsets.symmetric(
-      horizontal: compact ? 6 : 8,
-      vertical: compact ? 2 : 4,
-    ),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF1F3F4),
-      borderRadius: BorderRadius.circular(compact ? 4 : 6),
-      border: Border.all(color: const Color(0xFFDADCE0), width: 0.5),
-    ),
+    padding: EdgeInsets.zero,
+    decoration: const BoxDecoration(),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:onetwotrail/repositories/models/experience.dart';
+import 'package:onetwotrail/utils/date_time_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ItineraryExperienceCard extends StatelessWidget {
@@ -89,6 +90,8 @@ class ItineraryExperienceCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 4),
+                      _buildStayTimeBadge(experience.visitStartTime, experience.visitEndTime),
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
@@ -235,23 +238,23 @@ class ItineraryMealSleepBlock extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Text(
-                                    isMeal
-                                        ? (title.contains('Breakfast')
-                                            ? 'Breakfast'
-                                            : (title.contains('Lunch')
-                                                ? 'Lunch'
-                                                : 'Dinner'))
-                                        : 'Sleep',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.grey[600],
-                                      letterSpacing: 0.5,
+                                    Text(
+                                      isMeal
+                                          ? (title.contains('Breakfast')
+                                              ? 'Breakfast'
+                                              : (title.contains('Lunch')
+                                                  ? 'Lunch'
+                                                  : 'Dinner'))
+                                          : 'Sleep',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.grey[600],
+                                        letterSpacing: 0.5,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
                               const SizedBox(height: 4),
                               Text(
                                 name,
@@ -408,14 +411,14 @@ class ItineraryMealSleepBlock extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      isMeal ? 'Meal: $name' : name,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: baseTextColor,
+                      Text(
+                        isMeal ? 'Meal: $name' : name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: baseTextColor,
+                        ),
                       ),
-                    ),
                     if (description.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2.0),
@@ -525,4 +528,40 @@ class ItineraryTransitBlock extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildStayTimeBadge(DateTime start, DateTime end, {bool compact = false}) {
+  final duration = end.difference(start);
+  final durationStr = DateTimeUtils.formatDuration(duration);
+
+  return Container(
+    padding: EdgeInsets.symmetric(
+      horizontal: compact ? 6 : 8,
+      vertical: compact ? 2 : 4,
+    ),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF1F3F4),
+      borderRadius: BorderRadius.circular(compact ? 4 : 6),
+      border: Border.all(color: const Color(0xFFDADCE0), width: 0.5),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.access_time,
+          size: compact ? 10 : 12,
+          color: const Color(0xFF5F6368),
+        ),
+        SizedBox(width: compact ? 2 : 4),
+        Text(
+          durationStr,
+          style: TextStyle(
+            fontSize: compact ? 9 : 11,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF5F6368),
+          ),
+        ),
+      ],
+    ),
+  );
 }

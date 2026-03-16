@@ -58,16 +58,20 @@ class TrailPreviewView extends StatelessWidget {
               builder: (context, model, _) => !model.isItineraryView
                   ? Container(
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: tealish, width: 2),
+                        ),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             model.currentTrailPreview.name,
                             style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                               color: Color(0xFF1D1D1F),
-                              letterSpacing: -0.4,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -78,10 +82,9 @@ class TrailPreviewView extends StatelessWidget {
                             Text(
                               model.currentTrailPreview.description ?? '',
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: Color(0xFF6E6E73),
-                                height: 1.4,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -92,11 +95,7 @@ class TrailPreviewView extends StatelessWidget {
                     )
                   : const SizedBox.shrink(),
             ),
-            Container(
-                child: Consumer<PreviewTrailModel>(
-                    builder: (context, model, _) => !model.isItineraryView
-                        ? EstimatedTimeBar(model.duration, false)
-                        : const SizedBox.shrink())),
+            const SizedBox.shrink(),
             const TrailPreviewViewBody(),
           ],
         ),
@@ -330,61 +329,70 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
 
     return ListView(
       key: const PageStorageKey('board_list'),
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
       children: <Widget>[
-        const SizedBox(height: 8),
-        const Text(
-          'Experiences',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1D1D1F),
-            letterSpacing: -0.4,
+        Container(
+          child: EstimatedTimeBar(model.duration, false),
+        ),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: const Text(
+            'Experiences',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1D1D1F),
+              letterSpacing: -0.4,
+            ),
           ),
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: EdgeInsets.zero,
-          margin: EdgeInsets.zero,
-          width: double.maxFinite,
-          child: GridView.builder(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
             padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: experienceCount,
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12.0,
-              mainAxisSpacing: 12.0,
-              mainAxisExtent: 240,
+            margin: EdgeInsets.zero,
+            width: double.maxFinite,
+            child: GridView.builder(
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: experienceCount,
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12.0,
+                mainAxisSpacing: 12.0,
+                mainAxisExtent: 240,
+              ),
+              itemBuilder: (context, index) {
+                var width = MediaQuery.of(context).size.width / 2 - 26;
+                var height = width;
+                var experience = model.currentTrailPreview.experiences[index];
+                return experienceItem(
+                  context: context,
+                  experience: experience,
+                  height: height,
+                  width: width,
+                  experienceNameFontSize: 12,
+                  experienceDestinationFontSize: 10,
+                  onLongPress: doNothing,
+                  onTap: () {
+                    Provider.of<EventClient>(context, listen: false).createEvent(
+                        Event(EventName.experience_profile_viewed,
+                            EventSourceView.trail_experience, {
+                      EventTag.experience_id: experience.experienceId.toString(),
+                      EventTag.experience_name: experience.name,
+                      EventTag.trail_id: model.currentTrailPreview.id.toString(),
+                      EventTag.trail_name: model.currentTrailPreview.name,
+                    }));
+                  },
+                  showAddToTrailButton: true,
+                  showMoreOptionsButton: false,
+                  backgroundColor: const Color(0xFFF5F5F7),
+                );
+              },
             ),
-            itemBuilder: (context, index) {
-              var width = MediaQuery.of(context).size.width / 2 - 14;
-              var height = MediaQuery.of(context).size.width / 2 - 28;
-              var experience = model.currentTrailPreview.experiences[index];
-              return experienceItem(
-                context: context,
-                experience: experience,
-                height: height,
-                width: width,
-                experienceNameFontSize: 12,
-                experienceDestinationFontSize: 10,
-                onLongPress: doNothing,
-                onTap: () {
-                  Provider.of<EventClient>(context, listen: false).createEvent(
-                      Event(EventName.experience_profile_viewed,
-                          EventSourceView.trail_experience, {
-                    EventTag.experience_id: experience.experienceId.toString(),
-                    EventTag.experience_name: experience.name,
-                    EventTag.trail_id: model.currentTrailPreview.id.toString(),
-                    EventTag.trail_name: model.currentTrailPreview.name,
-                  }));
-                },
-                showAddToTrailButton: true,
-                showMoreOptionsButton: false,
-                backgroundColor: const Color(0xFFF5F5F7),
-              );
-            },
           ),
         ),
         if (model.currentTrailPreview.experiences.length > 6) ...[
@@ -418,43 +426,52 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
           ),
         ],
         const SizedBox(height: 24),
-        Text(
-          AppLocalizations.of(context)!.experiencesOnTheMap,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1D1D1F),
-            letterSpacing: -0.4,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            AppLocalizations.of(context)!.experiencesOnTheMap,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1D1D1F),
+              letterSpacing: -0.4,
+            ),
           ),
         ),
         const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: 200,
-            color: Colors.black26,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(model.currentTrailPreview.latitude,
-                    model.currentTrailPreview.longitude),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              height: 200,
+              color: Colors.black26,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(model.currentTrailPreview.latitude,
+                      model.currentTrailPreview.longitude),
+                ),
+                onMapCreated: model.onTrailMapCreated,
+                markers: model.getMarkers(trail: model.currentTrailPreview),
+                polylines: model.polylines,
+                gestureRecognizers: Set()
+                  ..add(Factory<OneSequenceGestureRecognizer>(
+                      () => EagerGestureRecognizer())),
               ),
-              onMapCreated: model.onTrailMapCreated,
-              markers: model.getMarkers(trail: model.currentTrailPreview),
-              polylines: model.polylines,
-              gestureRecognizers: Set()
-                ..add(Factory<OneSequenceGestureRecognizer>(
-                    () => EagerGestureRecognizer())),
             ),
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
-          'Related Experiences',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1D1D1F),
-            letterSpacing: -0.4,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: const Text(
+            'Related Experiences',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1D1D1F),
+              letterSpacing: -0.4,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -462,7 +479,7 @@ class _TrailPreviewViewBodyState extends State<TrailPreviewViewBody> {
           height: 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: model.currentTrailPreview.experiences.length > 5
                 ? 5
                 : model.currentTrailPreview.experiences.length,

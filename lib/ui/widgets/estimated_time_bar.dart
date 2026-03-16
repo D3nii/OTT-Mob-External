@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:onetwotrail/l10n/app_localizations.dart';
-import 'package:onetwotrail/ui/share/app_colors.dart';
 import 'package:onetwotrail/v2/util/duration.dart';
 
 class EstimatedTimeBar extends StatelessWidget {
-  const EstimatedTimeBar(this.duration, this.isUpdating, {Key? key}) : super(key: key);
+  const EstimatedTimeBar(this.duration, this.isUpdating, {Key? key})
+      : super(key: key);
 
   final Duration duration;
 
@@ -14,8 +14,8 @@ class EstimatedTimeBar extends StatelessWidget {
   Widget build(BuildContext context) {
     Size mediaQuery = MediaQuery.of(context).size;
     return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: tealish, width: 2))),
       width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       height: mediaQuery.height * 0.064,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -27,8 +27,8 @@ class EstimatedTimeBar extends StatelessWidget {
               child: Text(
                 AppLocalizations.of(context)?.estimatedTime ?? 'Estimated Time',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -52,7 +52,8 @@ class EstimatedTimeBar extends StatelessWidget {
                     ),
                     Text(
                       _getDurationText(context),
-                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                     )
                   ],
                 ),

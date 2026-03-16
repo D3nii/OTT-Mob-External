@@ -359,64 +359,42 @@ class MapButton extends StatelessWidget {
     return Consumer2<SchedulePageViewModel,
         ControllerPageBoardAndItineraryModel>(
       builder: (context, model, controllerPageBoardAndItineraryModel, _) {
-        return Container(
-          height: 44,
-          child: Row(
-            children: [
-              Flexible(
-                flex: 60,
-                child: Container(),
-              ),
-              Flexible(
-                flex: 40,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: viridian,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Expanded(
-                          flex: 30,
-                          child: Container(
-                            alignment: Alignment.centerRight,
-                            child: Image.asset(
-                              'assets/icons/map.png',
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 70,
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: Text(
-                              AppLocalizations.of(context)?.mapText ?? "Map",
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    onPressed: () {
-                      controllerPageBoardAndItineraryModel.loadMapActivities(
-                          model.scheduleDays, selectedDayIndex);
-                      controllerPageBoardAndItineraryModel.showItineraryMap =
-                          true;
-                    },
-                  ),
+        return Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: viridian,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/icons/map.png',
+                  color: Colors.white,
+                  height: 14,
+                  width: 14,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  AppLocalizations.of(context)?.mapText ?? "Map",
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            onPressed: () {
+              controllerPageBoardAndItineraryModel.loadMapActivities(
+                  model.scheduleDays, selectedDayIndex);
+              controllerPageBoardAndItineraryModel.showItineraryMap =
+                  true;
+            },
           ),
         );
       },

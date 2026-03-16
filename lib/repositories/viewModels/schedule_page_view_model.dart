@@ -91,6 +91,10 @@ class SchedulePageViewModel extends BaseModel {
     scheduleDays = {};
     Map<String, List<dynamic>> tempDays = {};
     itinerary.events.forEach((element) {
+      if (element is VisitItineraryEvent) {
+        element.experience.visitStartTime = element.startTime;
+        element.experience.visitEndTime = element.endTime;
+      }
       String dayFormatDate = DateFormat('EEE, MMM d').format(element.startTime);
       List dayItems = (tempDays[dayFormatDate] ?? [])..add(element);
       tempDays[dayFormatDate] = dayItems;
@@ -210,19 +214,26 @@ class SchedulePageViewModel extends BaseModel {
       }
     }
 
+    final eventEndTime = time.add(Duration(minutes: isMeal ? 30 : 480));
+    final experience = Experience.dummy(
+      title: name,
+      name: name,
+      description: description,
+      isMeal: isMeal,
+      adName: adName,
+      adUrl: adUrl,
+      adImageUrl: adImageUrl,
+    );
+    
+    // Sync times to experience for display in card
+    experience.visitStartTime = time;
+    experience.visitEndTime = eventEndTime;
+
     return VisitItineraryEvent(
       position: -1,
       startTime: time,
-      endTime: time.add(Duration(minutes: isMeal ? 30 : 480)),
-      experience: Experience.dummy(
-        title: name,
-        name: name,
-        description: description,
-        isMeal: isMeal,
-        adName: adName,
-        adUrl: adUrl,
-        adImageUrl: adImageUrl,
-      ),
+      endTime: eventEndTime,
+      experience: experience,
     );
   }
 

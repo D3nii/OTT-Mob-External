@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:onetwotrail/config/config.dart';
 import 'package:onetwotrail/l10n/app_localizations.dart';
-import 'package:onetwotrail/repositories/models/itinerary.dart';
 import 'package:onetwotrail/repositories/models/trail.dart';
 import 'package:onetwotrail/repositories/services/trail_service.dart';
 import 'package:onetwotrail/repositories/viewModels/controller_page_board_controller_model.dart';

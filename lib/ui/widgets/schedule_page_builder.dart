@@ -277,40 +277,16 @@ class ScrollContainer extends StatelessWidget {
                     },
                   )),
               Expanded(
-                flex: 30,
-                child: Container(
-                  alignment: Alignment.center,
-                  // Number of the day in the schedule
+                flex: 80,
+                child: Center(
+                  // Number of the day in the schedule (centered)
                   child: Text(
-                    "${capitalizeFirstLetter(AppLocalizations.of(context)?.day ?? "Day")}: ${index + 1}",
+                    "${capitalizeFirstLetter(AppLocalizations.of(context)?.day ?? "Day")} ${index + 1}",
                     style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1D1D1F)),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 50,
-                child: Container(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/icons/calendar.png',
-                        color: tomato,
-                      ),
-                      Container(
-                        width: 16,
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 2),
-                        child:
-                            Text("${model.scheduleDays.keys.elementAt(index)}"),
-                      )
-                    ],
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1D1D1F),
+                    ),
                   ),
                 ),
               ),

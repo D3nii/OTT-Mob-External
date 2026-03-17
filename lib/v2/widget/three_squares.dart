@@ -13,6 +13,7 @@ class ThreeSquares extends StatelessWidget {
   final ImageProvider? secondaryTopImage;
   final ImageProvider? secondaryBottomImage;
   final List<ImageProvider>? images;
+  final Widget? trailingWidget;
   final Function(BuildContext context) mainAction;
   final double? height;
 
@@ -23,6 +24,7 @@ class ThreeSquares extends StatelessWidget {
     required this.mainAction,
     this.height,
     this.images,
+    this.trailingWidget,
   });
 
   @override
@@ -47,6 +49,7 @@ class ThreeSquares extends StatelessWidget {
                         secondaryTopImage ?? empty,
                         secondaryBottomImage ?? empty,
                       ],
+                  trailingWidget: trailingWidget,
                   cardHeight: height ?? 200,
                   maxWidth: constraints.maxWidth,
                 ),
@@ -61,11 +64,13 @@ class ThreeSquares extends StatelessWidget {
 
 class _OverlappingImageStack extends StatefulWidget {
   final List<ImageProvider> images;
+  final Widget? trailingWidget;
   final double cardHeight;
   final double maxWidth;
 
   const _OverlappingImageStack({
     required this.images,
+    this.trailingWidget,
     required this.cardHeight,
     required this.maxWidth,
     Key? key,
@@ -75,10 +80,61 @@ class _OverlappingImageStack extends StatefulWidget {
   _OverlappingImageStackState createState() => _OverlappingImageStackState();
 }
 
-class _OverlappingImageStackState extends State<_OverlappingImageStack> {
+class _OverlappingImageStackState extends State<_OverlappingImageStack>
+    with SingleTickerProviderStateMixin {
   int? _hoveredIndex;
+  int _startIndex = 0;
+  double? _dragStartX;
+  Widget? _cachedTrailing;
+  double _dragOffsetX = 0.0;
+  late final AnimationController _settleController;
+  Animation<double>? _settleAnimation;
 
-  List<ImageProvider> get _images => [...widget.images];
+  // Apply custom ordering for the main page trail card:
+  // first becomes fourth, second becomes first, third becomes second,
+  // and fourth becomes third. For 4+ images we rotate the list so
+  // that [0,1,2,3] becomes [1,2,3,0].
+  List<ImageProvider> get _images {
+    final List<ImageProvider> imgs = [...widget.images];
+    if (imgs.length >= 4) {
+      final ImageProvider first = imgs.removeAt(0);
+      imgs.add(first);
+    }
+    return imgs;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cachedTrailing = widget.trailingWidget;
+    _settleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    )..addListener(() {
+        final anim = _settleAnimation;
+        if (anim == null) return;
+        setState(() {
+          _dragOffsetX = anim.value;
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _settleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OverlappingImageStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only swap the cached trailing widget if it's logically different.
+    // Many parents rebuild with a new instance each frame; using a stable
+    // key (e.g. `ValueKey('trail_map_<id>')`) prevents unnecessary reloads.
+    if (oldWidget.trailingWidget?.key != widget.trailingWidget?.key) {
+      _cachedTrailing = widget.trailingWidget;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,15 +144,21 @@ class _OverlappingImageStackState extends State<_OverlappingImageStack> {
           : constraints.maxWidth.isFinite
               ? constraints.maxWidth
               : 360.0;
-      final int count = _images.length;
+      // Use at most 4 trail images in the carousel.
+      final int imageCount = math.min(_images.length, 4);
+      final Widget? trailing = _cachedTrailing;
+      final bool hasTrailing = trailing != null;
+      final int count = imageCount + (hasTrailing ? 1 : 0);
       if (count == 0) return SizedBox.shrink();
 
       // Defaults similar to original behaviour
       const double defaultCardWidth = 280.0;
       const double desiredOverlap = 80.0;
-      const int maxAllowed = 4;
+      // Allow up to 5 cards in the stack: 4 images + 1 map.
+      const int maxAllowedCards = 5;
 
-      final int visible = math.min(count, maxAllowed);
+      // Show at most 5 cards in the stack (images + optional map).
+      final int visible = math.min(count, maxAllowedCards);
 
       double cardWidth = defaultCardWidth;
       double overlap = desiredOverlap;
@@ -117,18 +179,53 @@ class _OverlappingImageStackState extends State<_OverlappingImageStack> {
       List<Widget> children = [];
       for (int i = 0; i < visible; i++) {
         final double w = cardWidth;
-        Widget card = _HoverableImageCard(
-          image: _images[i],
-          width: w,
-          height: widget.cardHeight,
-          hovered: _hoveredIndex == i,
-          onHoverChanged: (hovering) {
-            setState(() {
-              _hoveredIndex = hovering ? i : null;
-            });
-          },
-        );
-        children.add(Positioned(left: i * overlap, child: card));
+        final int globalIndex = (_startIndex + i) % count;
+
+        Widget card;
+        Key cardKey;
+        if (hasTrailing && globalIndex == count - 1) {
+          // Last position is the trailing widget (e.g. map),
+          // styled the same as an image card (border radius, border, shadow).
+          cardKey = trailing!.key ?? const ValueKey('__three_squares_trailing__');
+          card = SizedBox(
+            width: w,
+            height: widget.cardHeight,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 12,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: trailing!,
+            ),
+          );
+        } else {
+          final int imageIndex = globalIndex % imageCount;
+          cardKey = ValueKey('three_squares_img_$imageIndex');
+          card = _HoverableImageCard(
+            image: _images[imageIndex],
+            width: w,
+            height: widget.cardHeight,
+            hovered: _hoveredIndex == i,
+            onHoverChanged: (hovering) {
+              setState(() {
+                _hoveredIndex = hovering ? i : null;
+              });
+            },
+          );
+        }
+        children.add(Positioned(
+          key: cardKey,
+          left: i * overlap + _dragOffsetX,
+          child: card,
+        ));
       }
 
       // Render leftmost image on top by reversing order so index 0 is last
@@ -143,9 +240,70 @@ class _OverlappingImageStackState extends State<_OverlappingImageStack> {
         }
       }
 
-      return Stack(
-        clipBehavior: Clip.none,
-        children: finalChildren,
+      return GestureDetector(
+        onHorizontalDragStart: (details) {
+          _settleController.stop();
+          _dragStartX = details.localPosition.dx;
+        },
+        onHorizontalDragUpdate: (details) {
+          if (_dragStartX == null) return;
+          final delta = details.localPosition.dx - _dragStartX!;
+          // Keep the interaction feeling like a normal horizontal list:
+          // let the user drag freely but clamp so it doesn't look broken.
+          setState(() {
+            _dragOffsetX = delta.clamp(-overlap * 1.2, overlap * 1.2);
+          });
+        },
+        onHorizontalDragEnd: (details) {
+          final double velocity = details.primaryVelocity ?? 0.0;
+
+          const double velocityThreshold = 250.0;
+          final bool fling = velocity.abs() > velocityThreshold;
+          final bool dragFar = _dragOffsetX.abs() > overlap * 0.35;
+
+          int direction = 0; // -1 = left, +1 = right
+          if (fling) {
+            direction = velocity < 0 ? -1 : 1;
+          } else if (dragFar) {
+            direction = _dragOffsetX < 0 ? -1 : 1;
+          }
+
+          // Animate to settle. If direction != 0 we animate to +/-overlap,
+          // then rotate the stack and snap back to 0 for a seamless loop.
+          final double target =
+              direction == 0 ? 0.0 : (direction < 0 ? -overlap : overlap);
+
+          _settleController.stop();
+          _settleController.reset();
+          _settleAnimation = Tween<double>(begin: _dragOffsetX, end: target)
+              .animate(CurvedAnimation(parent: _settleController, curve: Curves.easeOut));
+
+          _settleController.forward().whenComplete(() {
+            if (!mounted) return;
+            if (direction != 0) {
+              setState(() {
+                if (direction < 0) {
+                  // Swipe left: move first card to the end.
+                  _startIndex = (_startIndex + 1) % count;
+                } else {
+                  // Swipe right: move last card to the front.
+                  _startIndex = (_startIndex - 1 + count) % count;
+                }
+                _dragOffsetX = 0.0;
+              });
+            } else {
+              setState(() {
+                _dragOffsetX = 0.0;
+              });
+            }
+          });
+
+          _dragStartX = null;
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: finalChildren,
+        ),
       );
     });
   }
@@ -280,6 +438,7 @@ class TitleThreeSquares extends ThreeSquares {
     this.textBackgroundColor = Colors.transparent,
     List<ImageProvider>? images,
     double? height,
+    Widget? trailingWidget,
     required Function(BuildContext context) mainAction,
   }) : super(
           mainImage: images != null && images.isNotEmpty
@@ -293,6 +452,7 @@ class TitleThreeSquares extends ThreeSquares {
               : AssetImage('assets/help/empty_image.png'),
           images: images,
           height: height,
+          trailingWidget: trailingWidget,
           mainAction: mainAction,
         );
 
@@ -426,6 +586,7 @@ class TitleThreeSquares extends ThreeSquares {
             summaryTitleText: '',
             summaryBodyText: '',
             images: [emptyImage, emptyImage, emptyImage],
+            trailingWidget: null,
             mainAction: (context) => Container(),
             padding: padding,
           ),

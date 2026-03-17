@@ -6,6 +6,9 @@ import 'package:onetwotrail/v2/util/duration.dart';
 import 'package:onetwotrail/v2/widget/banner.dart';
 import 'package:onetwotrail/v2/widget/three_squares.dart';
 import 'package:provider/provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
 
 class TrailWidgetFactory {
   static Widget createWidgetFromDisplay(
@@ -45,9 +48,80 @@ class TrailWidgetFactory {
       summaryTitleText: "",
       summaryBodyText: "",
       images: trail.imageProviders,
+      trailingWidget: KeyedSubtree(
+        key: ValueKey('trail_map_${trail.id}'),
+        child: _TrailMiniMap(trail: trail),
+      ),
       mainAction: (BuildContext context) =>
           Provider.value(value: trail, child: TrailPreviewView()),
       padding: EdgeInsets.only(left: 16, right: 16),
+    );
+  }
+}
+
+class _TrailMiniMap extends StatelessWidget {
+  final Trail trail;
+
+  const _TrailMiniMap({Key? key, required this.trail}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final experiences = trail.experiences;
+    LatLng center;
+    Set<Marker> markers = {};
+    List<LatLng> polylinePoints = [];
+
+    if (experiences.isNotEmpty) {
+      center = LatLng(experiences.first.latitude, experiences.first.longitude);
+      markers = experiences
+          .map((exp) => Marker(
+                markerId: MarkerId('exp_${exp.experienceId}'),
+                position: LatLng(exp.latitude, exp.longitude),
+              ))
+          .toSet();
+
+      // Build a simple route polyline following the experiences order,
+      // similar to the itinerary view route.
+      polylinePoints = experiences
+          .map((exp) => LatLng(exp.latitude, exp.longitude))
+          .toList();
+    } else {
+      center = LatLng(trail.latitude, trail.longitude);
+      markers = {
+        Marker(
+          markerId: MarkerId('trail_${trail.id}'),
+          position: center,
+        )
+      };
+    }
+
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: center,
+        zoom: 11,
+      ),
+      // We don't have access to the shared trail preview model here,
+      // so we mirror its behaviour by drawing markers and a simple
+      // route polyline from the ordered experiences.
+      markers: markers,
+      polylines: polylinePoints.length >= 2
+          ? {
+              Polyline(
+                polylineId: const PolylineId('trail_route'),
+                points: polylinePoints,
+                color: Colors.blueAccent,
+                width: 4,
+              ),
+            }
+          : const <Polyline>{},
+      zoomControlsEnabled: false,
+      mapToolbarEnabled: false,
+      myLocationButtonEnabled: false,
+      gestureRecognizers: {
+        Factory<OneSequenceGestureRecognizer>(
+          () => EagerGestureRecognizer(),
+        ),
+      },
     );
   }
 }

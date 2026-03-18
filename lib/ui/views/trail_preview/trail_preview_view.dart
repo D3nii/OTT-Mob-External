@@ -582,29 +582,30 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
     List<Experience> visits =
         dayEvents.where((e) => !e.foodDrinks && !e.accommodation).toList();
 
-    bool needsBreakfast = visits.any((e) {
-      int start =
-          e.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
-      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
-      // Overlaps 9 AM - 12 PM
-      return start < 12 && end >= 9;
-    });
-    bool needsLunch = visits.any((e) {
-      int start =
-          e.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
-      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
-      // Overlaps 12 PM - 8 PM
-      return start < 20 && end >= 12;
-    });
-    bool needsDinner = visits.any((e) {
-      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
-      // Active at or after 8 PM
-      return end >= 20;
-    });
+    // We show Breakfast only if the first activity starts before 12 PM.
+    // We show Dinner only if some activity ends at or after 6 PM (18:00).
+    // Lunch is shown for any day with activity.
+    bool needsBreakfast = visits.any((e) =>
+        e.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour < 12);
+    bool needsLunch = visits.isNotEmpty;
+    bool needsDinner = visits.isNotEmpty;
 
     bool breakfastAdded = false;
     bool lunchAdded = false;
     bool dinnerAdded = false;
+
+    // Breakfast fallback for early activities
+    if (needsBreakfast && dayEvents.isNotEmpty) {
+      int firstStartHour = dayEvents.first.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      if (firstStartHour < 7) {
+        itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true,
+          customName: 'Breakfast',
+          customDescription: '30 minutes',
+        ));
+        breakfastAdded = true;
+      }
+    }
 
     for (int j = 0; j < dayEvents.length; j++) {
       var exp = dayEvents[j];
@@ -613,10 +614,10 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
       int endHour =
           exp.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
 
-      // Breakfast: before first visit starting at/after 9, or visit covering 9 AM
+      // Breakfast: before first visit starting at/after 7 AM
       if (needsBreakfast &&
           !breakfastAdded &&
-          (startHour >= 9 || endHour >= 9)) {
+          (startHour >= 7 || endHour >= 7)) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Breakfast',
@@ -625,7 +626,7 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
         breakfastAdded = true;
       }
 
-      // Lunch: before first visit starting at/after 12, or visit covering 12 PM
+      // Lunch: before first visit starting at/after 12 PM
       if (needsLunch && !lunchAdded && (startHour >= 12 || endHour >= 12)) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
@@ -635,8 +636,8 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
         lunchAdded = true;
       }
 
-      // Dinner: before first visit starting at/after 20 (8 PM), or visit covering 8 PM
-      if (needsDinner && !dinnerAdded && (startHour >= 20 || endHour >= 20)) {
+      // Dinner: before first visit starting at/after 6 PM (18:00)
+      if (needsDinner && !dinnerAdded && (startHour >= 18 || endHour >= 18)) {
         itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
           customName: 'Dinner',

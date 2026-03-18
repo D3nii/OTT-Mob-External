@@ -582,63 +582,65 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
     List<Experience> visits =
         dayEvents.where((e) => !e.foodDrinks && !e.accommodation).toList();
 
+    bool needsBreakfast = visits.any((e) {
+      int start =
+          e.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      // Overlaps 9 AM - 12 PM
+      return start < 12 && end >= 9;
+    });
+    bool needsLunch = visits.any((e) {
+      int start =
+          e.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      // Overlaps 12 PM - 8 PM
+      return start < 20 && end >= 12;
+    });
+    bool needsDinner = visits.any((e) {
+      int end = e.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      // Active at or after 8 PM
+      return end >= 20;
+    });
+
     bool breakfastAdded = false;
     bool lunchAdded = false;
     bool dinnerAdded = false;
 
     for (int j = 0; j < dayEvents.length; j++) {
       var exp = dayEvents[j];
-      int startHour = exp.visitStartTime.hour;
+      int startHour =
+          exp.visitStartTime.toUtc().subtract(const Duration(hours: 6)).hour;
+      int endHour =
+          exp.visitEndTime.toUtc().subtract(const Duration(hours: 6)).hour;
 
-      // Breakfast: 9:00 AM - 12:00 PM
-      bool hasActivity9to12 = visits.any((e) => e.visitStartTime.hour < 12 && e.visitEndTime.hour >= 9);
-      if (hasActivity9to12 && !breakfastAdded && startHour >= 9) {
-        itineraryList.add(ItineraryMealSleepBlock(
+      // Breakfast: before first visit starting at/after 9, or visit covering 9 AM
+      if (needsBreakfast &&
+          !breakfastAdded &&
+          (startHour >= 9 || endHour >= 9)) {
+        itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
-          experience: Experience.dummy(
-            title: 'Breakfast',
-            name: 'Sunrise Bistro & Cafe',
-            description: '30 minutes',
-            isMeal: true,
-            adName: 'Sunrise Bistro & Cafe',
-            adUrl: 'https://www.google.com/maps',
-            adImageUrl: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&q=80&w=200',
-          ),
+          customName: 'Breakfast',
+          customDescription: '30 minutes',
         ));
         breakfastAdded = true;
       }
 
-      // Lunch: 12:00 PM - 8:00 PM
-      bool hasActivity12to20 = visits.any((e) => e.visitStartTime.hour < 20 && e.visitEndTime.hour >= 12);
-      if (hasActivity12to20 && !lunchAdded && startHour >= 12) {
-        itineraryList.add(ItineraryMealSleepBlock(
+      // Lunch: before first visit starting at/after 12, or visit covering 12 PM
+      if (needsLunch && !lunchAdded && (startHour >= 12 || endHour >= 12)) {
+        itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
-          experience: Experience.dummy(
-            title: 'Lunch',
-            name: 'Green Garden Grill',
-            description: '30 minutes',
-            isMeal: true,
-            adName: 'Green Garden Grill',
-            adUrl: 'https://www.google.com/maps',
-            adImageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200',
-          ),
+          customName: 'Lunch',
+          customDescription: '30 minutes',
         ));
         lunchAdded = true;
       }
 
-      // Dinner: At or after 8 PM
-      if (!dinnerAdded && startHour >= 20) {
-        itineraryList.add(ItineraryMealSleepBlock(
+      // Dinner: before first visit starting at/after 20 (8 PM), or visit covering 8 PM
+      if (needsDinner && !dinnerAdded && (startHour >= 20 || endHour >= 20)) {
+        itineraryList.add(const ItineraryMealSleepBlock(
           isMeal: true,
-          experience: Experience.dummy(
-            title: 'Dinner',
-            name: 'Starlight Gourmet Dining',
-            description: '30 minutes',
-            isMeal: true,
-            adName: 'Starlight Gourmet Dining',
-            adUrl: 'https://www.google.com/maps',
-            adImageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=200',
-          ),
+          customName: 'Dinner',
+          customDescription: '30 minutes',
         ));
         dinnerAdded = true;
       }
@@ -670,28 +672,37 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
       if (j < dayEvents.length - 1) {
         var nextExp = dayEvents[j + 1];
 
-        // ... Transit calculation stays same ...
+        // 1. Convert start_time and end_time to Costa Rica local time (UTC-6)
         DateTime startCR =
             exp.visitEndTime.toUtc().subtract(const Duration(hours: 6));
         DateTime endCR =
             nextExp.visitStartTime.toUtc().subtract(const Duration(hours: 6));
 
+        // 2. Calculate difference in milliseconds
         int durationMs = endCR.difference(startCR).inMilliseconds;
+
+        // 3. Convert to total minutes
         double totalMinutes = durationMs / (1000 * 60);
 
+        // FALLBACK: If time gap is 0 or less, calculate based on distance
         if (totalMinutes <= 0) {
           double distanceKm = GeoHelpers.calculateDistance(
               exp.latitude, exp.longitude, nextExp.latitude, nextExp.longitude);
+          // Estimate 2.5 minutes per km for Costa Rica (approx 24 km/h avg)
           totalMinutes = distanceKm * 2.5;
         }
 
+        // 4. Round up to nearest 10 minutes
         int roundedMinutes = (totalMinutes / 10).ceil() * 10;
+
+        // Ensure at least 10 minutes if they are not at the same location
         if (roundedMinutes == 0 &&
             (exp.latitude != nextExp.latitude ||
                 exp.longitude != nextExp.longitude)) {
           roundedMinutes = 10;
         }
 
+        // 5. Human-readable display format
         String durationStr;
         int hours = roundedMinutes ~/ 60;
         int mins = roundedMinutes % 60;
@@ -710,17 +721,20 @@ class _TrailItineraryPageState extends State<TrailItineraryPage> {
       }
     }
 
-    itineraryList.add(ItineraryMealSleepBlock(
+    // Fallback if windows passed without triggers (e.g. dinner is at the very end)
+    if (needsLunch && !lunchAdded) {
+      itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true, customName: 'Lunch', customDescription: '30 minutes'));
+    }
+    if (needsDinner && !dinnerAdded) {
+      itineraryList.add(const ItineraryMealSleepBlock(
+          isMeal: true, customName: 'Dinner', customDescription: '30 minutes'));
+    }
+
+    itineraryList.add(const ItineraryMealSleepBlock(
       isMeal: false,
-      experience: Experience.dummy(
-        title: 'Sleep',
-        name: 'Grand Heritage Resort & Spa',
-        description: '8 hours',
-        isMeal: false,
-        adName: 'Grand Heritage Resort & Spa',
-        adUrl: 'https://www.google.com/maps',
-        adImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=200',
-      ),
+      customName: 'Sleep',
+      customDescription: '8 hours',
     ));
 
     return itineraryList;
